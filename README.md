@@ -1,2 +1,2 @@
-# land-shaper
-A terrain generator
+# Land Shaper
+A generator for terrain.
