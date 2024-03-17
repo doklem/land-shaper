@@ -2,7 +2,13 @@ import { DataTexture, FloatType, MeshStandardMaterial, PixelFormat, RedFormat, R
 import { IDisposable } from '../disposable';
 import { ITextureSettings } from '../settings/texture-settings';
 import { TextureWrapper } from './texture-wrapper';
+import { NormalTangentSpaceRenderNode } from '../nodes/render-nodes/normal-tangent-space-render-node';
+import { NormalObjectSpaceRenderNode } from '../nodes/render-nodes/normal-object-space-render-node';
+import { DiffuseRenderNode } from '../nodes/render-nodes/diffuse-render-node';
 import { DisplacementRenderNode } from '../nodes/render-nodes/displacement-render-node';
+import { WaterComputeNode } from '../nodes/compute-nodes/water-compute-node';
+import { Rubble } from '../objects-3d/rubble';
+import { SurfaceRenderNode } from '../nodes/render-nodes/surface-render-node';
 import { SettingsManager } from '../settings/settings-manager';
 
 export class TextureManager implements IDisposable {
@@ -20,12 +26,18 @@ export class TextureManager implements IDisposable {
     public readonly displacementDraft: TextureWrapper;
     public readonly displacementFinal: TextureWrapper;
     public readonly displacementFinalCopy: TextureWrapper;
+    public readonly diffuse: TextureWrapper;
     public readonly floatSampler: GPUSampler;
+    public readonly normalObjectSpace: TextureWrapper;
+    public readonly normalTangentSpace: TextureWrapper;
     public readonly rFloatTextureColors: ITextureSettings;
     public readonly rFloatTextureDraft: ITextureSettings;
     public readonly rFloatTextureTerrain: ITextureSettings;
     public readonly rgFloatTextureColors: ITextureSettings;
     public readonly rgbaFloatTextureColors: ITextureSettings;
+    public readonly rubbleTexture: ITextureSettings;
+    public readonly surface: TextureWrapper;
+    public readonly water: TextureWrapper;
     
     //public readonly debug: TextureWrapper;
 
@@ -35,6 +47,7 @@ export class TextureManager implements IDisposable {
         this.rFloatTextureTerrain = TextureManager.createTextureSettings(settings.constants.textureSizeTerrain, 'r32float');
         this.rgFloatTextureColors = TextureManager.createTextureSettings(settings.constants.textureSizeColors, 'rg32float');
         this.rgbaFloatTextureColors = TextureManager.createTextureSettings(settings.constants.textureSizeColors, 'rgba32float');
+        this.rubbleTexture = TextureManager.createTextureSettings(settings.constants.rubble.dimensions, 'rgba32float', Rubble.ITEM_LENGTH, Rubble.ITEM_BYTE_LENGTH);
 
         this.floatSampler = device.createSampler({
             label: 'Float Sampler',
@@ -73,12 +86,57 @@ export class TextureManager implements IDisposable {
             `${DisplacementRenderNode.NAME_FINAL} Copy`,
             this.displacementFinal.settings
         );
+
+        this.water = new TextureWrapper(
+            device,
+            TextureManager.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+            WaterComputeNode.NAME,
+            this.displacementFinal.settings
+        );
+
+        this.surface = new TextureWrapper(
+            device,
+            TextureManager.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT,
+            SurfaceRenderNode.NAME,
+            this.rgFloatTextureColors
+        );
+
+        this.diffuse = new TextureWrapper(
+            device,
+            TextureManager.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+            DiffuseRenderNode.NAME,
+            this.rgbaFloatTextureColors
+        );
+
+        this.normalObjectSpace = new TextureWrapper(
+            device,
+            TextureManager.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT,
+            NormalObjectSpaceRenderNode.NAME,
+            this.rgbaFloatTextureColors
+        );
+
+        this.normalTangentSpace = new TextureWrapper(
+            device,
+            TextureManager.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+            NormalTangentSpaceRenderNode.NAME,
+            this.normalObjectSpace.settings
+        );
     }
 
     public dispose(): void {
         this.displacementDraft.dispose();
         this.displacementFinal.dispose();
         this.displacementFinalCopy.dispose();
+        this.diffuse.dispose();
+        this.normalObjectSpace.dispose();
+        this.normalTangentSpace.dispose();
+        this.surface.dispose();
+        this.water.dispose();
     }
 
     public static disposeMaterialTextures(material: MeshStandardMaterial): void {

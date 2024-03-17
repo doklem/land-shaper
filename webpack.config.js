@@ -35,5 +35,12 @@ module.exports = {
     },
     resolve: {
         extensions: ['.ts']
-    }  
+    },
+    plugins: [
+        new CopyPlugin({
+            patterns: [
+                { from: 'src/assets', to: 'assets' },
+            ],
+        })
+    ],    
 }

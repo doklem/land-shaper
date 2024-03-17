@@ -10,15 +10,19 @@ import {
 } from 'three';
 import { TextureManager } from '../gpu-resources/texture-manager';
 import { IDisposable } from '../disposable';
+import { NormalTangentSpaceRenderNode } from '../nodes/render-nodes/normal-tangent-space-render-node';
+import { DiffuseRenderNode } from '../nodes/render-nodes/diffuse-render-node';
 import { IExportableNode } from '../nodes/exportable-node';
 import { ITextureSettings } from '../settings/texture-settings';
 import { SettingsManager } from '../settings/settings-manager';
 
 export class Terrain extends LOD implements IDisposable {
 
+    private readonly _diffuseOutput?: Float32Array;
     private readonly _displacementOutput?: Float32Array;
     private readonly _material: MeshStandardMaterial;
     private readonly _meshs: Mesh[];
+    private readonly _normalOutput?: Float32Array;
     private readonly _displacementMap: DataTexture;
 
     public get displacementMap(): DataTexture {
@@ -32,12 +36,20 @@ export class Terrain extends LOD implements IDisposable {
         vertexSizeMin: Vector2,
         meshLodDistance: number,
         flatShading: boolean,
+        private readonly _normalTangentSpaceRenderNode?: NormalTangentSpaceRenderNode,
+        private readonly _diffuseRenderNode?: DiffuseRenderNode,
         displacementTexture?: ITextureSettings,
         displacementMap?: DataTexture) {
         super();
 
         if (displacementTexture) {
             this._displacementOutput = new Float32Array(displacementTexture.length);
+        }
+        if (_normalTangentSpaceRenderNode) {
+            this._normalOutput = new Float32Array(_normalTangentSpaceRenderNode.textureSettings.length);
+        }
+        if (_diffuseRenderNode) {
+            this._diffuseOutput = new Float32Array(_diffuseRenderNode.textureSettings.length);
         }
 
         this._displacementMap = displacementMap ?? TextureManager.createDataTexture(this._displacementOutput!, displacementTexture!);
@@ -49,6 +61,12 @@ export class Terrain extends LOD implements IDisposable {
             roughness: 1,
             side: DoubleSide,
         };
+        if (_diffuseRenderNode) {
+            materialParameters.map = TextureManager.createDataTexture(this._diffuseOutput!, _diffuseRenderNode.textureSettings, _settings.constants.anisotropy);
+        }
+        if (_normalTangentSpaceRenderNode) {
+            materialParameters.normalMap = TextureManager.createDataTexture(this._normalOutput!, _normalTangentSpaceRenderNode.textureSettings);
+        }
         this._material = new MeshStandardMaterial(materialParameters);
 
         this._meshs = [];
@@ -81,12 +99,24 @@ export class Terrain extends LOD implements IDisposable {
         if (displacementProvider && this._displacementOutput) {
             promises.push(displacementProvider.readOutputBuffer(this._displacementOutput));
         }
+        if (this._normalTangentSpaceRenderNode && this._normalOutput) {
+            promises.push(this._normalTangentSpaceRenderNode.readOutputBuffer(this._normalOutput));
+        }
+        if (this._diffuseRenderNode && this._diffuseOutput) {
+            promises.push(this._diffuseRenderNode.readOutputBuffer(this._diffuseOutput));
+        }
         if (promises.length > 0) {
             await Promise.all(promises);
         }
 
         if (this._displacementOutput) {
             this._material.displacementMap!.needsUpdate = true;
+        }
+        if (this._normalTangentSpaceRenderNode) {
+            this._material.normalMap!.needsUpdate = true;
+        }
+        if (this._diffuseRenderNode) {
+            this._material.map!.needsUpdate = true;
         }
         this._material.needsUpdate = true;
 
@@ -108,6 +138,10 @@ export class Terrain extends LOD implements IDisposable {
     }
 
     public async updateDiffuse(): Promise<void> {
+        if (!this._diffuseRenderNode) {
+            return;
+        }
+        await this._diffuseRenderNode.readOutputBuffer(this._diffuseOutput!);
         this._material.map!.needsUpdate = true;
         this._material.needsUpdate = true;
     }

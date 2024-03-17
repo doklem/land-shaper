@@ -45,6 +45,8 @@ export class ErosionLandscape extends Group implements ILandscape {
             settings.constants.vertexSizeFinalMinimum,
             settings.constants.meshLodDistance,
             true,
+            undefined,
+            undefined,
             this._displacementRenderNode.textureSettings);
         this.add(this._terrain);
 
