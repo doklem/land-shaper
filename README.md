@@ -1,9 +1,9 @@
 # Land Shaper
-A generator for terrain.
+A generator for terrain. See the live [demo](https://doklem.github.io/land-shaper/).
 
-See the live [demo](https://doklem.github.io/land-shaper/).
+![LandShaper](https://github.com/doklem/land-shaper/assets/34248939/23efc48f-591b-47d4-a207-ef2290af3dfa)
 
-It uses [procedural noise](https://thebookofshaders.com/examples/?chapter=proceduralTexture) in the form of the [3D Simplex noise](https://en.wikipedia.org/wiki/Simplex_noise) posted on [Shadertoy by Nikita Miropolskiy](https://www.shadertoy.com/view/XsX3zB) to create the basic displacement texture. It is further refined with a hydraulic erosion simulation based upon the droplet approach featured by Sebastian Lague of Coding Adventure on YouTube:
+It uses [procedural noise](https://thebookofshaders.com/examples/?chapter=proceduralTexture) in the form of the [3D Simplex noise](https://en.wikipedia.org/wiki/Simplex_noise) posted on [Shadertoy by Nikita Miropolskiy](https://www.shadertoy.com/view/XsX3zB) to create the basic displacement texture, which is then further refined with a hydraulic erosion simulation based upon the droplet approach featured by Sebastian Lague of Coding Adventure on YouTube:
 
 [![alt text](http://img.youtube.com/vi/eaXk97ujbPQ/0.jpg "Coding Adventure: Hydraulic Erosion")](https://www.youtube.com/watch?v=eaXk97ujbPQ)
 
