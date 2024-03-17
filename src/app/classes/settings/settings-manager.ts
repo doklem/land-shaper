@@ -3,6 +3,11 @@ import { LightSettings } from './light-settings';
 
 export class SettingsManager {
 
+    public readonly blur = {
+        size: new Vector2(2, 2),
+        strength: 0.5,
+    };
+
     public readonly constants: {
         readonly anisotropy: number;
         readonly littleEndian: boolean;
@@ -13,11 +18,32 @@ export class SettingsManager {
         readonly textureSizeTerrain: Vector2;
         readonly vertexSizeFinalMaximum: Vector2;
         readonly vertexSizeFinalMinimum: Vector2;
+        readonly meshLodDistance: number;
         readonly transformation: Matrix4;
+        readonly erosion: {
+            readonly dropletsSize: Vector2;
+            readonly dropletOffsetsMinSize: number;
+            readonly dropletsWorkgroupCount: number;
+            readonly brushRadius: number;
+        };
     };
 
     public readonly debug = {
         wireframe: false,
+    };
+
+    public readonly erosion = {
+        iterations: 1000,
+        maxLifetime: 50,
+        inertia: 0.05,
+        sedimentCapacityFactor: 4,
+        minSedimentCapacity: 0.1,
+        depositSpeed: 2,
+        erodeSpeed: 2,
+        evaporateSpeed: 0.1,
+        gravity: 9.807,
+        startSpeed: 1,
+        startWater: 1,
     };
 
     public readonly light = new LightSettings(
@@ -29,6 +55,7 @@ export class SettingsManager {
     public readonly ocean = {
         color: new Color(0, 0.118, 0.059),
     };
+
     public readonly sky = {
         turbidity: 0.1,
         rayleigh: 0.1,
@@ -54,7 +81,14 @@ export class SettingsManager {
             textureSizeTerrain: new Vector2(1024, 1024),
             vertexSizeFinalMaximum: new Vector2(1024, 1024),
             vertexSizeFinalMinimum: new Vector2(2, 2),
-            transformation: new Matrix4().makeRotationX(Math.PI * -0.5)
+            meshLodDistance: 200,
+            transformation: new Matrix4().makeRotationX(Math.PI * -0.5),
+            erosion: {
+                dropletsSize: new Vector2(8, 8),
+                dropletOffsetsMinSize: 1,
+                dropletsWorkgroupCount: 1,
+                brushRadius: 4,
+            }
         };
     }
 }

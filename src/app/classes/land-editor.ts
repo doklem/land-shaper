@@ -1,11 +1,12 @@
 import { ACESFilmicToneMapping, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
-import { GUI } from 'lil-gui';
+import { GUI, Controller } from 'lil-gui';
 import { BufferManager } from './gpu-resources/buffer-manager';
 import { TextureManager } from './gpu-resources/texture-manager';
 import { SkyBox } from './objects-3d/sky-box';
 import { IDisposable } from './disposable';
 import { TopologyStage } from './editor-stages/topology-stage';
+import { ErosionStage } from './editor-stages/erosion-stage';
 import { SettingsManager } from './settings/settings-manager';
 
 export class LandEditor implements IDisposable {
@@ -13,13 +14,20 @@ export class LandEditor implements IDisposable {
     private readonly _buffers: BufferManager;
     private readonly _camera: PerspectiveCamera;
     private readonly _controls: MapControls;
+    private readonly _erosionStage: ErosionStage;
     private readonly _gui: GUI;
+    private readonly _nextButton: Controller;
     private readonly _renderer: WebGLRenderer;
+    private readonly _previousButton: Controller;
     private readonly _scene: Scene;
     private readonly _settings: SettingsManager;
     private readonly _skyBox: SkyBox;
     private readonly _textures: TextureManager;
     private readonly _topologyStage: TopologyStage;
+    private readonly _settingsActions = {
+        previousStage: async () => await this.previousStage(),
+        nextStage: async () => await this.nextStage(),
+    };
 
     public constructor(
         private readonly _canvas: HTMLCanvasElement,
@@ -53,8 +61,12 @@ export class LandEditor implements IDisposable {
         this._controls.update();
 
         this._gui = new GUI({ width: 700 });
+        
+        this._previousButton = this._gui.add(this._settingsActions, 'previousStage').name('Previous').disable();
+        this._nextButton = this._gui.add(this._settingsActions, 'nextStage').name('Next');
 
         this._topologyStage = new TopologyStage(this._settings, this._scene, this._gui, this._textures, device, this._buffers);
+        this._erosionStage = new ErosionStage(this._settings, this._scene, this._gui, this._textures, device, this._buffers);
 
         const worldFolder = this._gui.addFolder('World').close();
         const skyFolder = worldFolder.addFolder('Sky').close();
@@ -80,6 +92,7 @@ export class LandEditor implements IDisposable {
         window.removeEventListener('resize', () => this.onWindowResize());
         this._renderer.setAnimationLoop(null);
         this._topologyStage.dispose();
+        this._erosionStage.dispose();
         this._scene.clear();
         this._skyBox.dispose();
         this._renderer.dispose();
@@ -88,17 +101,45 @@ export class LandEditor implements IDisposable {
     }
 
     public async run(): Promise<void> {
-        await this._topologyStage.updateLandscape();
+        await Promise.all([
+            this._topologyStage.updateLandscape(),
+            this._erosionStage.updateLandscape()
+        ]);
         this._renderer.setAnimationLoop((now) => this.animate(now));
+    }
+
+    private async previousStage(): Promise<void> {
+        if (this._topologyStage.enabled) {
+            return;
+        }
+        this._erosionStage.disable();
+        this._topologyStage.enable();
+        this._previousButton.disable();
+        this._nextButton.enable();
+    }
+
+    private async nextStage(): Promise<void> {
+        if (this._erosionStage.enabled) {
+            return;
+        }
+        this._topologyStage.disable();
+        if (this._topologyStage.changed) {
+            this._erosionStage.updateLandscape();
+        }
+        this._erosionStage.enable();
+        this._previousButton.enable();
+        this._nextButton.disable();
     }
 
     private updateWorld(): void {
         this._topologyStage.applyWaterSettings();
+        this._erosionStage.applyWaterSettings();
         this._skyBox.update();
     }
 
     private applyDebugSettings(): void {
         this._topologyStage.applyDebugSettings();
+        this._erosionStage.applyDebugSettings();
     }
 
     private onWindowResize(): void {
