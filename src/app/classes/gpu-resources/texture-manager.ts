@@ -26,17 +26,26 @@ export class TextureManager implements IDisposable {
     public readonly displacementDraft: TextureWrapper;
     public readonly displacementFinal: TextureWrapper;
     public readonly displacementFinalCopy: TextureWrapper;
+    public readonly displacementSection: TextureWrapper;
     public readonly diffuse: TextureWrapper;
+    public readonly diffuseSection: TextureWrapper;
     public readonly floatSampler: GPUSampler;
     public readonly normalObjectSpace: TextureWrapper;
+    public readonly normalObjectSpaceSection: TextureWrapper;
     public readonly normalTangentSpace: TextureWrapper;
+    public readonly normalTangentSpaceSection: TextureWrapper;
     public readonly rFloatTextureColors: ITextureSettings;
     public readonly rFloatTextureDraft: ITextureSettings;
     public readonly rFloatTextureTerrain: ITextureSettings;
+    public readonly rFloatTextureTerrainSection: ITextureSettings;
     public readonly rgFloatTextureColors: ITextureSettings;
+    public readonly rgFloatTextureColorsSection: ITextureSettings;
     public readonly rgbaFloatTextureColors: ITextureSettings;
+    public readonly rgbaFloatTextureColorsSection: ITextureSettings;
     public readonly rubbleTexture: ITextureSettings;
+    public readonly rubbleTextureSection: ITextureSettings;
     public readonly surface: TextureWrapper;
+    public readonly surfaceSection: TextureWrapper;
     public readonly water: TextureWrapper;
     
     //public readonly debug: TextureWrapper;
@@ -45,9 +54,13 @@ export class TextureManager implements IDisposable {
         this.rFloatTextureColors = TextureManager.createTextureSettings(settings.constants.textureSizeColors, 'r32float');
         this.rFloatTextureDraft = TextureManager.createTextureSettings(settings.constants.textureSizeDraft, 'r32float');
         this.rFloatTextureTerrain = TextureManager.createTextureSettings(settings.constants.textureSizeTerrain, 'r32float');
+        this.rFloatTextureTerrainSection = TextureManager.createTextureSettings(settings.constants.sections.textureSizeTerrain, 'r32float');
         this.rgFloatTextureColors = TextureManager.createTextureSettings(settings.constants.textureSizeColors, 'rg32float');
+        this.rgFloatTextureColorsSection = TextureManager.createTextureSettings(settings.constants.sections.textureSizeColors, 'rg32float');
         this.rgbaFloatTextureColors = TextureManager.createTextureSettings(settings.constants.textureSizeColors, 'rgba32float');
+        this.rgbaFloatTextureColorsSection = TextureManager.createTextureSettings(settings.constants.sections.textureSizeColors, 'rgba32float');
         this.rubbleTexture = TextureManager.createTextureSettings(settings.constants.rubble.dimensions, 'rgba32float', Rubble.ITEM_LENGTH, Rubble.ITEM_BYTE_LENGTH);
+        this.rubbleTextureSection = TextureManager.createTextureSettings(settings.constants.rubble.dimensionsSection, 'rgba32float', Rubble.ITEM_LENGTH, Rubble.ITEM_BYTE_LENGTH);
 
         this.floatSampler = device.createSampler({
             label: 'Float Sampler',
@@ -86,6 +99,13 @@ export class TextureManager implements IDisposable {
             `${DisplacementRenderNode.NAME_FINAL} Copy`,
             this.displacementFinal.settings
         );
+        this.displacementSection = new TextureWrapper(
+            device,
+            TextureManager.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+            `${DisplacementRenderNode.NAME_FINAL} Section`,
+            this.rFloatTextureTerrainSection
+        );
 
         this.water = new TextureWrapper(
             device,
@@ -102,6 +122,13 @@ export class TextureManager implements IDisposable {
             SurfaceRenderNode.NAME,
             this.rgFloatTextureColors
         );
+        this.surfaceSection = new TextureWrapper(
+            device,
+            TextureManager.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT,
+            `${SurfaceRenderNode.NAME} Section`,
+            this.rgFloatTextureColorsSection
+        );
 
         this.diffuse = new TextureWrapper(
             device,
@@ -109,6 +136,13 @@ export class TextureManager implements IDisposable {
             GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
             DiffuseRenderNode.NAME,
             this.rgbaFloatTextureColors
+        );
+        this.diffuseSection = new TextureWrapper(
+            device,
+            TextureManager.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+            `${DiffuseRenderNode.NAME} Section`,
+            this.rgbaFloatTextureColorsSection
         );
 
         this.normalObjectSpace = new TextureWrapper(
@@ -118,6 +152,13 @@ export class TextureManager implements IDisposable {
             NormalObjectSpaceRenderNode.NAME,
             this.rgbaFloatTextureColors
         );
+        this.normalObjectSpaceSection = new TextureWrapper(
+            device,
+            TextureManager.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT,
+            `${NormalObjectSpaceRenderNode.NAME} Section`,
+            this.rgbaFloatTextureColorsSection
+        );
 
         this.normalTangentSpace = new TextureWrapper(
             device,
@@ -126,16 +167,28 @@ export class TextureManager implements IDisposable {
             NormalTangentSpaceRenderNode.NAME,
             this.normalObjectSpace.settings
         );
+        this.normalTangentSpaceSection = new TextureWrapper(
+            device,
+            TextureManager.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+            `${NormalTangentSpaceRenderNode.NAME} Section`,
+            this.rgbaFloatTextureColorsSection
+        );
     }
 
     public dispose(): void {
         this.displacementDraft.dispose();
         this.displacementFinal.dispose();
         this.displacementFinalCopy.dispose();
+        this.displacementSection.dispose();
         this.diffuse.dispose();
+        this.diffuseSection.dispose();
         this.normalObjectSpace.dispose();
+        this.normalObjectSpaceSection.dispose();
         this.normalTangentSpace.dispose();
+        this.normalTangentSpaceSection.dispose();
         this.surface.dispose();
+        this.surfaceSection.dispose();
         this.water.dispose();
     }
 

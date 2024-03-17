@@ -8,6 +8,7 @@ import { IDisposable } from './disposable';
 import { TopologyStage } from './editor-stages/topology-stage';
 import { ErosionStage } from './editor-stages/erosion-stage';
 import { ColoringStage } from './editor-stages/coloring-stage';
+import { SectionedStage } from './editor-stages/sectioned-stage';
 import { MeshManager } from './gpu-resources/mesh-manager';
 import { SettingsManager } from './settings/settings-manager';
 
@@ -23,6 +24,7 @@ export class LandEditor implements IDisposable {
     private readonly _renderer: WebGLRenderer;
     private readonly _previousButton: Controller;
     private readonly _scene: Scene;
+    private readonly _sectionedStage: SectionedStage;
     private readonly _settings: SettingsManager;
     private readonly _skyBox: SkyBox;
     private readonly _textures: TextureManager;
@@ -75,6 +77,7 @@ export class LandEditor implements IDisposable {
         this._topologyStage = new TopologyStage(this._settings, this._scene, this._gui, this._textures, device, this._buffers);
         this._erosionStage = new ErosionStage(this._settings, this._scene, this._gui, this._textures, device, this._buffers);
         this._coloringStage = new ColoringStage(this._settings, this._scene, this._gui, this._textures, device, this._buffers, this._meshs, this._erosionStage.displacementMap);
+        this._sectionedStage = new SectionedStage(this._settings, this._scene, this._textures, device, this._buffers, this._meshs);
 
         const worldFolder = this._gui.addFolder('World').close();
         const skyFolder = worldFolder.addFolder('Sky').close();
@@ -102,6 +105,7 @@ export class LandEditor implements IDisposable {
     public dispose(): void {
         window.removeEventListener('resize', () => this.onWindowResize());
         this._renderer.setAnimationLoop(null);
+        this._sectionedStage.dispose();
         this._topologyStage.dispose();
         this._erosionStage.dispose();
         this._coloringStage.dispose();
@@ -130,20 +134,31 @@ export class LandEditor implements IDisposable {
             this._previousButton.disable();
             return;
         }
-        this._coloringStage.disable();
-        this._erosionStage.enable();
+        if (this._coloringStage.enabled) {
+            this._coloringStage.disable();
+            this._erosionStage.enable();
+            return;
+        }
+        this._sectionedStage.disable();
+        this._coloringStage.enable();
         this._nextButton.enable();
     }
 
     private async nextStage(): Promise<void> {
+        if (this._sectionedStage.enabled) {
+            return;
+        }
         if (this._coloringStage.enabled) {
+            this._coloringStage.disable();
+            this._sectionedStage.updateLandscape();
+            this._sectionedStage.enable();
+            this._nextButton.disable();
             return;
         }
         if (this._erosionStage.enabled) {
             this._erosionStage.disable();
             this._coloringStage.updateLandscape();
             this._coloringStage.enable();
-            this._nextButton.disable();
             return;
         }
         this._topologyStage.disable();
@@ -155,6 +170,7 @@ export class LandEditor implements IDisposable {
     }
 
     private updateWorld(): void {
+        this._sectionedStage.applyWaterSettings();
         this._topologyStage.applyWaterSettings();
         this._erosionStage.applyWaterSettings();
         this._coloringStage.applyWaterSettings();
@@ -162,6 +178,7 @@ export class LandEditor implements IDisposable {
     }
 
     private applyDebugSettings(): void {
+        this._sectionedStage.applyDebugSettings();
         this._topologyStage.applyDebugSettings();
         this._erosionStage.applyDebugSettings();
         this._coloringStage.applyDebugSettings();
@@ -181,6 +198,7 @@ export class LandEditor implements IDisposable {
         const delta = now - this._lastRun;
         this._lastRun = now;
         this._coloringStage.animate(delta);
+        this._sectionedStage.animate(delta);
         this._controls.update();
         this._renderer.render(this._scene, this._camera);
     }

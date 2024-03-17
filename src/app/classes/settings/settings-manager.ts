@@ -21,6 +21,12 @@ export class SettingsManager {
         readonly vertexSizeFinalMinimum: Vector2;
         readonly meshLodDistance: number;
         readonly transformation: Matrix4;
+        readonly sections: {
+            readonly textureSizeTerrain: Vector2;
+            readonly textureSizeColors: Vector2;
+            readonly vertexSizeMaximum: Vector2;
+            readonly uvRange: Vector2;
+        };
         readonly erosion: {
             readonly dropletsSize: Vector2;
             readonly dropletOffsetsMinSize: number;
@@ -148,6 +154,12 @@ export class SettingsManager {
             vertexSizeFinalMinimum: new Vector2(2, 2),
             meshLodDistance: 200,
             transformation: new Matrix4().makeRotationX(Math.PI * -0.5),
+            sections: {
+                textureSizeTerrain: new Vector2(64, 64),
+                textureSizeColors: new Vector2(512, 512),
+                vertexSizeMaximum: new Vector2(64, 64),
+                uvRange: new Vector2(0.0625, 0.0625),
+            },
             erosion: {
                 dropletsSize: new Vector2(8, 8),
                 dropletOffsetsMinSize: 1,
