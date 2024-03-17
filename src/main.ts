@@ -1,12 +1,17 @@
+import { MeshManager } from './app/classes/gpu-resources/mesh-manager';
 import { LandEditor } from './app/classes/land-editor';
 
 export class Program {
 
+    private readonly _meshs: MeshManager;
+
     private _editor?: LandEditor;
 
     constructor() {
+        this._meshs = new MeshManager();
         window.addEventListener('unload', () => {
             this._editor?.dispose();
+            this._meshs.dispose();
         }, { once: true });
     }
 
@@ -35,7 +40,9 @@ export class Program {
         device.lost.then((info) => console.error(info));
         console.debug(device.limits);
 
-        this._editor = new LandEditor(display, device);
+        await this._meshs.loadAsync();
+
+        this._editor = new LandEditor(display, device, this._meshs);
         await this._editor.run();
     }
 }

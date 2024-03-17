@@ -7,12 +7,15 @@ import { SkyBox } from './objects-3d/sky-box';
 import { IDisposable } from './disposable';
 import { TopologyStage } from './editor-stages/topology-stage';
 import { ErosionStage } from './editor-stages/erosion-stage';
+import { ColoringStage } from './editor-stages/coloring-stage';
+import { MeshManager } from './gpu-resources/mesh-manager';
 import { SettingsManager } from './settings/settings-manager';
 
 export class LandEditor implements IDisposable {
 
     private readonly _buffers: BufferManager;
     private readonly _camera: PerspectiveCamera;
+    private readonly _coloringStage: ColoringStage;
     private readonly _controls: MapControls;
     private readonly _erosionStage: ErosionStage;
     private readonly _gui: GUI;
@@ -29,9 +32,13 @@ export class LandEditor implements IDisposable {
         nextStage: async () => await this.nextStage(),
     };
 
+    private _lastRun: DOMHighResTimeStamp;
+
     public constructor(
         private readonly _canvas: HTMLCanvasElement,
-        device: GPUDevice) {
+        device: GPUDevice,
+        private readonly _meshs: MeshManager) {
+        this._lastRun = 0;
         _canvas.width = window.innerWidth;
         _canvas.height = window.innerHeight;
         this._camera = new PerspectiveCamera(50, _canvas.width / _canvas.height, 0.1, 5000);
@@ -67,6 +74,7 @@ export class LandEditor implements IDisposable {
 
         this._topologyStage = new TopologyStage(this._settings, this._scene, this._gui, this._textures, device, this._buffers);
         this._erosionStage = new ErosionStage(this._settings, this._scene, this._gui, this._textures, device, this._buffers);
+        this._coloringStage = new ColoringStage(this._settings, this._scene, this._gui, this._textures, device, this._buffers, this._meshs, this._erosionStage.displacementMap);
 
         const worldFolder = this._gui.addFolder('World').close();
         const skyFolder = worldFolder.addFolder('Sky').close();
@@ -78,6 +86,9 @@ export class LandEditor implements IDisposable {
         skyFolder.addColor(this._settings.light, 'directional').name('Directional').onChange(() => this.updateWorld());
 
         const waterFolder = worldFolder.addFolder('Water').close();
+        waterFolder.add(this._settings.ocean, 'distortionScale', 0, 8, 0.1).name('Distortion Scale').onChange(() => this.updateWorld());
+        waterFolder.add(this._settings.ocean, 'waterSize', 0.1, 10, 0.1).name('Size').onChange(() => this.updateWorld());
+        waterFolder.add(this._settings.ocean, 'waterSpeed', 0.0001, 0.01, 0.0001).name('Speed').onChange(() => this.updateWorld());
         waterFolder.addColor(this._settings.ocean, 'color').name('Color').onChange(() => this.updateWorld());
 
         const debugFolder = this._gui.addFolder('Debug').close();
@@ -93,6 +104,7 @@ export class LandEditor implements IDisposable {
         this._renderer.setAnimationLoop(null);
         this._topologyStage.dispose();
         this._erosionStage.dispose();
+        this._coloringStage.dispose();
         this._scene.clear();
         this._skyBox.dispose();
         this._renderer.dispose();
@@ -103,7 +115,7 @@ export class LandEditor implements IDisposable {
     public async run(): Promise<void> {
         await Promise.all([
             this._topologyStage.updateLandscape(),
-            this._erosionStage.updateLandscape()
+            this._erosionStage.updateLandscape().then(_ => this._coloringStage.updateLandscape())
         ]);
         this._renderer.setAnimationLoop((now) => this.animate(now));
     }
@@ -112,14 +124,26 @@ export class LandEditor implements IDisposable {
         if (this._topologyStage.enabled) {
             return;
         }
-        this._erosionStage.disable();
-        this._topologyStage.enable();
-        this._previousButton.disable();
+        if (this._erosionStage.enabled) {
+            this._erosionStage.disable();
+            this._topologyStage.enable();
+            this._previousButton.disable();
+            return;
+        }
+        this._coloringStage.disable();
+        this._erosionStage.enable();
         this._nextButton.enable();
     }
 
     private async nextStage(): Promise<void> {
+        if (this._coloringStage.enabled) {
+            return;
+        }
         if (this._erosionStage.enabled) {
+            this._erosionStage.disable();
+            this._coloringStage.updateLandscape();
+            this._coloringStage.enable();
+            this._nextButton.disable();
             return;
         }
         this._topologyStage.disable();
@@ -128,18 +152,19 @@ export class LandEditor implements IDisposable {
         }
         this._erosionStage.enable();
         this._previousButton.enable();
-        this._nextButton.disable();
     }
 
     private updateWorld(): void {
         this._topologyStage.applyWaterSettings();
         this._erosionStage.applyWaterSettings();
+        this._coloringStage.applyWaterSettings();
         this._skyBox.update();
     }
 
     private applyDebugSettings(): void {
         this._topologyStage.applyDebugSettings();
         this._erosionStage.applyDebugSettings();
+        this._coloringStage.applyDebugSettings();
     }
 
     private onWindowResize(): void {
@@ -153,6 +178,9 @@ export class LandEditor implements IDisposable {
     }
 
     private async animate(now: DOMHighResTimeStamp): Promise<void> {
+        const delta = now - this._lastRun;
+        this._lastRun = now;
+        this._coloringStage.animate(delta);
         this._controls.update();
         this._renderer.render(this._scene, this._camera);
     }
