@@ -14,22 +14,32 @@
         margin: 0;
         position: relative;
     }
+
+    .source-link {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        text-decoration: none;
+    }
 </style>
 
 <body>
     <div id="requirements" hidden>
         <h1>Bad News</h1>
-        Unfortunately your system can't run Land Shaper. Check if the following requirements are met:
+        Unfortunately your system can't run <a href="https://github.com/doklem/land-shaper/">Land Shaper</a>. Check if
+        the following requirements are met:
         <ul>
             <li>Your browser needs to support <a href="https://www.w3.org/TR/webgpu/">WebGPU</a>. <a
                     href="https://caniuse.com/webgpu/">caniuse.com</a> will tell you if this is the case.</li>
             <li>Your GPU device needs to have the <a
-                    href="https://www.w3.org/TR/webgpu/#float32-filterable">float32-filterable</a> feature. Land Shaper
-                requires this to create smooth displacement textures.</li>
+                    href="https://www.w3.org/TR/webgpu/#float32-filterable">float32-filterable</a> feature. <a
+                    href="https://github.com/doklem/land-shaper/">Land Shaper</a> requires this to create smooth
+                displacement textures.</li>
         </ul>
     </div>
     <div id="content">
         <canvas id="display"></canvas>
+        <a class="source-link" href="https://github.com/doklem/land-shaper/" target="_blank">Land Shaper Source</a>
     </div>
 </body>
 
