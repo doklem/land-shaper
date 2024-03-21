@@ -12,21 +12,27 @@
 <style>
     body {
         margin: 0;
-    }
-    #container {
         position: relative;
     }
 </style>
 
 <body>
-    <div id="container">
-        <div id="compatibility-check">
-            <h1 id="compatibility-check-reason"></h1>
-            <a href="https://caniuse.com/webgpu">Check this WebGPU browser support list</a>
-        </div>
-        <canvas id="display" width="1400" height="800"></canvas>
+    <div id="requirements" hidden>
+        <h1>Bad News</h1>
+        Unfortunately your system can't run Land Shaper. Check if the following requirements are met:
+        <ul>
+            <li>Your browser needs to support <a href="https://www.w3.org/TR/webgpu/">WebGPU</a>. <a
+                    href="https://caniuse.com/webgpu/">caniuse.com</a> will tell you if this is the case.</li>
+            <li>Your GPU device needs to have the <a
+                    href="https://www.w3.org/TR/webgpu/#float32-filterable">float32-filterable</a> feature. Land Shaper
+                requires this to create smooth displacement textures.</li>
+        </ul>
+    </div>
+    <div id="content">
+        <canvas id="display"></canvas>
     </div>
 </body>
+
 <script src="dist/main.min.js" type="module"></script>
 
 </html>
