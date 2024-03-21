@@ -1,4 +1,6 @@
 # Land Shaper
+![status main branch](actions/workflows/webpack.yml/badge.svg?branch=main)
+
 A terrain generator.
 
 ![Land Shaper](assets/34248939/23efc48f-591b-47d4-a207-ef2290af3dfa)
