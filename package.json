@@ -4,9 +4,10 @@
   "description": "A terrain generator",
   "main": "dist/main.min.js",
   "scripts": {
-    "ci": "pnpm i && pnpm run build",
-    "start": "pnpm i && pnpm run build && pnpm run serve",
-    "build": "webpack --config webpack.config.js --mode production",
+    "ci": "pnpm i && pnpm run build:prod",
+    "start": "pnpm i && pnpm run build:dev && pnpm run serve",
+    "build:prod": "webpack --config webpack.config.js --mode production",
+    "build:dev": "webpack --config webpack.config.js --mode development",
     "serve": "http-server"
   },
   "keywords": [],
