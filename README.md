@@ -3,10 +3,10 @@
 
 A terrain generator.
 
-![Land Shaper](assets/34248939/23efc48f-591b-47d4-a207-ef2290af3dfa)
+![Land Shaper](https://github.com/doklem/land-shaper/assets/34248939/23efc48f-591b-47d4-a207-ef2290af3dfa)
 
 ## Getting Started
-See the [live demo](https://doklem.github.io/land-shaper/) to try it out or have a look at the [wiki](wiki), if you want to know more.
+See the [live demo](https://doklem.github.io/land-shaper/) to try it out or have a look at the [wiki](https://github.com/doklem/land-shaper/wiki), if you want to know more.
 
 ## Scope
 A developer's pet project to learn the nooks and crannies of [WebGPU](https://www.w3.org/TR/webgpu/).
