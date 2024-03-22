@@ -40,12 +40,12 @@ export class ErosionStage extends EditorStageBase<ErosionLandscape> {
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'iterations', 1, 2000, 1).name('Iterations'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'maxLifetime', 1, 100, 1).name('Maximum Lifetime'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'inertia', 0, 1, 0.01).name('Inertia'));
+        this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'gravity', 0.01, 100, 0.001).name('Gravity'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'sedimentCapacityFactor', 0.01, 100, 0.01).name('Sediment Capacity Factor'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'minSedimentCapacity', 0.01, 100, 0.01).name('Minimum Sediment Capacity'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'depositSpeed', 0, 10, 0.1).name('Deposit Speed'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'erodeSpeed', 0, 10, 0.1).name('Erode Speed'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'evaporateSpeed', 0, 1, 0.01).name('Evaporate Speed'));
-        this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'gravity', 0.01, 100, 0.001).name('Gravity'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'startSpeed', 0.01, 100, 0.01).name('Start Speed'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'startWater', 0.01, 100, 0.01).name('Start Water'));
         this._erosionToggle = erosionFolder.add(this._settingsActions, 'toggleErosion').name('Start Erosion');
