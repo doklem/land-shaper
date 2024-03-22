@@ -24,12 +24,12 @@ export class ColoringStage extends EditorStageBase<ColoringLandscape> {
 
         const diffuseFolder = gui.addFolder('Colors').hide();
         this._uiElements.push(diffuseFolder);
-        diffuseFolder.add(settings.diffuse, 'slopStart', 0, 1, 0.001).name('Steep Starting Angle').onChange(() => this.runDiffuse());
-        diffuseFolder.add(settings.diffuse, 'slopRange', 0, 10, 0.01).name('Steep Gradient').onChange(() => this.runDiffuse());
+        diffuseFolder.add(settings.diffuse, 'slopStart', 0, 1, 0.001).name('Slop Angle').onChange(() => this.runDiffuse());
+        diffuseFolder.add(settings.diffuse, 'slopRange', 0, 10, 0.01).name('Slop Gradient').onChange(() => this.runDiffuse());
         diffuseFolder.add(settings.diffuse, 'riverStart', 0, 100, 0.1).name('River Start').onChange(() => this.runDiffuse());
         diffuseFolder.add(settings.diffuse, 'riverRange', 0, 100, 0.1).name('River Gradient').onChange(() => this.runDiffuse());
-        diffuseFolder.add(settings.diffuse, 'shoreStart', -100, 100, 0.1).name('Shore Line Start Height').onChange(() => this.runDiffuse());
-        diffuseFolder.add(settings.diffuse, 'shoreRange', 0, 200, 0.1).name('Shore Line Gradient').onChange(() => this.runDiffuse());        
+        diffuseFolder.add(settings.diffuse, 'shoreStart', -100, 100, 0.1).name('Shore Start Height').onChange(() => this.runDiffuse());
+        diffuseFolder.add(settings.diffuse, 'shoreRange', 0, 200, 0.1).name('Shore Gradient').onChange(() => this.runDiffuse());        
 
         const bumpsFolder = diffuseFolder.addFolder('Normal Bumps').close().hide();
         this._uiElements.push(bumpsFolder);
@@ -45,11 +45,11 @@ export class ColoringStage extends EditorStageBase<ColoringLandscape> {
 
         const rubbleFolder = diffuseFolder.addFolder('Rubble').close().hide();
         this._uiElements.push(rubbleFolder);
+        rubbleFolder.add(settings.rubble, 'slopStart', 0, 1, 0.001).name('Slop Angle').onChange(() => this.runDiffuse());
+        rubbleFolder.add(settings.rubble, 'slopRange', 0, 10, 0.01).name('Slop Gradient').onChange(() => this.runDiffuse());
         rubbleFolder.add(settings.rubble.scaleFactor, 'x', 0, 10, 0.1).name('Scale X').onChange(() => this.runDiffuse());
         rubbleFolder.add(settings.rubble.scaleFactor, 'y', 0, 10, 0.1).name('Scale Y').onChange(() => this.runDiffuse());
         rubbleFolder.add(settings.rubble.scaleFactor, 'z', 0, 10, 0.1).name('Scale Z').onChange(() => this.runDiffuse());
-        rubbleFolder.add(settings.rubble, 'slopStart', 0, 1, 0.001).name('Slop Starting Angle').onChange(() => this.runDiffuse());
-        rubbleFolder.add(settings.rubble, 'slopRange', 0, 10, 0.01).name('Slop Gradient').onChange(() => this.runDiffuse());
         MixedColorSettings.createGUI(settings.rubble.color, rubbleFolder, 'Color', () => this.runDiffuse());
         
         this._landscape = new ColoringLandscape(settings, textures, device, buffers, meshs, displacementMap);
