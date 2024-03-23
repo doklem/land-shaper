@@ -12,6 +12,8 @@ export class TopologyStage extends EditorStageBase<TopologyLandscape> {
 
     protected readonly _landscape: TopologyLandscape;
 
+    public readonly helpPageName = 'Topology-Stage';
+
     public get changed(): boolean {
         return this._changed;
     }

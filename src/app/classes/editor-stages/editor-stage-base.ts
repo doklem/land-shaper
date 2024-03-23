@@ -12,6 +12,8 @@ export abstract class EditorStageBase<T extends ILandscape> implements IDisposab
 
     protected readonly abstract _landscape: T;
 
+    public abstract readonly helpPageName: string;
+
     public get enabled(): boolean {
         return this._enabled;
     }

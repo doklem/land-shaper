@@ -14,6 +14,9 @@ import { SettingsManager } from './settings/settings-manager';
 
 export class LandEditor implements IDisposable {
 
+    private static readonly SOURCE_URL = 'https://github.com/doklem/land-shaper/';
+    private static readonly HELP_BASE_URL = `${LandEditor.SOURCE_URL}wiki`;
+
     private readonly _buffers: BufferManager;
     private readonly _camera: PerspectiveCamera;
     private readonly _coloringStage: ColoringStage;
@@ -32,6 +35,8 @@ export class LandEditor implements IDisposable {
     private readonly _settingsActions = {
         previousStage: async () => await this.previousStage(),
         nextStage: async () => await this.nextStage(),
+        source: () => window.open(LandEditor.SOURCE_URL, '_blank'),
+        help: () => this.openContextualHelp(),
     };
 
     private _lastRun: DOMHighResTimeStamp;
@@ -96,6 +101,9 @@ export class LandEditor implements IDisposable {
 
         const debugFolder = this._gui.addFolder('Debug').close();
         debugFolder.add(this._settings.debug, 'wireframe').name('Wireframe').onChange(() => this.applyDebugSettings());
+
+        this._gui.add(this._settingsActions, 'help').name('Help');
+        this._gui.add(this._settingsActions, 'source').name('Source');
 
         window.addEventListener('resize', () => this.onWindowResize());
 
@@ -192,6 +200,22 @@ export class LandEditor implements IDisposable {
         this._camera.aspect = width / height;
         this._camera.updateProjectionMatrix();
         this._renderer?.setSize(width, height);
+    }
+
+    private openContextualHelp(): void {
+        let url: string;
+        if (this._topologyStage.enabled) {
+            url = `${LandEditor.HELP_BASE_URL}/${this._topologyStage.helpPageName}`;
+        } else if (this._erosionStage.enabled) {
+            url = `${LandEditor.HELP_BASE_URL}/${this._erosionStage.helpPageName}`;
+        } else if (this._coloringStage.enabled) {
+            url = `${LandEditor.HELP_BASE_URL}/${this._coloringStage.helpPageName}`;
+        } else if (this._sectionedStage.enabled) {
+            url = `${LandEditor.HELP_BASE_URL}/${this._sectionedStage.helpPageName}`;
+        } else {
+            url = LandEditor.HELP_BASE_URL;
+        }
+        window.open(url, '_blank');
     }
 
     private async animate(now: DOMHighResTimeStamp): Promise<void> {

@@ -10,6 +10,8 @@ export class SectionedStage extends EditorStageBase<SectionedLandscape> {
 
     protected readonly _landscape: SectionedLandscape;
 
+    public readonly helpPageName = 'Final-Stage';
+
     constructor(
         settings: SettingsManager,
         scene: Scene,

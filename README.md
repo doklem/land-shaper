@@ -1,5 +1,5 @@
 # Land Shaper
-![status main branch](https://github.com/doklem/land-shaper/actions/workflows/webpack.yml/badge.svg?branch=main)
+![Build Status](https://github.com/doklem/land-shaper/actions/workflows/webpack.yml/badge.svg?branch=main)
 
 A terrain generator.
 

@@ -4,14 +4,12 @@ import { LandEditor } from './app/classes/land-editor';
 export class Program {
 
     private readonly _requirements: HTMLDivElement;
-    private readonly _content: HTMLDivElement;
     private readonly _display: HTMLCanvasElement;
     private readonly _meshs: MeshManager;
 
     private _editor?: LandEditor;
 
     constructor() {
-        this._content = document.getElementById('content') as HTMLDivElement;
         this._display = document.getElementById('display') as HTMLCanvasElement;
         this._requirements = document.getElementById('requirements') as HTMLDivElement;
         this._meshs = new MeshManager();
@@ -24,7 +22,7 @@ export class Program {
     public async main(): Promise<void> {
         const device = await Program.getDevice();
         if (!device) {
-            this._content.hidden = true;
+            this._display.hidden = true;
             this._requirements.hidden = false;
             return;
         }

@@ -17,6 +17,8 @@ export class ErosionStage extends EditorStageBase<ErosionLandscape> {
 
     protected readonly _landscape: ErosionLandscape;
 
+    public readonly helpPageName = 'Erosion-Stage';
+
     public get displacementMap(): DataTexture {
         return this._landscape.displacementMap;
     }

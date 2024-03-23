@@ -11,6 +11,8 @@ export class ColoringStage extends EditorStageBase<ColoringLandscape> {
 
     protected readonly _landscape: ColoringLandscape;
 
+    public readonly helpPageName = 'Coloring-Stage';
+
     constructor(
         settings: SettingsManager,
         scene: Scene,
