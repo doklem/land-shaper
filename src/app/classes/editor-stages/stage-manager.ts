@@ -65,10 +65,9 @@ export class StageManager implements IDisposable {
     }
 
     public async initialize(): Promise<void> {
-        await Promise.all([
-            this._stages[0].updateLandscape().then(() => this._stages[0].enable()),
-            this._stages[1].updateLandscape().then(() => this._stages[2].updateLandscape().then(() => this._stages[3].updateLandscape()))
-        ]);
+        await this._stages[0].updateLandscape();
+        this._stages[0].show();
+        this._stages.forEach(stage => stage.changed = true);
     }
 
     public async nextStage(): Promise<void> {
@@ -77,13 +76,16 @@ export class StageManager implements IDisposable {
         }
         const current = this._stages[this._index];
         const next = this._stages[this._index + 1];
-        current.disable();
+        current.hide();
+        next.show();
         if (current.changed) {
-            next.updateLandscape();
-        }
-        next.enable();
-        if (current.changed) {
-            next.changed = true;
+            next.disable();
+            await next.updateLandscape().then(() => {
+                next.changed = true;
+                next.enable();
+            });
+        } else {
+            next.show();
         }
         this._index++;
     }
@@ -92,8 +94,8 @@ export class StageManager implements IDisposable {
         if (this.first) {
             return;
         }
-        this._stages[this._index].disable();
-        this._stages[this._index - 1].enable();
+        this._stages[this._index].hide();
+        this._stages[this._index - 1].show();
         this._index--;
     }
 }

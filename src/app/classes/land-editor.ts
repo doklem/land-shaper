@@ -126,12 +126,14 @@ export class LandEditor implements IDisposable {
     }
 
     private async nextStage(): Promise<void> {
-        this._stages.nextStage();
+        this._nextButton.disable();
+        this._previousButton.disable();
+        await this._stages.nextStage();
         if (!this._stages.first) {
             this._previousButton.enable();
         }
-        if (this._stages.last) {
-            this._nextButton.disable();
+        if (!this._stages.last) {
+            this._nextButton.enable();
         }
     }
 
