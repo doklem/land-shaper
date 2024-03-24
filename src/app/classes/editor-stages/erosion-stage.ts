@@ -63,10 +63,6 @@ export class ErosionStage extends EditorStageBase<ErosionLandscape> {
         this._sceneElements.push(this._landscape);
     }
 
-    public async updateLandscape(): Promise<void> {
-        await this._landscape.runLandscape();
-    }
-
     protected override onStateChange(state: boolean): void {
         super.onStateChange(state);
         this.setErosionState(false);
@@ -90,14 +86,16 @@ export class ErosionStage extends EditorStageBase<ErosionLandscape> {
         if (this._erosionRunning) {
             return;
         }
+        this.changed = true;
         await this._landscape.runBlur();
     }
 
     private runErosion(): void {
-        if (!this.enabled) {
+        if (!this._enabled) {
             return;
         }
         if (this._erosionRunning) {
+            this.changed = true;
             this._landscape.runErosion().then(() => this.runErosion());
         } else {
             setTimeout(() => this.runErosion(), 100);

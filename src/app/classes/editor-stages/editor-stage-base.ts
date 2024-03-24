@@ -1,28 +1,28 @@
 import { Object3D, Scene } from 'three';
-import { IDisposable } from '../disposable';
 import { ILandscape } from '../objects-3d/landscapes/landscape';
 import { GUI } from 'lil-gui';
+import { IEditorStage } from './editor-stage';
 
-export abstract class EditorStageBase<T extends ILandscape> implements IDisposable {
+export abstract class EditorStageBase<T extends ILandscape> implements IEditorStage {
 
-    private _enabled: boolean;
+    protected _enabled: boolean;
 
     protected readonly _uiElements: GUI[];
     protected readonly _sceneElements: Object3D[];
-
     protected readonly abstract _landscape: T;
 
     public abstract readonly helpPageName: string;
 
-    public get enabled(): boolean {
-        return this._enabled;
-    }
+    public changed: boolean;
 
     constructor(private readonly _scene: Scene) {
+        this.changed = false;
         this._enabled = false;
         this._uiElements = [];
         this._sceneElements = [];
     }
+
+    public animate(delta: number): void { }
 
     public enable(): void {
         if (this._enabled) {
@@ -43,7 +43,7 @@ export abstract class EditorStageBase<T extends ILandscape> implements IDisposab
         this._sceneElements.forEach(sceneElement => this._scene.remove(sceneElement));
         this.onStateChange(false);
     }
-    
+
     public dispose(): void {
         this.disable();
         this._landscape.dispose();
@@ -53,9 +53,17 @@ export abstract class EditorStageBase<T extends ILandscape> implements IDisposab
         this._landscape.applyDebugSettings();
     }
 
-    public applyWaterSettings(){
+    public applyWaterSettings(): void {
         this._landscape.applyWaterSettings();
     }
 
-    protected onStateChange(state: boolean): void { }
+    public async updateLandscape(): Promise<void> {
+        await this._landscape.runLandscape();
+    }
+
+    protected onStateChange(state: boolean): void {
+        if (state) {
+            this.changed = false;
+        }
+    }
 }

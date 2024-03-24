@@ -56,7 +56,7 @@ export class TopologyLandscape extends Group implements ILandscape {
         this._ocean.dispose();
     }
 
-    public async applyLandscapeSettings(): Promise<void> {
+    public async runLandscape(): Promise<void> {
         if (this._running) {
             return;
         }
