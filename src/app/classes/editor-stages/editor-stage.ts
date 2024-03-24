@@ -9,5 +9,7 @@ export interface IEditorStage extends IDisposable {
     applyWaterSettings(): void;
     disable(): void;
     enable(): void;
+    hide(): void;
+    show(): void;
     updateLandscape(): Promise<void>;
 }

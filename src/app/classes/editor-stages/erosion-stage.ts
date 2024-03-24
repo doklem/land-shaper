@@ -38,7 +38,7 @@ export class ErosionStage extends EditorStageBase<ErosionLandscape> {
         this._erosionAffectedControllers = [];
 
         const erosionFolder = gui.addFolder('Erosion').hide();
-        this._uiElements.push(erosionFolder);
+        this._folders.push(erosionFolder);
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'iterations', 1, 2000, 1).name('Iterations'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'maxLifetime', 1, 100, 1).name('Maximum Lifetime'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'inertia', 0, 1, 0.01).name('Inertia'));
@@ -51,13 +51,16 @@ export class ErosionStage extends EditorStageBase<ErosionLandscape> {
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'startSpeed', 0.01, 100, 0.01).name('Start Speed'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'startWater', 0.01, 100, 0.01).name('Start Water'));
         this._erosionToggle = erosionFolder.add(this._settingsActions, 'toggleErosion').name('Start Erosion');
+        this._controllers.push(this._erosionToggle);
 
         const blurFolder = gui.addFolder('Blur').hide();
-        this._uiElements.push(blurFolder);
+        this._folders.push(blurFolder);
         this._erosionAffectedControllers.push(blurFolder.add(settings.blur.size, 'x', 0, 100, 1).name('Radius X'));
         this._erosionAffectedControllers.push(blurFolder.add(settings.blur.size, 'y', 0, 100, 1).name('Radius Y'));
         this._erosionAffectedControllers.push(blurFolder.add(settings.blur, 'strength', 0, 1, 0.01).name('Strength'));
         this._erosionAffectedControllers.push(blurFolder.add(this._settingsActions, 'blurTerrain').name('Blur Terrain'));
+
+        this._erosionAffectedControllers.forEach(controller => this._controllers.push(controller));
 
         this._landscape = new ErosionLandscape(settings, textures, device, buffers);
         this._sceneElements.push(this._landscape);
@@ -91,7 +94,7 @@ export class ErosionStage extends EditorStageBase<ErosionLandscape> {
     }
 
     private runErosion(): void {
-        if (!this._enabled) {
+        if (!this._visible) {
             return;
         }
         if (this._erosionRunning) {

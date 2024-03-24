@@ -1,5 +1,5 @@
 import { Color, Vector2 } from 'three';
-import GUI from 'lil-gui';
+import GUI, { Controller } from 'lil-gui';
 
 export class MixedColorSettings {
 
@@ -17,17 +17,19 @@ export class MixedColorSettings {
         public scale: Vector2) {
     }
 
-    public static createGUI(settings: MixedColorSettings, gui: GUI, name: string, applyChange: () => Promise<void>): GUI {
+    public static createGUI(settings: MixedColorSettings, gui: GUI, name: string, applyChange: () => Promise<void>): Controller[] {
         const mixedColorFolder = gui.addFolder(name).close();
-        mixedColorFolder.addColor(settings, 'colorA').name('Color A').onChange(() => applyChange());
-        mixedColorFolder.addColor(settings, 'colorB').name('Color B').onChange(() => applyChange());
-        mixedColorFolder.add(settings, 'seed', -10, 10, 0.1).name('Seed').onChange(() => applyChange());
-        mixedColorFolder.add(settings, 'octaves', 1, 15, 1).name('Octaves').onChange(() => applyChange());
-        mixedColorFolder.add(settings, 'start', -2, 2, 0.01).name('Start').onChange(() => applyChange());
-        mixedColorFolder.add(settings, 'range', 0, 10, 0.1).name('Range').onChange(() => applyChange());
-        mixedColorFolder.add(settings.scale, 'x', 0, 1000, 1).name('Scale X').onChange(() => applyChange());
-        mixedColorFolder.add(settings.scale, 'y', 0, 1000, 1).name('Scale Y').onChange(() => applyChange());
-        return mixedColorFolder;
+        const controllers = [
+            mixedColorFolder.addColor(settings, 'colorA').name('Color A').onChange(() => applyChange()),
+            mixedColorFolder.addColor(settings, 'colorB').name('Color B').onChange(() => applyChange()),
+            mixedColorFolder.add(settings, 'seed', -10, 10, 0.1).name('Seed').onChange(() => applyChange()),
+            mixedColorFolder.add(settings, 'octaves', 1, 15, 1).name('Octaves').onChange(() => applyChange()),
+            mixedColorFolder.add(settings, 'start', -2, 2, 0.01).name('Start').onChange(() => applyChange()),
+            mixedColorFolder.add(settings, 'range', 0, 10, 0.1).name('Range').onChange(() => applyChange()),
+            mixedColorFolder.add(settings.scale, 'x', 0, 1000, 1).name('Scale X').onChange(() => applyChange()),
+            mixedColorFolder.add(settings.scale, 'y', 0, 1000, 1).name('Scale Y').onChange(() => applyChange())
+        ];
+        return controllers;
     }
 
     public serialize(view: DataView, offset: number, littleEndian: boolean): number {
@@ -43,7 +45,7 @@ export class MixedColorSettings {
         offset += Float32Array.BYTES_PER_ELEMENT;
         view.setFloat32(offset, this.range, littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        
+
         view.setFloat32(offset, this.scale.x, littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         view.setFloat32(offset, this.scale.y, littleEndian);
