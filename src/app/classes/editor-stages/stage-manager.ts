@@ -9,13 +9,11 @@ import GUI from 'lil-gui';
 import { TextureManager } from '../gpu-resources/texture-manager';
 import { BufferManager } from '../gpu-resources/buffer-manager';
 import { MeshManager } from '../gpu-resources/mesh-manager';
+import { IEditorStage } from './editor-stage';
 
 export class StageManager implements IDisposable {
 
-    private readonly _coloringStage: ColoringStage;
-    private readonly _erosionStage: ErosionStage;
-    private readonly _sectionedStage: SectionedStage;
-    private readonly _topologyStage: TopologyStage;
+    private readonly _stages: IEditorStage[];
 
     private _index: number;
 
@@ -24,23 +22,11 @@ export class StageManager implements IDisposable {
     }
 
     public get helpPageName(): string {
-        if (this._topologyStage.enabled) {
-            return this._topologyStage.helpPageName;
-        }
-        if (this._erosionStage.enabled) {
-            return this._erosionStage.helpPageName;
-        }
-        if (this._coloringStage.enabled) {
-            return this._coloringStage.helpPageName;
-        }
-        if (this._sectionedStage.enabled) {
-            return this._sectionedStage.helpPageName;
-        }
-        return '';
+        return this._stages[this._index].helpPageName;
     }
 
     public get last(): Boolean {
-        return this._index === 3;
+        return this._index === this._stages.length - 1;
     }
 
     constructor(
@@ -53,88 +39,61 @@ export class StageManager implements IDisposable {
         meshs: MeshManager
     ) {
         this._index = 0;
-        this._topologyStage = new TopologyStage(settings, scene, gui, textures, device, buffers);
-        this._erosionStage = new ErosionStage(settings, scene, gui, textures, device, buffers);
-        this._coloringStage = new ColoringStage(settings, scene, gui, textures, device, buffers, meshs, this._erosionStage.displacementMap);
-        this._sectionedStage = new SectionedStage(settings, scene, textures, device, buffers, meshs);
+        const erosionStage = new ErosionStage(settings, scene, gui, textures, device, buffers);
+        this._stages = [
+            new TopologyStage(settings, scene, gui, textures, device, buffers),
+            erosionStage,
+            new ColoringStage(settings, scene, gui, textures, device, buffers, meshs, erosionStage.displacementMap),
+            new SectionedStage(settings, scene, textures, device, buffers, meshs)
+        ];
     }
 
     public async animate(delta: number): Promise<void> {
-        this._coloringStage.animate(delta);
-        this._sectionedStage.animate(delta);
+        this._stages.forEach(stage => stage.animate(delta));
     }
 
     public applyDebugSettings(): void {
-        this._sectionedStage.applyDebugSettings();
-        this._topologyStage.applyDebugSettings();
-        this._erosionStage.applyDebugSettings();
-        this._coloringStage.applyDebugSettings();
+        this._stages.forEach(stage => stage.applyDebugSettings());
     }
 
     public applyWaterSettings(): void {
-        this._sectionedStage.applyWaterSettings();
-        this._topologyStage.applyWaterSettings();
-        this._erosionStage.applyWaterSettings();
-        this._coloringStage.applyWaterSettings();
+        this._stages.forEach(stage => stage.applyWaterSettings());
     }
 
     public dispose(): void {
-        this._sectionedStage.dispose();
-        this._topologyStage.dispose();
-        this._erosionStage.dispose();
-        this._coloringStage.dispose();
+        this._stages.forEach(stage => stage.dispose());
     }
 
     public async initialize(): Promise<void> {
         await Promise.all([
-            this._topologyStage.updateLandscape().then(() => this._topologyStage.enable()),
-            this._erosionStage.updateLandscape().then(_ => this._coloringStage.updateLandscape())
+            this._stages[0].updateLandscape().then(() => this._stages[0].enable()),
+            this._stages[1].updateLandscape().then(() => this._stages[2].updateLandscape().then(() => this._stages[3].updateLandscape()))
         ]);
     }
 
     public async nextStage(): Promise<void> {
-        switch (this._index) {
-            case 0:
-                this._topologyStage.disable();
-                if (this._topologyStage.changed) {
-                    this._erosionStage.updateLandscape();
-                }
-                this._erosionStage.enable();
-                break;
-            case 1:
-                this._erosionStage.disable();
-                this._coloringStage.updateLandscape();
-                this._coloringStage.enable();
-                break;
-            case 2:
-                this._coloringStage.disable();
-                this._sectionedStage.updateLandscape();
-                this._sectionedStage.enable();
-                break;
-            default:
-                return;
+        if (this.last) {
+            return;
+        }
+        const current = this._stages[this._index];
+        const next = this._stages[this._index + 1];
+        current.disable();
+        if (current.changed) {
+            next.updateLandscape();
+        }
+        next.enable();
+        if (current.changed) {
+            next.changed = true;
         }
         this._index++;
     }
 
     public async previousStage(): Promise<void> {
-        switch (this._index) {
-            case 3:
-                this._sectionedStage.disable();
-                this._coloringStage.enable();
-                break;
-            case 2:
-                this._coloringStage.disable();
-                this._erosionStage.enable();
-                break;
-            case 1:
-                this._erosionStage.disable();
-                this._topologyStage.enable();
-                break;
-            default:
-                return;
-
+        if (this.first) {
+            return;
         }
+        this._stages[this._index].disable();
+        this._stages[this._index - 1].enable();
         this._index--;
     }
 }

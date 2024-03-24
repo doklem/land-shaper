@@ -58,15 +58,12 @@ export class ColoringStage extends EditorStageBase<ColoringLandscape> {
         this._sceneElements.push(this._landscape);
     }
 
-    public animate(delta: number): void {
+    public override animate(delta: number): void {
         this._landscape.animate(delta);
     }
 
-    public async updateLandscape(): Promise<void> {
-        await this._landscape.runLandscape();
-    }
-
     private async runDiffuse(): Promise<void> {
+        this.changed = true;
         await this._landscape.runDiffuse();
     }
 }

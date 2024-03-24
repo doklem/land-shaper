@@ -23,15 +23,15 @@ export class LandEditor implements IDisposable {
     private readonly _previousButton: Controller;
     private readonly _scene: Scene;
     private readonly _settings: SettingsManager;
-    private readonly _skyBox: SkyBox;
-    private readonly _stages: StageManager;
-    private readonly _textures: TextureManager;
     private readonly _settingsActions = {
         previousStage: async () => await this.previousStage(),
         nextStage: async () => await this.nextStage(),
         source: () => window.open(LandEditor.SOURCE_URL, '_blank'),
         help: () => this.openContextualHelp(),
     };
+    private readonly _skyBox: SkyBox;
+    private readonly _stages: StageManager;
+    private readonly _textures: TextureManager;
 
     private _lastRun: DOMHighResTimeStamp;
 
