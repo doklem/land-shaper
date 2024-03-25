@@ -11,13 +11,12 @@ export class NormalObjectSpaceRenderNode extends RenderNodeBase {
     public static readonly NAME = 'Normal Object Space';
 
     private readonly _bindGroup: GPUBindGroup;
-    private readonly _renderPassDescriptor: GPURenderPassDescriptor;
-    private readonly _renderBundle: GPURenderBundle;
     private readonly _uniformConfigArray: ArrayBuffer;
     private readonly _uniformConfigBuffer: GPUBuffer;
     private readonly _sampleDistanceUv: Vector2;
     private readonly _sampleDistanceMeters: Vector2;
 
+    protected readonly _renderBundle: GPURenderBundle;
     protected readonly _pipeline: GPURenderPipeline;
 
     public constructor(
@@ -95,33 +94,8 @@ export class NormalObjectSpaceRenderNode extends RenderNodeBase {
         // pipeline
         this._pipeline = this.createPipeline(bindGroupLayout, FragmentShader);
 
-        // render pass descriptor
-        this._renderPassDescriptor = {
-            label: `${this._name} Render Pass`,
-            colorAttachments: [
-                {
-                    loadOp: 'clear',
-                    storeOp: 'store',
-                    view: this._texture.view
-                }
-            ]
-        };
-
         // render bundle
-        const renderPassEncoder = this._device.createRenderBundleEncoder({
-            label: `${this._name} Render Bundle Encoder`,
-            colorFormats: [this._texture.texture.format]
-        });
-        renderPassEncoder.setPipeline(this._pipeline);
-        renderPassEncoder.setBindGroup(0, this._bindGroup);
-        buffers.drawClipSpaceQuad(renderPassEncoder);
-        this._renderBundle = renderPassEncoder.finish();
-    }
-
-    public appendRenderPass(commandEncoder: GPUCommandEncoder): void {
-        const renderPassEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
-        renderPassEncoder.executeBundles([this._renderBundle]);
-        renderPassEncoder.end();
+        this._renderBundle = this.createRenderBundle(this._pipeline, this._bindGroup);
     }
 
     public configureRun(uvOffset?: Vector2): void {

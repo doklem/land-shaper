@@ -7,6 +7,8 @@ import { ITextureSettings } from '../../settings/texture-settings';
 export abstract class RenderNodeBase implements IDisposable {
 
     protected abstract readonly _pipeline: GPURenderPipeline;
+    protected abstract readonly _renderBundle: GPURenderBundle;
+    protected readonly _renderPassDescriptor: GPURenderPassDescriptor;
 
     public get textureSettings(): ITextureSettings {
         return this._texture.settings;
@@ -17,10 +19,23 @@ export abstract class RenderNodeBase implements IDisposable {
         protected readonly _device: GPUDevice,
         protected readonly _buffers: BufferManager,
         protected readonly _texture: TextureWrapper) {
-
+        this._renderPassDescriptor = {
+            label: `${this._name} Render Pass`,
+            colorAttachments: [
+                {
+                    loadOp: 'clear',
+                    storeOp: 'store',
+                    view: this._texture.view
+                }
+            ]
+        };
     }
 
-    public abstract appendRenderPass(commandEncoder: GPUCommandEncoder): void;
+    public appendRenderPass(commandEncoder: GPUCommandEncoder): void {
+        const renderPassEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
+        renderPassEncoder.executeBundles([this._renderBundle]);
+        renderPassEncoder.end();
+    }
 
     public dispose(): void { }
 
@@ -44,5 +59,16 @@ export abstract class RenderNodeBase implements IDisposable {
                 targets: [{ format: this._texture.texture.format }]
             }
         });
+    }
+
+    protected createRenderBundle(pipeline: GPURenderPipeline, bindGroup: GPUBindGroup): GPURenderBundle {
+        const renderPassEncoder = this._device.createRenderBundleEncoder({
+            label: `${this._name} Render Bundle Encoder`,
+            colorFormats: [this._texture.texture.format]
+        });
+        renderPassEncoder.setPipeline(pipeline);
+        renderPassEncoder.setBindGroup(0, bindGroup);
+        this._buffers.drawClipSpaceQuad(renderPassEncoder);
+        return renderPassEncoder.finish();
     }
 }

@@ -9,12 +9,11 @@ export class BlurRenderNode extends RenderNodeBase {
     public static readonly NAME = 'Blur';
 
     private readonly _bindGroup: GPUBindGroup;
-    private readonly _renderPassDescriptor: GPURenderPassDescriptor;
-    private readonly _renderBundle: GPURenderBundle;
     private readonly _stagingBuffer: GPUBuffer;
     private readonly _uniformConfigArray: ArrayBuffer;
     private readonly _uniformConfigBuffer: GPUBuffer;
 
+    protected readonly _renderBundle: GPURenderBundle;
     protected readonly _pipeline: GPURenderPipeline;
 
     public constructor(
@@ -88,33 +87,12 @@ export class BlurRenderNode extends RenderNodeBase {
         // pipeline
         this._pipeline = this.createPipeline(bindGroupLayout, FragmentShader);
 
-        // render pass descriptor
-        this._renderPassDescriptor = {
-            label: `${this._name} Render Pass`,
-            colorAttachments: [
-                {
-                    loadOp: 'clear',
-                    storeOp: 'store',
-                    view: this._texture.view
-                }
-            ]
-        };
-
         // render bundle
-        const renderPassEncoder = this._device.createRenderBundleEncoder({
-            label: `${this._name} Render Bundle Encoder`,
-            colorFormats: [this._texture.texture.format]
-        });
-        renderPassEncoder.setPipeline(this._pipeline);
-        renderPassEncoder.setBindGroup(0, this._bindGroup);
-        buffers.drawClipSpaceQuad(renderPassEncoder);
-        this._renderBundle = renderPassEncoder.finish();
+        this._renderBundle = this.createRenderBundle(this._pipeline, this._bindGroup);
     }
 
     public appendRenderPass(commandEncoder: GPUCommandEncoder): void {
-        const renderPassEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
-        renderPassEncoder.executeBundles([this._renderBundle]);
-        renderPassEncoder.end();
+        super.appendRenderPass(commandEncoder);
         commandEncoder.copyTextureToTexture(this._texture, this._textures.displacementFinal, this._texture);
         commandEncoder.copyTextureToBuffer(
             this._texture,
