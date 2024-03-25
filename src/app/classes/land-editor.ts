@@ -68,7 +68,12 @@ export class LandEditor implements IDisposable {
         this._controls = new MapControls(this._camera, this._renderer.domElement);
         this._controls.update();
 
-        this._gui = new GUI({ width: 700 });
+        this._gui = new GUI(
+            {
+                title: 'Land Shaper',
+                width: Math.min(700, Math.max(Math.round(window.innerWidth * 0.4), 300)),
+            }
+        );
         
         this._previousButton = this._gui.add(this._settingsActions, 'previousStage').name('Previous').disable();
         this._nextButton = this._gui.add(this._settingsActions, 'nextStage').name('Next');
