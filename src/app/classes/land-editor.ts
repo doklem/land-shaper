@@ -8,6 +8,7 @@ import { IDisposable } from './disposable';
 import { MeshManager } from './gpu-resources/mesh-manager';
 import { SettingsManager } from './settings/settings-manager';
 import { StageManager } from './editor-stages/stage-manager';
+import { TemplateType } from './settings/template-type';
 
 export class LandEditor implements IDisposable {
 
@@ -37,15 +38,18 @@ export class LandEditor implements IDisposable {
     };
     private readonly _skyBox: SkyBox;
     private readonly _stages: StageManager;
+    private readonly _templateButton: Controller;
     private readonly _textures: TextureManager;
 
     private _lastRun: DOMHighResTimeStamp;
+    private _template: TemplateType;
 
     public constructor(
         private readonly _canvas: HTMLCanvasElement,
         device: GPUDevice,
         private readonly _meshs: MeshManager) {
         this._lastRun = 0;
+        this._template = TemplateType.unknown;
         _canvas.width = window.innerWidth;
         _canvas.height = window.innerHeight;
         this._camera = new PerspectiveCamera(50, _canvas.width / _canvas.height, 0.1, 5000);
@@ -81,7 +85,9 @@ export class LandEditor implements IDisposable {
             }
         );
 
-        this._fileFolder = this.addFileFolder();
+        const fileFolderResult = this.addFileFolder();
+        this._fileFolder = fileFolderResult.folder;
+        this._templateButton = fileFolderResult.button;
 
         const editFolder = this._gui.addFolder('Edit');
         this._previousButton = editFolder.add(this._settingsActions, 'previous').name('Previous').disable();
@@ -125,11 +131,20 @@ export class LandEditor implements IDisposable {
         folder.add(this._settings.debug, 'wireframe').name('Wireframe').onChange(() => this._stages.applyDebugSettings());
     }
 
-    private addFileFolder(): GUI {
+    private addFileFolder(): { folder: GUI, button: Controller } {
         const folder = this._gui.addFolder('File').close();
+        const button = folder.add(
+            this,
+            '_template',
+            {
+                '-': TemplateType.unknown,
+                Desert: TemplateType.desert,
+                Temperate: TemplateType.temperate
+            })
+            .name('Load Template').onChange(() => this.loadTemplate());
         folder.add(this._settingsActions, 'save').name('Save');
         folder.add(this._settingsActions, 'load').name('Load');
-        return folder;
+        return { folder, button };
     }
 
     private addWorldFolder(editFolder: GUI): void {
@@ -175,13 +190,18 @@ export class LandEditor implements IDisposable {
     private async loadSettings(): Promise<void> {
         const success = await this._settings.load(this._gui);
         if (success) {
-            this.setState(false);
-            await this._stages.initialize();
-            this.updateWorld();
-            this._stages.applyDebugSettings();
-            this.setState(true);
-            this._previousButton.disable();
+            await this.restart();
         }
+    }
+
+    private async loadTemplate(): Promise<void> {
+        if (this._template === TemplateType.unknown) {
+            return;
+        }
+        await this._settings.loadTemplate(this._gui, this._template);
+        await this.restart();
+        this._template = TemplateType.unknown;
+        this._templateButton.updateDisplay();
     }
 
     private onWindowResize(): void {
@@ -202,6 +222,15 @@ export class LandEditor implements IDisposable {
         if (this._stages.first) {
             this._previousButton.disable();
         }
+    }
+
+    private async restart(): Promise<void> {
+        this.setState(false);
+        await this._stages.initialize();
+        this.updateWorld();
+        this._stages.applyDebugSettings();
+        this.setState(true);
+        this._previousButton.disable();
     }
 
     private setState(state: boolean) {

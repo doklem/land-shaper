@@ -2,6 +2,9 @@ import { Color, Matrix4, Vector2, Vector3 } from 'three';
 import { LightSettings } from './light-settings';
 import { MixedColorSettings } from './mixed-color-settings';
 import { GUI } from 'lil-gui';
+import temperateTemplate from './temperate-template.json';
+import desertTemplate from './desert-template.json';
+import { TemplateType } from './template-type';
 
 export class SettingsManager {
 
@@ -172,7 +175,7 @@ export class SettingsManager {
             textureSizeColors: new Vector2(4096, 4096),
             textureSizeTerrain: new Vector2(1024, 1024),
             vertexSizeFinalMaximum: new Vector2(1024, 1024),
-            vertexSizeFinalMinimum: new Vector2(2, 2),
+            vertexSizeFinalMinimum: new Vector2(1, 1),
             meshLodDistance: 200,
             transformation: new Matrix4().makeRotationX(Math.PI * -0.5),
             sections: {
@@ -197,6 +200,17 @@ export class SettingsManager {
         };
     }
 
+    public async loadTemplate(gui: GUI, template: TemplateType): Promise<void> {
+        switch (template) {
+            case TemplateType.desert:
+                this.applySettings(gui, desertTemplate);
+                break;
+            case TemplateType.temperate:
+                this.applySettings(gui, temperateTemplate);
+                break;
+        }
+    }
+
     public async load(gui: GUI): Promise<boolean> {
         try {
             const fileHandle = await window.showOpenFilePicker(SettingsManager.OPEN_PICKER_OPTIONS);
@@ -205,8 +219,7 @@ export class SettingsManager {
             }
             const file = await fileHandle[0].getFile();
             const json = await file.text();
-            gui.load(JSON.parse(json), true);
-            this.light.updateSunPosition();
+            this.applySettings(gui, JSON.parse(json));
             return true;
         }
         catch (error) {
@@ -229,5 +242,10 @@ export class SettingsManager {
         catch (error) {
             console.debug(error);
         }
+    }
+
+    private applySettings(gui: GUI, settings: any): void {
+        gui.load(settings, true);
+        this.light.updateSunPosition();
     }
 }
