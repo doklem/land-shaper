@@ -5,7 +5,7 @@ import { ColoringStage } from './coloring-stage';
 import { ErosionStage } from './erosion-stage';
 import { SectionedStage } from './sectioned-stage';
 import { TopologyStage } from './topology-stage';
-import GUI from 'lil-gui';
+import { GUI } from 'lil-gui';
 import { TextureManager } from '../gpu-resources/texture-manager';
 import { BufferManager } from '../gpu-resources/buffer-manager';
 import { MeshManager } from '../gpu-resources/mesh-manager';
@@ -65,10 +65,12 @@ export class StageManager implements IDisposable {
     }
 
     public async initialize(): Promise<void> {
+        this._stages.forEach(stage => stage.hide());
         const first = this._stages[0];
         await first.updateLandscape();
         first.show();
         this._stages.forEach(stage => stage.changed = true);
+        this._index = 0;
     }
 
     public async nextStage(): Promise<void> {

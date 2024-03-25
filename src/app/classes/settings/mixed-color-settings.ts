@@ -1,5 +1,5 @@
 import { Color, Vector2 } from 'three';
-import GUI, { Controller } from 'lil-gui';
+import { GUI, Controller } from 'lil-gui';
 
 export class MixedColorSettings {
 

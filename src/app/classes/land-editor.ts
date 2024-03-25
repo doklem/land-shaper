@@ -11,12 +11,14 @@ import { StageManager } from './editor-stages/stage-manager';
 
 export class LandEditor implements IDisposable {
 
-    private static readonly SOURCE_URL = 'https://github.com/doklem/land-shaper/';
-    private static readonly HELP_BASE_URL = `${LandEditor.SOURCE_URL}wiki`;
+    private static readonly SOURCE_URL = 'https://github.com/doklem/land-shaper';
+    private static readonly HELP_BASE_URL = `${LandEditor.SOURCE_URL}/wiki`;
 
+    private readonly _aboutFolder: GUI;
     private readonly _buffers: BufferManager;
     private readonly _camera: PerspectiveCamera;
     private readonly _controls: MapControls;
+    private readonly _fileFolder: GUI;
     private readonly _gui: GUI;
     private readonly _nextButton: Controller;
     private readonly _renderer: WebGLRenderer;
@@ -24,10 +26,14 @@ export class LandEditor implements IDisposable {
     private readonly _scene: Scene;
     private readonly _settings: SettingsManager;
     private readonly _settingsActions = {
-        previous: async () => await this.previousStage(),
-        next: async () => await this.nextStage(),
-        source: () => window.open(LandEditor.SOURCE_URL, '_blank'),
+        acknowledgements: () => window.open(`${LandEditor.SOURCE_URL}?tab=readme-ov-file#acknowledgements`, '_blank'),
         help: () => window.open(`${LandEditor.HELP_BASE_URL}/${this._stages.helpPageName}`, '_blank'),
+        license: () => window.open(`${LandEditor.SOURCE_URL}?tab=MIT-1-ov-file`, '_blank'),
+        load: async () => await this.loadSettings(),
+        next: async () => await this.nextStage(),
+        previous: async () => await this.previousStage(),
+        save: async () => await this._settings.save(this._gui),
+        source: () => window.open(LandEditor.SOURCE_URL, '_blank'),
     };
     private readonly _skyBox: SkyBox;
     private readonly _stages: StageManager;
@@ -75,16 +81,16 @@ export class LandEditor implements IDisposable {
             }
         );
 
-        this._previousButton = this._gui.add(this._settingsActions, 'previous').name('Previous').disable();
-        this._nextButton = this._gui.add(this._settingsActions, 'next').name('Next');
+        this._fileFolder = this.addFileFolder();
 
-        this._stages = new StageManager(this._settings, this._scene, this._gui, this._textures, device, this._buffers, this._meshs);
+        const editFolder = this._gui.addFolder('Edit');
+        this._previousButton = editFolder.add(this._settingsActions, 'previous').name('Previous').disable();
+        this._nextButton = editFolder.add(this._settingsActions, 'next').name('Next');
+        this._stages = new StageManager(this._settings, this._scene, editFolder, this._textures, device, this._buffers, this._meshs);
+        this.addWorldFolder(editFolder);
 
-        this.addWorldFolder();
         this.addDebugFolder();
-
-        this._gui.add(this._settingsActions, 'help').name('Help');
-        this._gui.add(this._settingsActions, 'source').name('Source');
+        this._aboutFolder = this.addAboutFolder();
 
         window.addEventListener('resize', () => this.onWindowResize());
     }
@@ -105,15 +111,31 @@ export class LandEditor implements IDisposable {
         this._renderer.setAnimationLoop((now) => this.animate(now));
     }
 
-    private addDebugFolder(): void {
-        const debugFolder = this._gui.addFolder('Debug').close();
-        debugFolder.add(this._settings.debug, 'wireframe').name('Wireframe').onChange(() => this._stages.applyDebugSettings());
+    private addAboutFolder(): GUI {
+        const folder = this._gui.addFolder('About').close();
+        folder.add(this._settingsActions, 'help').name('Help');
+        folder.add(this._settingsActions, 'license').name('License');
+        folder.add(this._settingsActions, 'acknowledgements').name('Acknowledgements');
+        folder.add(this._settingsActions, 'source').name('Source');
+        return folder;
     }
 
-    private addWorldFolder(): void {
-        const worldFolder = this._gui.addFolder('World').close();
+    private addDebugFolder(): void {
+        const folder = this._gui.addFolder('Debug').close();
+        folder.add(this._settings.debug, 'wireframe').name('Wireframe').onChange(() => this._stages.applyDebugSettings());
+    }
 
-        const skyFolder = worldFolder.addFolder('Sky').close();
+    private addFileFolder(): GUI {
+        const folder = this._gui.addFolder('File').close();
+        folder.add(this._settingsActions, 'save').name('Save');
+        folder.add(this._settingsActions, 'load').name('Load');
+        return folder;
+    }
+
+    private addWorldFolder(editFolder: GUI): void {
+        const folder = editFolder.addFolder('World').close();
+
+        const skyFolder = folder.addFolder('Sky').close();
         skyFolder.add(this._settings.light, 'elevation', 0, 90, 1).name('Elevation').onChange(() => this.updateWorld());
         skyFolder.add(this._settings.light, 'azimuth', 0, 360, 1).name('Azimuth').onChange(() => this.updateWorld());
         skyFolder.add(this._settings.sky, 'turbidity', 0, 100, 0.1).name('Turbidity').onChange(() => this.updateWorld());
@@ -121,7 +143,7 @@ export class LandEditor implements IDisposable {
         skyFolder.addColor(this._settings.light, 'ambient').name('Ambient').onChange(() => this.updateWorld());
         skyFolder.addColor(this._settings.light, 'directional').name('Directional').onChange(() => this.updateWorld());
 
-        const waterFolder = worldFolder.addFolder('Water').close();
+        const waterFolder = folder.addFolder('Water').close();
         waterFolder.add(this._settings.ocean, 'distortionScale', 0, 8, 0.1).name('Distortion Scale').onChange(() => this.updateWorld());
         waterFolder.add(this._settings.ocean, 'waterSize', 0.1, 10, 0.1).name('Size').onChange(() => this.updateWorld());
         waterFolder.add(this._settings.ocean, 'waterSpeed', 0.0001, 0.01, 0.0001).name('Speed').onChange(() => this.updateWorld());
@@ -137,6 +159,7 @@ export class LandEditor implements IDisposable {
     }
 
     private async nextStage(): Promise<void> {
+        this._fileFolder.controllersRecursive().forEach(controller => controller.disable());
         this._nextButton.disable();
         this._previousButton.disable();
         await this._stages.nextStage();
@@ -145,6 +168,19 @@ export class LandEditor implements IDisposable {
         }
         if (!this._stages.last) {
             this._nextButton.enable();
+        }
+        this._fileFolder.controllersRecursive().forEach(controller => controller.enable());
+    }
+
+    private async loadSettings(): Promise<void> {
+        const success = await this._settings.load(this._gui);
+        if (success) {
+            this.setState(false);
+            await this._stages.initialize();
+            this.updateWorld();
+            this._stages.applyDebugSettings();
+            this.setState(true);
+            this._previousButton.disable();
         }
     }
 
@@ -165,6 +201,18 @@ export class LandEditor implements IDisposable {
         }
         if (this._stages.first) {
             this._previousButton.disable();
+        }
+    }
+
+    private setState(state: boolean) {
+        if (state) {
+            this._gui.controllersRecursive().forEach(controller => controller.enable());
+        } else {
+            this._gui.controllersRecursive().forEach(controller => {
+                if (controller.parent !== this._aboutFolder) {
+                    controller.disable();
+                }
+            });
         }
     }
 

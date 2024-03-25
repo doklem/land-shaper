@@ -1,8 +1,29 @@
 import { Color, Matrix4, Vector2, Vector3 } from 'three';
 import { LightSettings } from './light-settings';
 import { MixedColorSettings } from './mixed-color-settings';
+import { GUI } from 'lil-gui';
 
 export class SettingsManager {
+
+    private static readonly JSON_MIME_TYPE: MIMEType = 'application/json';
+    private static readonly JSON_FILE_EXTENSION: FileExtension = '.json';
+    private static readonly PICKER_ACCEPT_TYPES: FilePickerAcceptType[] = [
+        {
+            description: 'JSON File',
+            accept: {
+                'application/json': [SettingsManager.JSON_FILE_EXTENSION],
+            },
+        },
+    ];
+    private static readonly OPEN_PICKER_OPTIONS: OpenFilePickerOptions = {
+        types: SettingsManager.PICKER_ACCEPT_TYPES,
+        excludeAcceptAllOption: true,
+        multiple: false,
+    };
+    private static readonly SAVE_PICKER_OPTIONS: SaveFilePickerOptions = {
+        suggestedName: `land-shaper-settings${SettingsManager.JSON_FILE_EXTENSION}`,
+        types: SettingsManager.PICKER_ACCEPT_TYPES,
+    };
 
     public readonly blur = {
         size: new Vector2(2, 2),
@@ -174,5 +195,39 @@ export class SettingsManager {
                 textureSize: new Vector2(512, 512),
             }
         };
+    }
+
+    public async load(gui: GUI): Promise<boolean> {
+        try {
+            const fileHandle = await window.showOpenFilePicker(SettingsManager.OPEN_PICKER_OPTIONS);
+            if (fileHandle.length < 1) {
+                return false;
+            }
+            const file = await fileHandle[0].getFile();
+            const json = await file.text();
+            gui.load(JSON.parse(json), true);
+            this.light.updateSunPosition();
+            return true;
+        }
+        catch (error) {
+            console.debug(error);
+        }
+        return false;
+    }
+
+    public async save(gui: GUI): Promise<void> {
+        var blob = new Blob(
+            [JSON.stringify(gui.save(true), LightSettings.replacer)],
+            { type: SettingsManager.JSON_MIME_TYPE }
+        );
+        try {
+            const fileHandle = await window.showSaveFilePicker(SettingsManager.SAVE_PICKER_OPTIONS);
+            const writableFileStream = await fileHandle.createWritable();
+            await writableFileStream.write(blob);
+            await writableFileStream.close();
+        }
+        catch (error) {
+            console.debug(error);
+        }
     }
 }

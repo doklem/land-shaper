@@ -4,7 +4,7 @@ export class LightSettings {
 
     private _elevation: number;
     private _azimuth: number;
-    private _sunPosition: Vector3;
+    private _sunPosition = new Vector3();
 
     public get elevation(): number {
         return this._elevation;
@@ -12,7 +12,7 @@ export class LightSettings {
 
     public set elevation(value: number) {
         this._elevation = value;
-        this._sunPosition = this.calculateSunPosition();
+        this.updateSunPosition();
     }
 
     public get azimuth(): number {
@@ -21,7 +21,7 @@ export class LightSettings {
 
     public set azimuth(value: number) {
         this._azimuth = value;
-        this._sunPosition = this.calculateSunPosition();
+        this.updateSunPosition();
     }
 
     public get sunPosition(): Vector3 {
@@ -31,13 +31,22 @@ export class LightSettings {
     constructor(elevation: number, azimuth: number, public ambient: Color, public directional: Color) {
         this._elevation = elevation;
         this._azimuth = azimuth;
-        this._sunPosition = this.calculateSunPosition();
+        this.updateSunPosition();
     }
 
-    private calculateSunPosition() : Vector3 {
+    public static replacer(key: string, value: any): any {
+        switch (key) {
+            case '_sunPosition':
+                return undefined;
+            default:
+                return value;
+        }
+    }
+
+    public updateSunPosition(): void {
         const phi = LightSettings.degToRad(90 - this._elevation);
         const theta = LightSettings.degToRad(this._azimuth);
-        return new Vector3().setFromSphericalCoords(1, phi, theta);
+        this._sunPosition = new Vector3().setFromSphericalCoords(1, phi, theta);
     }
 
     private static degToRad(value: number): number {
