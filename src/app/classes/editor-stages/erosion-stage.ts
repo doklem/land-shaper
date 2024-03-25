@@ -51,7 +51,6 @@ export class ErosionStage extends EditorStageBase<ErosionLandscape> {
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'startSpeed', 0.01, 100, 0.01).name('Start Speed'));
         this._erosionAffectedControllers.push(erosionFolder.add(settings.erosion, 'startWater', 0.01, 100, 0.01).name('Start Water'));
         this._erosionToggle = erosionFolder.add(this._settingsActions, 'toggleErosion').name('Start Erosion');
-        this._controllers.push(this._erosionToggle);
 
         const blurFolder = gui.addFolder('Blur').hide();
         this._folders.push(blurFolder);
@@ -59,8 +58,6 @@ export class ErosionStage extends EditorStageBase<ErosionLandscape> {
         this._erosionAffectedControllers.push(blurFolder.add(settings.blur.size, 'y', 0, 100, 1).name('Radius Y'));
         this._erosionAffectedControllers.push(blurFolder.add(settings.blur, 'strength', 0, 1, 0.01).name('Strength'));
         this._erosionAffectedControllers.push(blurFolder.add(this._settingsActions, 'blurTerrain').name('Blur Terrain'));
-
-        this._erosionAffectedControllers.forEach(controller => this._controllers.push(controller));
 
         this._landscape = new ErosionLandscape(settings, textures, device, buffers);
         this._sceneElements.push(this._landscape);
