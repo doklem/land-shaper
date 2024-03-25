@@ -65,8 +65,9 @@ export class StageManager implements IDisposable {
     }
 
     public async initialize(): Promise<void> {
-        await this._stages[0].updateLandscape();
-        this._stages[0].show();
+        const first = this._stages[0];
+        await first.updateLandscape();
+        first.show();
         this._stages.forEach(stage => stage.changed = true);
     }
 

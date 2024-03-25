@@ -24,10 +24,10 @@ export class LandEditor implements IDisposable {
     private readonly _scene: Scene;
     private readonly _settings: SettingsManager;
     private readonly _settingsActions = {
-        previousStage: async () => await this.previousStage(),
-        nextStage: async () => await this.nextStage(),
+        previous: async () => await this.previousStage(),
+        next: async () => await this.nextStage(),
         source: () => window.open(LandEditor.SOURCE_URL, '_blank'),
-        help: () => this.openContextualHelp(),
+        help: () => window.open(`${LandEditor.HELP_BASE_URL}/${this._stages.helpPageName}`, '_blank'),
     };
     private readonly _skyBox: SkyBox;
     private readonly _stages: StageManager;
@@ -74,36 +74,21 @@ export class LandEditor implements IDisposable {
                 width: Math.min(700, Math.max(Math.round(window.innerWidth * 0.4), 300)),
             }
         );
-        
-        this._previousButton = this._gui.add(this._settingsActions, 'previousStage').name('Previous').disable();
-        this._nextButton = this._gui.add(this._settingsActions, 'nextStage').name('Next');
+
+        this._previousButton = this._gui.add(this._settingsActions, 'previous').name('Previous').disable();
+        this._nextButton = this._gui.add(this._settingsActions, 'next').name('Next');
 
         this._stages = new StageManager(this._settings, this._scene, this._gui, this._textures, device, this._buffers, this._meshs);
 
-        const worldFolder = this._gui.addFolder('World').close();
-        const skyFolder = worldFolder.addFolder('Sky').close();
-        skyFolder.add(this._settings.light, 'elevation', 0, 90, 1).name('Elevation').onChange(() => this.updateWorld());
-        skyFolder.add(this._settings.light, 'azimuth', 0, 360, 1).name('Azimuth').onChange(() => this.updateWorld());
-        skyFolder.add(this._settings.sky, 'turbidity', 0, 100, 0.1).name('Turbidity').onChange(() => this.updateWorld());
-        skyFolder.add(this._settings.sky, 'rayleigh', 0, 50, 0.1).name('Rayleigh').onChange(() => this.updateWorld());
-        skyFolder.addColor(this._settings.light, 'ambient').name('Ambient').onChange(() => this.updateWorld());
-        skyFolder.addColor(this._settings.light, 'directional').name('Directional').onChange(() => this.updateWorld());
-
-        const waterFolder = worldFolder.addFolder('Water').close();
-        waterFolder.add(this._settings.ocean, 'distortionScale', 0, 8, 0.1).name('Distortion Scale').onChange(() => this.updateWorld());
-        waterFolder.add(this._settings.ocean, 'waterSize', 0.1, 10, 0.1).name('Size').onChange(() => this.updateWorld());
-        waterFolder.add(this._settings.ocean, 'waterSpeed', 0.0001, 0.01, 0.0001).name('Speed').onChange(() => this.updateWorld());
-        waterFolder.addColor(this._settings.ocean, 'color').name('Color').onChange(() => this.updateWorld());
-
-        const debugFolder = this._gui.addFolder('Debug').close();
-        debugFolder.add(this._settings.debug, 'wireframe').name('Wireframe').onChange(() => this.applyDebugSettings());
+        this.addWorldFolder();
+        this.addDebugFolder();
 
         this._gui.add(this._settingsActions, 'help').name('Help');
         this._gui.add(this._settingsActions, 'source').name('Source');
 
         window.addEventListener('resize', () => this.onWindowResize());
     }
-    
+
     public dispose(): void {
         window.removeEventListener('resize', () => this.onWindowResize());
         this._renderer.setAnimationLoop(null);
@@ -120,14 +105,35 @@ export class LandEditor implements IDisposable {
         this._renderer.setAnimationLoop((now) => this.animate(now));
     }
 
-    private async previousStage(): Promise<void> {
-        this._stages.previousStage();
-        if (!this._stages.last) {
-            this._nextButton.enable();
-        }
-        if (this._stages.first) {
-            this._previousButton.disable();
-        }
+    private addDebugFolder(): void {
+        const debugFolder = this._gui.addFolder('Debug').close();
+        debugFolder.add(this._settings.debug, 'wireframe').name('Wireframe').onChange(() => this._stages.applyDebugSettings());
+    }
+
+    private addWorldFolder(): void {
+        const worldFolder = this._gui.addFolder('World').close();
+
+        const skyFolder = worldFolder.addFolder('Sky').close();
+        skyFolder.add(this._settings.light, 'elevation', 0, 90, 1).name('Elevation').onChange(() => this.updateWorld());
+        skyFolder.add(this._settings.light, 'azimuth', 0, 360, 1).name('Azimuth').onChange(() => this.updateWorld());
+        skyFolder.add(this._settings.sky, 'turbidity', 0, 100, 0.1).name('Turbidity').onChange(() => this.updateWorld());
+        skyFolder.add(this._settings.sky, 'rayleigh', 0, 50, 0.1).name('Rayleigh').onChange(() => this.updateWorld());
+        skyFolder.addColor(this._settings.light, 'ambient').name('Ambient').onChange(() => this.updateWorld());
+        skyFolder.addColor(this._settings.light, 'directional').name('Directional').onChange(() => this.updateWorld());
+
+        const waterFolder = worldFolder.addFolder('Water').close();
+        waterFolder.add(this._settings.ocean, 'distortionScale', 0, 8, 0.1).name('Distortion Scale').onChange(() => this.updateWorld());
+        waterFolder.add(this._settings.ocean, 'waterSize', 0.1, 10, 0.1).name('Size').onChange(() => this.updateWorld());
+        waterFolder.add(this._settings.ocean, 'waterSpeed', 0.0001, 0.01, 0.0001).name('Speed').onChange(() => this.updateWorld());
+        waterFolder.addColor(this._settings.ocean, 'color').name('Color').onChange(() => this.updateWorld());
+    }
+
+    private async animate(now: DOMHighResTimeStamp): Promise<void> {
+        const delta = now - this._lastRun;
+        this._lastRun = now;
+        this._stages.animate(delta);
+        this._controls.update();
+        this._renderer.render(this._scene, this._camera);
     }
 
     private async nextStage(): Promise<void> {
@@ -142,15 +148,6 @@ export class LandEditor implements IDisposable {
         }
     }
 
-    private updateWorld(): void {
-        this._stages.applyWaterSettings();
-        this._skyBox.update();
-    }
-
-    private applyDebugSettings(): void {
-        this._stages.applyDebugSettings();
-    }
-
     private onWindowResize(): void {
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -161,15 +158,18 @@ export class LandEditor implements IDisposable {
         this._renderer?.setSize(width, height);
     }
 
-    private openContextualHelp(): void {
-        window.open(`${LandEditor.HELP_BASE_URL}/${this._stages.helpPageName}`, '_blank');
+    private async previousStage(): Promise<void> {
+        this._stages.previousStage();
+        if (!this._stages.last) {
+            this._nextButton.enable();
+        }
+        if (this._stages.first) {
+            this._previousButton.disable();
+        }
     }
 
-    private async animate(now: DOMHighResTimeStamp): Promise<void> {
-        const delta = now - this._lastRun;
-        this._lastRun = now;
-        this._stages.animate(delta);
-        this._controls.update();
-        this._renderer.render(this._scene, this._camera);
+    private updateWorld(): void {
+        this._stages.applyWaterSettings();
+        this._skyBox.update();
     }
 }
