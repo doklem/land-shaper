@@ -9,9 +9,8 @@ export class NormalTangentSpaceRenderNode extends ExportableRenderNodeBase {
     public static readonly NAME = 'Normal Tangent Space';
 
     private readonly _bindGroup: GPUBindGroup;
-    private readonly _renderPassDescriptor: GPURenderPassDescriptor;
-    private readonly _renderBundle: GPURenderBundle;
 
+    protected readonly _renderBundle: GPURenderBundle;
     protected readonly _pipeline: GPURenderPipeline;
 
     public constructor(
@@ -62,33 +61,7 @@ export class NormalTangentSpaceRenderNode extends ExportableRenderNodeBase {
         // pipeline
         this._pipeline = this.createPipeline(bindGroupLayout, FragmentShader);
 
-        // render pass descriptor
-        this._renderPassDescriptor = {
-            label: `${this._name} Render Pass`,
-            colorAttachments: [
-                {
-                    loadOp: 'clear',
-                    storeOp: 'store',
-                    view: this._texture.view
-                }
-            ]
-        };
-
         // render bundle
-        const renderPassEncoder = this._device.createRenderBundleEncoder({
-            label: `${this._name} Render Bundle Encoder`,
-            colorFormats: [this._texture.texture.format]
-        });
-        renderPassEncoder.setPipeline(this._pipeline);
-        renderPassEncoder.setBindGroup(0, this._bindGroup);
-        buffers.drawClipSpaceQuad(renderPassEncoder);
-        this._renderBundle = renderPassEncoder.finish();
-    }
-
-    public appendRenderPass(commandEncoder: GPUCommandEncoder): void {
-        const renderPassEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
-        renderPassEncoder.executeBundles([this._renderBundle]);
-        renderPassEncoder.end();
-        this.appendTextureExport(commandEncoder);
+        this._renderBundle = this.createRenderBundle(this._pipeline, this._bindGroup);
     }
 }

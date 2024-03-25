@@ -151,7 +151,7 @@ export class SettingsManager {
             textureSizeColors: new Vector2(4096, 4096),
             textureSizeTerrain: new Vector2(1024, 1024),
             vertexSizeFinalMaximum: new Vector2(1024, 1024),
-            vertexSizeFinalMinimum: new Vector2(2, 2),
+            vertexSizeFinalMinimum: new Vector2(1, 1),
             meshLodDistance: 200,
             transformation: new Matrix4().makeRotationX(Math.PI * -0.5),
             sections: {
@@ -174,5 +174,9 @@ export class SettingsManager {
                 textureSize: new Vector2(512, 512),
             }
         };
+    }
+
+    public calculateSettings(): void {
+        this.light.updateSunPosition();
     }
 }

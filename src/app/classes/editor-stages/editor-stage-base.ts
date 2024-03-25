@@ -1,6 +1,6 @@
 import { Object3D, Scene } from 'three';
 import { ILandscape } from '../objects-3d/landscapes/landscape';
-import { Controller, GUI } from 'lil-gui';
+import { GUI } from 'lil-gui';
 import { IEditorStage } from './editor-stage';
 
 export abstract class EditorStageBase<T extends ILandscape> implements IEditorStage {
@@ -8,7 +8,6 @@ export abstract class EditorStageBase<T extends ILandscape> implements IEditorSt
     protected _visible: boolean;
 
     protected readonly _folders: GUI[];
-    protected readonly _controllers: Controller[];
     protected readonly _sceneElements: Object3D[];
     protected readonly abstract _landscape: T;
 
@@ -20,7 +19,6 @@ export abstract class EditorStageBase<T extends ILandscape> implements IEditorSt
         this.changed = false;
         this._visible = false;
         this._folders = [];
-        this._controllers = [];
         this._sceneElements = [];
     }
 
@@ -35,7 +33,7 @@ export abstract class EditorStageBase<T extends ILandscape> implements IEditorSt
     }
 
     public disable(): void {
-        this._controllers.forEach(controller => controller.disable());
+        this._folders.forEach(folder => folder.controllers.forEach(controller => controller.disable()));
     }
 
     public dispose(): void {
@@ -44,7 +42,7 @@ export abstract class EditorStageBase<T extends ILandscape> implements IEditorSt
     }
 
     public enable(): void {
-        this._controllers.forEach(controller => controller.enable());
+        this._folders.forEach(folder => folder.controllers.forEach(controller => controller.enable()));
     }
 
     public hide(): void {

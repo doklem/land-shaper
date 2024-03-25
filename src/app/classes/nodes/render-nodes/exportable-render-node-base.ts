@@ -36,7 +36,8 @@ export abstract class ExportableRenderNodeBase extends RenderNodeBase implements
         output.set(new Float32Array(await BufferManager.readGPUBuffer(this._stagingBuffer)));
     }
 
-    protected appendTextureExport(commandEncoder: GPUCommandEncoder): void {
+    public appendRenderPass(commandEncoder: GPUCommandEncoder): void {
+        super.appendRenderPass(commandEncoder);
         commandEncoder.copyTextureToBuffer(
             this._texture,
             {
