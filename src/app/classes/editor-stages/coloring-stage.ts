@@ -63,6 +63,9 @@ export class ColoringStage extends EditorStageBase<ColoringLandscape> {
     }
 
     private async runDiffuse(): Promise<void> {
+        if (!this._visible) {
+            return;
+        }
         this.changed = true;
         await this._landscape.runDiffuse();
     }

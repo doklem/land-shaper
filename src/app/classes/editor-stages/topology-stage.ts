@@ -39,7 +39,10 @@ export class TopologyStage extends EditorStageBase<TopologyLandscape> {
         this._sceneElements.push(this._landscape);
     }
 
-    private async runTopology(): Promise<void> {
+    private async runTopology(log?: boolean): Promise<void> {
+        if (!this._visible) {
+            return;
+        }
         this.changed = true;
         await this._landscape.runLandscape();
     }

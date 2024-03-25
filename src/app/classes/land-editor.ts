@@ -9,6 +9,7 @@ import { MeshManager } from './gpu-resources/mesh-manager';
 import { SettingsManager } from './settings/settings-manager';
 import { StageManager } from './editor-stages/stage-manager';
 import { TemplateType } from './settings/template-type';
+import { SettingsIOHelper } from './settings/settings-io-helper';
 
 export class LandEditor implements IDisposable {
 
@@ -33,7 +34,7 @@ export class LandEditor implements IDisposable {
         load: async () => await this.loadSettings(),
         next: async () => await this.nextStage(),
         previous: async () => await this.previousStage(),
-        save: async () => await this._settings.save(this._gui),
+        save: async () => await SettingsIOHelper.save(this._gui),
         source: () => window.open(LandEditor.SOURCE_URL, '_blank'),
     };
     private readonly _skyBox: SkyBox;
@@ -188,20 +189,19 @@ export class LandEditor implements IDisposable {
     }
 
     private async loadSettings(): Promise<void> {
-        const success = await this._settings.load(this._gui);
-        if (success) {
-            await this.restart();
+        const settings = await SettingsIOHelper.load();
+        if (settings) {
+            await this.restart(settings);
         }
     }
 
     private async loadTemplate(): Promise<void> {
-        if (this._template === TemplateType.unknown) {
-            return;
+        const settings = await SettingsIOHelper.loadTemplate(this._template);
+        if (settings) {
+            await this.restart(settings);
+            this._template = TemplateType.unknown;
+            this._templateButton.updateDisplay();
         }
-        await this._settings.loadTemplate(this._gui, this._template);
-        await this.restart();
-        this._template = TemplateType.unknown;
-        this._templateButton.updateDisplay();
     }
 
     private onWindowResize(): void {
@@ -224,8 +224,11 @@ export class LandEditor implements IDisposable {
         }
     }
 
-    private async restart(): Promise<void> {
+    private async restart(settings: any): Promise<void> {
         this.setState(false);
+        this._stages.hideAll();
+        this._gui.load(settings, true);
+        this._settings.calculateSettings();
         await this._stages.initialize();
         this.updateWorld();
         this._stages.applyDebugSettings();

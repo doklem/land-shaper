@@ -1,32 +1,8 @@
 import { Color, Matrix4, Vector2, Vector3 } from 'three';
 import { LightSettings } from './light-settings';
 import { MixedColorSettings } from './mixed-color-settings';
-import { GUI } from 'lil-gui';
-import temperateTemplate from './temperate-template.json';
-import desertTemplate from './desert-template.json';
-import { TemplateType } from './template-type';
 
 export class SettingsManager {
-
-    private static readonly JSON_MIME_TYPE: MIMEType = 'application/json';
-    private static readonly JSON_FILE_EXTENSION: FileExtension = '.json';
-    private static readonly PICKER_ACCEPT_TYPES: FilePickerAcceptType[] = [
-        {
-            description: 'JSON File',
-            accept: {
-                'application/json': [SettingsManager.JSON_FILE_EXTENSION],
-            },
-        },
-    ];
-    private static readonly OPEN_PICKER_OPTIONS: OpenFilePickerOptions = {
-        types: SettingsManager.PICKER_ACCEPT_TYPES,
-        excludeAcceptAllOption: true,
-        multiple: false,
-    };
-    private static readonly SAVE_PICKER_OPTIONS: SaveFilePickerOptions = {
-        suggestedName: `land-shaper-settings${SettingsManager.JSON_FILE_EXTENSION}`,
-        types: SettingsManager.PICKER_ACCEPT_TYPES,
-    };
 
     public readonly blur = {
         size: new Vector2(2, 2),
@@ -200,52 +176,7 @@ export class SettingsManager {
         };
     }
 
-    public async loadTemplate(gui: GUI, template: TemplateType): Promise<void> {
-        switch (template) {
-            case TemplateType.desert:
-                this.applySettings(gui, desertTemplate);
-                break;
-            case TemplateType.temperate:
-                this.applySettings(gui, temperateTemplate);
-                break;
-        }
-    }
-
-    public async load(gui: GUI): Promise<boolean> {
-        try {
-            const fileHandle = await window.showOpenFilePicker(SettingsManager.OPEN_PICKER_OPTIONS);
-            if (fileHandle.length < 1) {
-                return false;
-            }
-            const file = await fileHandle[0].getFile();
-            const json = await file.text();
-            this.applySettings(gui, JSON.parse(json));
-            return true;
-        }
-        catch (error) {
-            console.debug(error);
-        }
-        return false;
-    }
-
-    public async save(gui: GUI): Promise<void> {
-        var blob = new Blob(
-            [JSON.stringify(gui.save(true), LightSettings.replacer)],
-            { type: SettingsManager.JSON_MIME_TYPE }
-        );
-        try {
-            const fileHandle = await window.showSaveFilePicker(SettingsManager.SAVE_PICKER_OPTIONS);
-            const writableFileStream = await fileHandle.createWritable();
-            await writableFileStream.write(blob);
-            await writableFileStream.close();
-        }
-        catch (error) {
-            console.debug(error);
-        }
-    }
-
-    private applySettings(gui: GUI, settings: any): void {
-        gui.load(settings, true);
+    public calculateSettings(): void {
         this.light.updateSunPosition();
     }
 }

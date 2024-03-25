@@ -83,7 +83,7 @@ export class ErosionStage extends EditorStageBase<ErosionLandscape> {
     }
 
     private async runBlur(): Promise<void> {
-        if (this._erosionRunning) {
+        if (this._erosionRunning || !this._visible) {
             return;
         }
         this.changed = true;
