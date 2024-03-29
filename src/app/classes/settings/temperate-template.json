@@ -1,158 +1,124 @@
 {
     "controllers": {},
     "folders": {
-        "File": {
-            "controllers": {},
+        "Erosion": {
+            "controllers": {
+                "Iterations": 1000,
+                "Maximum Lifetime": 50,
+                "Inertia": 0.05,
+                "Gravity": 9.807,
+                "Sediment Capacity Factor": 4,
+                "Minimum Sediment Capacity": 0.1,
+                "Deposit Speed": 0.2,
+                "Erode Speed": 0.2,
+                "Evaporate Speed": 0.1,
+                "Start Speed": 1,
+                "Start Water": 1
+            },
             "folders": {}
         },
-        "Edit": {
-            "controllers": {},
+        "Blur": {
+            "controllers": {
+                "Radius X": 2,
+                "Radius Y": 2,
+                "Strength": 0.5
+            },
+            "folders": {}
+        },
+        "Topology": {
+            "controllers": {
+                "Seed": 0,
+                "Octaves": 9,
+                "Offset X": -243.89,
+                "Offset Y": -211.03,
+                "Offset Z": -49.5,
+                "Scale X": 0.0025,
+                "Scale Y": 0.0025,
+                "Scale Z": 82.25,
+                "Turbulence X": 0.2,
+                "Turbulence Y": 0.2,
+                "Ridge Threshold": 0
+            },
+            "folders": {}
+        },
+        "Colors": {
+            "controllers": {
+                "Slop Angle": 0.85,
+                "Slop Gradient": 0.05,
+                "River Start": 20,
+                "River Gradient": 30,
+                "Shore Start Height": 3,
+                "Shore Gradient": 0.2
+            },
             "folders": {
-                "Erosion": {
-                    "controllers": {
-                        "Iterations": 1000,
-                        "Maximum Lifetime": 50,
-                        "Inertia": 0.05,
-                        "Gravity": 9.807,
-                        "Sediment Capacity Factor": 4,
-                        "Minimum Sediment Capacity": 0.1,
-                        "Deposit Speed": 0.2,
-                        "Erode Speed": 0.2,
-                        "Evaporate Speed": 0.1,
-                        "Start Speed": 1,
-                        "Start Water": 1
-                    },
-                    "folders": {}
-                },
-                "Blur": {
-                    "controllers": {
-                        "Radius X": 2,
-                        "Radius Y": 2,
-                        "Strength": 0.5
-                    },
-                    "folders": {}
-                },
-                "Topology": {
+                "Normal Bumps": {
                     "controllers": {
                         "Seed": 0,
-                        "Octaves": 9,
-                        "Offset X": -243.89,
-                        "Offset Y": -211.03,
-                        "Offset Z": -49.5,
-                        "Scale X": 0.0025,
-                        "Scale Y": 0.0025,
-                        "Scale Z": 82.25,
-                        "Turbulence X": 0.2,
-                        "Turbulence Y": 0.2,
-                        "Ridge Threshold": 0
+                        "Octaves": 3,
+                        "Amplitude": 0.03,
+                        "Scale X": 1000,
+                        "Scale Y": 1000
                     },
                     "folders": {}
                 },
-                "Colors": {
+                "Vegetation": {
                     "controllers": {
-                        "Slop Angle": 0.85,
-                        "Slop Gradient": 0.05,
-                        "River Start": 20,
-                        "River Gradient": 30,
-                        "Shore Start Height": 3,
-                        "Shore Gradient": 0.2
+                        "Color A": "#0f1e09",
+                        "Color B": "#364d00",
+                        "Seed": 0,
+                        "Octaves": 2,
+                        "Start": -1,
+                        "Range": 2,
+                        "Scale X": 50,
+                        "Scale Y": 50
+                    },
+                    "folders": {}
+                },
+                "Bedrock": {
+                    "controllers": {
+                        "Color A": "#ffffff",
+                        "Color B": "#4c4c4c",
+                        "Seed": 0.7,
+                        "Octaves": 1,
+                        "Start": -0.75,
+                        "Range": 1.5,
+                        "Scale X": 8,
+                        "Scale Y": 8
+                    },
+                    "folders": {}
+                },
+                "Gravel": {
+                    "controllers": {
+                        "Color A": "#ffffff",
+                        "Color B": "#4c4c4c",
+                        "Seed": 0,
+                        "Octaves": 1,
+                        "Start": -1,
+                        "Range": 2,
+                        "Scale X": 500,
+                        "Scale Y": 500
+                    },
+                    "folders": {}
+                },
+                "Rubble": {
+                    "controllers": {
+                        "Slop Angle": 0.7,
+                        "Slop Gradient": 0.1,
+                        "Scale X": 0.5,
+                        "Scale Y": 0.5,
+                        "Scale Z": 0.5
                     },
                     "folders": {
-                        "Normal Bumps": {
+                        "Color": {
                             "controllers": {
-                                "Seed": 0,
-                                "Octaves": 3,
-                                "Amplitude": 0.03,
-                                "Scale X": 1000,
-                                "Scale Y": 1000
-                            },
-                            "folders": {}
-                        },
-                        "Vegetation": {
-                            "controllers": {
-                                "Color A": "#0f1e09",
-                                "Color B": "#364d00",
-                                "Seed": 0,
-                                "Octaves": 2,
-                                "Start": -1,
-                                "Range": 2,
-                                "Scale X": 50,
-                                "Scale Y": 50
-                            },
-                            "folders": {}
-                        },
-                        "Bedrock": {
-                            "controllers": {
-                                "Color A": "#ffffff",
-                                "Color B": "#4c4c4c",
-                                "Seed": 0.7,
-                                "Octaves": 1,
-                                "Start": -0.75,
-                                "Range": 1.5,
-                                "Scale X": 8,
-                                "Scale Y": 8
-                            },
-                            "folders": {}
-                        },
-                        "Gravel": {
-                            "controllers": {
-                                "Color A": "#ffffff",
-                                "Color B": "#4c4c4c",
+                                "Color A": "#878787",
+                                "Color B": "#dbdbdb",
                                 "Seed": 0,
                                 "Octaves": 1,
-                                "Start": -1,
-                                "Range": 2,
-                                "Scale X": 500,
-                                "Scale Y": 500
-                            },
-                            "folders": {}
-                        },
-                        "Rubble": {
-                            "controllers": {
-                                "Slop Angle": 0.7,
-                                "Slop Gradient": 0.1,
-                                "Scale X": 0.5,
-                                "Scale Y": 0.5,
-                                "Scale Z": 0.5
-                            },
-                            "folders": {
-                                "Color": {
-                                    "controllers": {
-                                        "Color A": "#878787",
-                                        "Color B": "#dbdbdb",
-                                        "Seed": 0,
-                                        "Octaves": 1,
-                                        "Start": -0.25,
-                                        "Range": 0.5,
-                                        "Scale X": 10,
-                                        "Scale Y": 10
-                                    },
-                                    "folders": {}
-                                }
-                            }
-                        }
-                    }
-                },
-                "World": {
-                    "controllers": {},
-                    "folders": {
-                        "Sky": {
-                            "controllers": {
-                                "Elevation": 45,
-                                "Azimuth": 92,
-                                "Turbidity": 0.1,
-                                "Rayleigh": 0.1,
-                                "Ambient": "#9ac7de",
-                                "Directional": "#ffffff"
-                            },
-                            "folders": {}
-                        },
-                        "Water": {
-                            "controllers": {
-                                "Distortion Scale": 3.7,
-                                "Size": 10,
-                                "Speed": 0.0005,
-                                "Color": "#001e0f"
+                                "Start": -0.25,
+                                "Range": 0.5,
+                                "Scale X": 10,
+                                "Scale Y": 10
                             },
                             "folders": {}
                         }
@@ -160,15 +126,30 @@
                 }
             }
         },
-        "Debug": {
-            "controllers": {
-                "Wireframe": false
-            },
-            "folders": {}
-        },
-        "About": {
+        "World": {
             "controllers": {},
-            "folders": {}
+            "folders": {
+                "Sky": {
+                    "controllers": {
+                        "Elevation": 45,
+                        "Azimuth": 92,
+                        "Turbidity": 0.1,
+                        "Rayleigh": 0.1,
+                        "Ambient": "#9ac7de",
+                        "Directional": "#ffffff"
+                    },
+                    "folders": {}
+                },
+                "Water": {
+                    "controllers": {
+                        "Distortion Scale": 3.7,
+                        "Size": 10,
+                        "Speed": 0.0005,
+                        "Color": "#001e0f"
+                    },
+                    "folders": {}
+                }
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
-import { BufferManager } from '../../gpu-resources/buffer-manager';
-import { TextureWrapper } from '../../gpu-resources/texture-wrapper';
+import { BufferService } from '../../services/buffer-service';
+import { TextureWrapper } from '../../services/texture-wrapper';
+import { IServiceProvider } from '../../services/service-provider';
 import { IExportableNode } from '../exportable-node';
 import { RenderNodeBase } from './render-node-base';
 
@@ -9,18 +10,13 @@ export abstract class ExportableRenderNodeBase extends RenderNodeBase implements
 
     public constructor(
         name: string,
-        device: GPUDevice,
-        buffers: BufferManager,
+        serviceProvider: IServiceProvider,
         texture: TextureWrapper
     ) {
-        super(
-            name,
-            device,
-            buffers,
-            texture);
+        super(name, serviceProvider, texture);
 
         // buffers
-        this._stagingBuffer = device.createBuffer({
+        this._stagingBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Staging Buffer`,
             size: this._texture.byteLength,
             usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
@@ -33,7 +29,7 @@ export abstract class ExportableRenderNodeBase extends RenderNodeBase implements
     }
 
     public async readOutputBuffer(output: Float32Array): Promise<void> {
-        output.set(new Float32Array(await BufferManager.readGPUBuffer(this._stagingBuffer)));
+        output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
     }
 
     public appendRenderPass(commandEncoder: GPUCommandEncoder): void {

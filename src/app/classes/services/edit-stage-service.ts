@@ -1,19 +1,15 @@
-import { Scene } from 'three';
 import { IDisposable } from '../disposable';
-import { SettingsManager } from '../settings/settings-manager';
-import { ColoringStage } from './coloring-stage';
-import { ErosionStage } from './erosion-stage';
-import { SectionedStage } from './sectioned-stage';
-import { TopologyStage } from './topology-stage';
+import { ColoringStage } from '../edit-stages/coloring-stage';
+import { ErosionStage } from '../edit-stages/erosion-stage';
+import { SectionedStage } from '../edit-stages/sectioned-stage';
+import { TopologyStage } from '../edit-stages/topology-stage';
 import { GUI } from 'lil-gui';
-import { TextureManager } from '../gpu-resources/texture-manager';
-import { BufferManager } from '../gpu-resources/buffer-manager';
-import { MeshManager } from '../gpu-resources/mesh-manager';
-import { IEditorStage } from './editor-stage';
+import { IEditStage } from '../edit-stages/edit-stage';
+import { IServiceProvider } from './service-provider';
 
-export class StageManager implements IDisposable {
+export class EditStageService implements IDisposable {
 
-    private readonly _stages: IEditorStage[];
+    private readonly _stages: IEditStage[];
 
     private _index: number;
 
@@ -29,23 +25,19 @@ export class StageManager implements IDisposable {
         return this._index === this._stages.length - 1;
     }
 
-    constructor(
-        settings: SettingsManager,
-        scene: Scene,
-        gui: GUI,
-        textures: TextureManager,
-        device: GPUDevice,
-        buffers: BufferManager,
-        meshs: MeshManager
-    ) {
+    constructor(serviceProvider: IServiceProvider) {
         this._index = 0;
-        const erosionStage = new ErosionStage(settings, scene, gui, textures, device, buffers);
+        const erosionStage = new ErosionStage(serviceProvider);
         this._stages = [
-            new TopologyStage(settings, scene, gui, textures, device, buffers),
+            new TopologyStage(serviceProvider),
             erosionStage,
-            new ColoringStage(settings, scene, gui, textures, device, buffers, meshs, erosionStage.displacementMap),
-            new SectionedStage(settings, scene, textures, device, buffers, meshs)
+            new ColoringStage(serviceProvider, erosionStage.displacementMap),
+            new SectionedStage(serviceProvider)
         ];
+    }
+
+    public addGUI(parent: GUI): void {
+        this._stages.forEach(stage => stage.addGUI(parent));
     }
 
     public async animate(delta: number): Promise<void> {

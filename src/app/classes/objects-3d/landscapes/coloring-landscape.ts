@@ -1,6 +1,4 @@
 import { DataTexture, Group, Vector2 } from 'three';
-import { TextureManager } from '../../gpu-resources/texture-manager';
-import { BufferManager } from '../../gpu-resources/buffer-manager';
 import { NormalObjectSpaceRenderNode } from '../../nodes/render-nodes/normal-object-space-render-node';
 import { NormalTangentSpaceRenderNode } from '../../nodes/render-nodes/normal-tangent-space-render-node';
 import { DiffuseRenderNode } from '../../nodes/render-nodes/diffuse-render-node';
@@ -10,9 +8,8 @@ import { SurfaceRenderNode } from '../../nodes/render-nodes/surface-render-node'
 import { Terrain } from '../terrain';
 import { ILandscape } from './landscape';
 import { WaterComputeNode } from '../../nodes/compute-nodes/water-compute-node';
-import { MeshManager } from '../../gpu-resources/mesh-manager';
-import { SettingsManager } from '../../settings/settings-manager';
 import { Ocean } from '../ocean';
+import { IServiceProvider } from '../../services/service-provider';
 
 export class ColoringLandscape extends Group implements ILandscape {
 
@@ -29,43 +26,39 @@ export class ColoringLandscape extends Group implements ILandscape {
     private _running: boolean;
 
     constructor(
-        settings: SettingsManager,
-        textures: TextureManager,
-        private readonly _device: GPUDevice,
-        buffers: BufferManager,
-        meshs: MeshManager,
+        private readonly _serviceProvider: IServiceProvider,
         displacementMap: DataTexture) {
         super();
 
         this._running = false;
-        this.applyMatrix4(settings.constants.transformation);
+        this.applyMatrix4(_serviceProvider.settings.constants.transformation);
         const uvRange = new Vector2(1, 1);
 
-        this._normalObjectSpaceRenderNode = new NormalObjectSpaceRenderNode(settings, _device, buffers, textures, uvRange, textures.displacementFinal, textures.normalObjectSpace);
-        this._normalTangentSpaceRenderNode = new NormalTangentSpaceRenderNode(_device, buffers, textures, textures.normalObjectSpace, textures.normalTangentSpace);
-        this._diffuseRenderNode = new DiffuseRenderNode(settings, _device, buffers, textures, uvRange, textures.surface, textures.displacementFinal, textures.diffuse);
-        this._rubbleComputeNode = new RubbleComputeNode(settings, textures, _device, uvRange, textures.rubbleTexture);
-        this._surfaceRenderNode = new SurfaceRenderNode(settings, _device, buffers, textures, uvRange, textures.normalObjectSpace, textures.displacementFinal, textures.water, textures.surface);
-        this._waterComputeNode = new WaterComputeNode(settings, _device, textures);
+        this._normalObjectSpaceRenderNode = new NormalObjectSpaceRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.displacementFinal, _serviceProvider.textures.normalObjectSpace);
+        this._normalTangentSpaceRenderNode = new NormalTangentSpaceRenderNode(_serviceProvider, _serviceProvider.textures.normalObjectSpace, _serviceProvider.textures.normalTangentSpace);
+        this._diffuseRenderNode = new DiffuseRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.surface, _serviceProvider.textures.displacementFinal, _serviceProvider.textures.diffuse);
+        this._rubbleComputeNode = new RubbleComputeNode(_serviceProvider, uvRange, _serviceProvider.textures.rubbleTexture);
+        this._surfaceRenderNode = new SurfaceRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.normalObjectSpace, _serviceProvider.textures.displacementFinal, _serviceProvider.textures.water, _serviceProvider.textures.surface);
+        this._waterComputeNode = new WaterComputeNode(_serviceProvider);
 
-        this._rubble = new Rubble(meshs, settings.constants.meshLodDistance, this._rubbleComputeNode);
-        this._rubble.translateX(settings.constants.meshSize.x * -0.5);
-        this._rubble.translateY(settings.constants.meshSize.y * -0.5);
+        this._rubble = new Rubble(_serviceProvider, _serviceProvider.settings.constants.meshLodDistance, this._rubbleComputeNode);
+        this._rubble.translateX(_serviceProvider.settings.constants.meshSize.x * -0.5);
+        this._rubble.translateY(_serviceProvider.settings.constants.meshSize.y * -0.5);
         this.add(this._rubble);
 
-        this._ocean = new Ocean(settings, meshs);
+        this._ocean = new Ocean(_serviceProvider);
         this.add(this._ocean);
 
         this._terrain = new Terrain(
-            settings,
-            settings.constants.meshSize,
-            settings.constants.vertexSizeFinalMaximum,
-            settings.constants.vertexSizeFinalMinimum,
-            settings.constants.meshLodDistance,
+            _serviceProvider,
+            _serviceProvider.settings.constants.meshSize,
+            _serviceProvider.settings.constants.vertexSizeFinalMaximum,
+            _serviceProvider.settings.constants.vertexSizeFinalMinimum,
+            _serviceProvider.settings.constants.meshLodDistance,
             false,
             this._normalTangentSpaceRenderNode,
             this._diffuseRenderNode,
-            textures.displacementFinal.settings,
+            _serviceProvider.textures.displacementFinal.settings,
             displacementMap);
         this.add(this._terrain);
     }
@@ -103,7 +96,7 @@ export class ColoringLandscape extends Group implements ILandscape {
         this._waterComputeNode.configureRun();
         this.configureRun();
 
-        const commandEncoder = this._device.createCommandEncoder();
+        const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         this._waterComputeNode.appendComputePass(commandEncoder);
         this.submitRun(commandEncoder);
 
@@ -119,7 +112,7 @@ export class ColoringLandscape extends Group implements ILandscape {
 
         this.configureRun();
 
-        const commandEncoder = this._device.createCommandEncoder();
+        const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         this.submitRun(commandEncoder);
 
         await this.applyRunOutput(this._terrain.updateDiffuse());
@@ -143,6 +136,6 @@ export class ColoringLandscape extends Group implements ILandscape {
         this._surfaceRenderNode.appendRenderPass(commandEncoder);
         this._diffuseRenderNode.appendRenderPass(commandEncoder);
         this._rubbleComputeNode.appendComputePass(commandEncoder);
-        this._device.queue.submit([commandEncoder.finish()]);
+        this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
     }
 }

@@ -1,8 +1,7 @@
 import FragmentShader from './../../../shaders/normal-tangent-space-fragment.wgsl';
-import { BufferManager } from '../../gpu-resources/buffer-manager';
-import { TextureManager } from '../../gpu-resources/texture-manager';
 import { ExportableRenderNodeBase } from './exportable-render-node-base';
-import { TextureWrapper } from '../../gpu-resources/texture-wrapper';
+import { TextureWrapper } from '../../services/texture-wrapper';
+import { IServiceProvider } from '../../services/service-provider';
 
 export class NormalTangentSpaceRenderNode extends ExportableRenderNodeBase {
 
@@ -14,19 +13,13 @@ export class NormalTangentSpaceRenderNode extends ExportableRenderNodeBase {
     protected readonly _pipeline: GPURenderPipeline;
 
     public constructor(
-        device: GPUDevice,
-        buffers: BufferManager,
-        textures: TextureManager,
+        serviceProvider: IServiceProvider,
         normalObjectSpaceTexture: TextureWrapper,
         outputTexture: TextureWrapper) {
-        super(
-            NormalTangentSpaceRenderNode.NAME,
-            device,
-            buffers,
-            outputTexture);
+        super(NormalTangentSpaceRenderNode.NAME, serviceProvider, outputTexture);
         
         // bind group layout
-        const bindGroupLayout = device.createBindGroupLayout({
+        const bindGroupLayout = serviceProvider.device.createBindGroupLayout({
             label: `${this._name} Bind Group Layout`,
             entries: [
                 {
@@ -43,7 +36,7 @@ export class NormalTangentSpaceRenderNode extends ExportableRenderNodeBase {
         });
 
         // bind group
-        this._bindGroup = this._device.createBindGroup({
+        this._bindGroup = serviceProvider.device.createBindGroup({
             label: `${this._name} Bind Group`,
             layout: bindGroupLayout,
             entries: [
@@ -53,7 +46,7 @@ export class NormalTangentSpaceRenderNode extends ExportableRenderNodeBase {
                 },
                 {
                     binding: 1,
-                    resource: textures.floatSampler,
+                    resource: serviceProvider.textures.floatSampler,
                 },
             ]
         });

@@ -10,7 +10,7 @@ import {
 } from 'three';
 import { IDisposable } from '../disposable';
 import { RubbleComputeNode } from '../nodes/compute-nodes/rubbel-compute-node';
-import { MeshManager } from '../gpu-resources/mesh-manager';
+import { IServiceProvider } from '../services/service-provider';
 
 export class Rubble extends LOD implements IDisposable {
 
@@ -26,7 +26,7 @@ export class Rubble extends LOD implements IDisposable {
     private readonly _rubbleOutput: Float32Array;
 
     public constructor(
-        meshs: MeshManager,
+        serviceProvider: IServiceProvider,
         meshLodDistance: number,
         private readonly _rubbleComputeNode: RubbleComputeNode) {
         super();
@@ -40,8 +40,8 @@ export class Rubble extends LOD implements IDisposable {
         this._colorAttribute.setUsage(DynamicDrawUsage);
         this._colorAttribute.needsUpdate = true;
         
-        meshs.rubbleGeometries.forEach((geometry: BufferGeometry<NormalBufferAttributes>, index: number) => {
-            this.addInstancedMesh(geometry, meshs.rubbleMaterial!, index * meshLodDistance);
+        serviceProvider.meshs.rubbleGeometries.forEach((geometry: BufferGeometry<NormalBufferAttributes>, index: number) => {
+            this.addInstancedMesh(geometry, serviceProvider.meshs.rubbleMaterial!, index * meshLodDistance);
         });
     }
 

@@ -1,6 +1,7 @@
 import { IDisposable } from '../../disposable';
-import { ShaderUtils } from '../../gpu-resources/shader-utils';
-import { TextureWrapper } from '../../gpu-resources/texture-wrapper';
+import { ShaderUtils } from '../../services/shader-utils';
+import { TextureWrapper } from '../../services/texture-wrapper';
+import { IServiceProvider } from '../../services/service-provider';
 import { ITextureSettings } from '../../settings/texture-settings';
 
 export abstract class ComputeNodeBase implements IDisposable {
@@ -14,14 +15,14 @@ export abstract class ComputeNodeBase implements IDisposable {
 
     constructor(
         protected readonly _name: string,
-        protected readonly _device: GPUDevice,
+        protected readonly _serviceProvider: IServiceProvider,
         protected readonly _workgroupCount: number,
         public readonly textureSettings: ITextureSettings,
         outputBuffer?: GPUBuffer) {
         this._externalOutputBuffer = !outputBuffer;
 
         // output buffers
-        this.outputBuffer = outputBuffer ?? _device.createBuffer({
+        this.outputBuffer = outputBuffer ?? _serviceProvider.device.createBuffer({
             label: `${this._name} Output Buffer`,
             size: this.textureSettings.byteLength,
             usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE,
@@ -61,7 +62,7 @@ export abstract class ComputeNodeBase implements IDisposable {
     }
 
     protected createBindGroup(bindGroupLayout: GPUBindGroupLayout, entries: Iterable<GPUBindGroupEntry>): GPUBindGroup {
-        return this._device.createBindGroup({
+        return this._serviceProvider.device.createBindGroup({
             label: `${this._name} Bind Group`,
             layout: bindGroupLayout,
             entries: entries
@@ -69,21 +70,21 @@ export abstract class ComputeNodeBase implements IDisposable {
     }
 
     protected createBindGroupLayout(entries: Iterable<GPUBindGroupLayoutEntry>): GPUBindGroupLayout {
-        return this._device.createBindGroupLayout({
+        return this._serviceProvider.device.createBindGroupLayout({
             label: `${this._name} Bind Group Layout`,
             entries: entries
         });
     }
 
     protected createPipeline(bindGroupLayout: GPUBindGroupLayout, shader: string, name?: string, entryPoint?: string): GPUComputePipeline {
-        return this._device.createComputePipeline({
+        return this._serviceProvider.device.createComputePipeline({
             label: `${name ?? this._name} Compute Pipeline`,
-            layout: this._device.createPipelineLayout({
+            layout: this._serviceProvider.device.createPipelineLayout({
                 label: `${name ?? this._name} Pipeline Layout`,
                 bindGroupLayouts: [bindGroupLayout],
             }),
             compute: {
-                module: this._device.createShaderModule({
+                module: this._serviceProvider.device.createShaderModule({
                     label: `${name ?? this._name} Compute Shader Module`,
                     code: ShaderUtils.applyIncludes(shader),
                 }),

@@ -1,10 +1,9 @@
 import { DoubleSide, Group, Mesh, MeshStandardMaterial, PlaneGeometry } from 'three';
-import { BufferManager } from '../../gpu-resources/buffer-manager';
-import { TextureManager } from '../../gpu-resources/texture-manager';
+import { TextureService } from '../../services/texture-service';
 import { DisplacementRenderNode } from '../../nodes/render-nodes/displacement-render-node';
 import { ILandscape } from './landscape';
-import { SettingsManager } from '../../settings/settings-manager';
 import { SimpleOcean } from '../simple-ocean';
+import { IServiceProvider } from '../../services/service-provider';
 
 export class TopologyLandscape extends Group implements ILandscape {
 
@@ -15,24 +14,23 @@ export class TopologyLandscape extends Group implements ILandscape {
 
     private _running: boolean;
 
-    constructor(
-        private readonly _settings: SettingsManager,
-        textures: TextureManager,
-        private readonly _device: GPUDevice,
-        buffers: BufferManager) {
+    constructor(private readonly _serviceProvider: IServiceProvider) {
         super();
         this._running = false;
-        this.applyMatrix4(_settings.constants.transformation);
+        this.applyMatrix4(_serviceProvider.settings.constants.transformation);
 
-        this._displacementRenderNode = new DisplacementRenderNode(_settings, _device, buffers, textures, true);
+        this._displacementRenderNode = new DisplacementRenderNode(_serviceProvider, true);
         this._displacementOutput = new Float32Array(this._displacementRenderNode.textureSettings.length);
 
         this._terrain = new Mesh(
-            new PlaneGeometry(_settings.constants.meshSize.x, _settings.constants.meshSize.y, _settings.constants.vertexSizeDraft.x, _settings.constants.vertexSizeDraft.y),
+            new PlaneGeometry(_serviceProvider.settings.constants.meshSize.x,
+                _serviceProvider.settings.constants.meshSize.y,
+                _serviceProvider.settings.constants.vertexSizeDraft.x,
+                _serviceProvider.settings.constants.vertexSizeDraft.y),
             new MeshStandardMaterial({
                 color: 0x86B036,
                 displacementScale: 1,
-                displacementMap: TextureManager.createDataTexture(this._displacementOutput, this._displacementRenderNode.textureSettings),
+                displacementMap: TextureService.createDataTexture(this._displacementOutput, this._displacementRenderNode.textureSettings),
                 flatShading: true,
                 metalness: 0,
                 roughness: 1,
@@ -44,13 +42,13 @@ export class TopologyLandscape extends Group implements ILandscape {
         this._terrain.receiveShadow = true;
         this.add(this._terrain);
 
-        this._ocean = new SimpleOcean(_settings);
+        this._ocean = new SimpleOcean(_serviceProvider);
         this.add(this._ocean);
     }
     
     public dispose(): void {
         this._terrain.geometry.dispose();
-        TextureManager.disposeMaterialTextures(this._terrain.material);
+        TextureService.disposeMaterialTextures(this._terrain.material);
         this._terrain.material.dispose();
         this._displacementRenderNode.dispose();
         this._ocean.dispose();
@@ -63,9 +61,9 @@ export class TopologyLandscape extends Group implements ILandscape {
         this._running = true;
         this._displacementRenderNode.configureRun();
 
-        const commandEncoder = this._device.createCommandEncoder();
+        const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         this._displacementRenderNode.appendRenderPass(commandEncoder);
-        this._device.queue.submit([commandEncoder.finish()]);
+        this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
 
         await this._displacementRenderNode.readOutputBuffer(this._displacementOutput);
         this._terrain.material.displacementMap!.needsUpdate = true;
@@ -74,7 +72,7 @@ export class TopologyLandscape extends Group implements ILandscape {
     }
 
     public applyDebugSettings(): void {
-        this._terrain.material.wireframe = this._settings.debug.wireframe;
+        this._terrain.material.wireframe = this._serviceProvider.settings.debug.wireframe;
         this._terrain.material.needsUpdate = true;
     }
 

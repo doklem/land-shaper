@@ -1,13 +1,11 @@
 import FragmentShader from './../../../shaders/displacement-fragment.wgsl';
-import { BufferManager } from '../../gpu-resources/buffer-manager';
-import { TextureManager } from '../../gpu-resources/texture-manager';
 import { ExportableRenderNodeBase } from './exportable-render-node-base';
-import { SettingsManager } from '../../settings/settings-manager';
+import { IServiceProvider } from '../../services/service-provider';
 
 export class DisplacementRenderNode extends ExportableRenderNodeBase {
 
     private static readonly NAME = 'Displacement';
-    
+
     public static readonly NAME_DRAFT = `Draft ${DisplacementRenderNode.NAME}`;
     public static readonly NAME_FINAL = `Final ${DisplacementRenderNode.NAME}`;
 
@@ -18,18 +16,11 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
     protected readonly _renderBundle: GPURenderBundle;
     protected readonly _pipeline: GPURenderPipeline;
 
-    public constructor(
-        private readonly _settings: SettingsManager,
-        device: GPUDevice,
-        buffers: BufferManager,
-        textures: TextureManager,
-        isDraft: boolean
-    ) {
+    public constructor(serviceProvider: IServiceProvider, isDraft: boolean) {
         super(
             isDraft ? DisplacementRenderNode.NAME_DRAFT : DisplacementRenderNode.NAME_FINAL,
-            device,
-            buffers,
-            isDraft ? textures.displacementDraft : textures.displacementFinal);
+            serviceProvider,
+            isDraft ? serviceProvider.textures.displacementDraft : serviceProvider.textures.displacementFinal);
 
         // buffers        
         this._uniformConfigArray = new ArrayBuffer(
@@ -37,14 +28,14 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
             + Int32Array.BYTES_PER_ELEMENT
             + 3 * Float32Array.BYTES_PER_ELEMENT // Padding
         );
-        this._uniformConfigBuffer = device.createBuffer({
+        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Uniform Config Buffer`,
             size: this._uniformConfigArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
         });
 
         // bind group layout
-        const bindGroupLayout = device.createBindGroupLayout({
+        const bindGroupLayout = serviceProvider.device.createBindGroupLayout({
             label: `${this._name} Bind Group Layout`,
             entries: [
                 {
@@ -56,7 +47,7 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
         });
 
         // bind group
-        this._bindGroup = this._device.createBindGroup({
+        this._bindGroup = serviceProvider.device.createBindGroup({
             label: `${this._name} Bind Group`,
             layout: bindGroupLayout,
             entries: [
@@ -75,34 +66,36 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
     }
 
     public configureRun(): void {
+        const constants = this._serviceProvider.settings.constants;
+        const topology = this._serviceProvider.settings.topology;
         const uniformConfigView = new DataView(this._uniformConfigArray);
         let offset = 0;
-        uniformConfigView.setFloat32(offset, this._settings.topology.offset.x, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, topology.offset.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.topology.offset.y, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, topology.offset.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.topology.offset.z, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, topology.offset.z, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.topology.seed, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, topology.seed, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.topology.scale.x, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, topology.scale.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.topology.scale.y, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, topology.scale.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.topology.scale.z, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, topology.scale.z, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setInt32(offset, this._settings.topology.octaveCount, this._settings.constants.littleEndian);
+        uniformConfigView.setInt32(offset, topology.octaveCount, constants.littleEndian);
         offset += Int32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.topology.turbulence.x, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, topology.turbulence.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.topology.turbulence.y, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, topology.turbulence.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.constants.meshSize.x, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, constants.meshSize.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.constants.meshSize.y, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, constants.meshSize.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.topology.ridgeThreshold, this._settings.constants.littleEndian);
-        this._device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
+        uniformConfigView.setFloat32(offset, topology.ridgeThreshold, constants.littleEndian);
+        this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
     }
 
     public override dispose(): void {

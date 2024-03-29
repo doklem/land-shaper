@@ -1,18 +1,18 @@
-import { MeshManager } from './app/classes/gpu-resources/mesh-manager';
+import { MeshService } from './app/classes/services/mesh-service';
 import { LandEditor } from './app/classes/land-editor';
 
 export class Program {
 
     private readonly _requirements: HTMLDivElement;
     private readonly _display: HTMLCanvasElement;
-    private readonly _meshs: MeshManager;
+    private readonly _meshs: MeshService;
 
     private _editor?: LandEditor;
 
     constructor() {
         this._display = document.getElementById('display') as HTMLCanvasElement;
         this._requirements = document.getElementById('requirements') as HTMLDivElement;
-        this._meshs = new MeshManager();
+        this._meshs = new MeshService();
         window.addEventListener('unload', () => {
             this._editor?.dispose();
             this._meshs.dispose();

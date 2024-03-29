@@ -1,9 +1,8 @@
 import FragmentShader from './../../../shaders/divide-fragment.wgsl';
 import { Vector2 } from 'three';
-import { BufferManager } from '../../gpu-resources/buffer-manager';
-import { TextureManager } from '../../gpu-resources/texture-manager';
-import { TextureWrapper } from '../../gpu-resources/texture-wrapper';
+import { TextureWrapper } from '../../services/texture-wrapper';
 import { ExportableRenderNodeBase } from './exportable-render-node-base';
+import { IServiceProvider } from '../../services/service-provider';
 
 export class ExportableDivideRenderNode extends ExportableRenderNodeBase {
 
@@ -17,24 +16,22 @@ export class ExportableDivideRenderNode extends ExportableRenderNodeBase {
     protected readonly _pipeline: GPURenderPipeline;
 
     constructor(
-        device: GPUDevice,
-        buffers: BufferManager,
-        textures: TextureManager,
+        serviceProvider: IServiceProvider,
         private readonly _uvRange: Vector2,
         inputTexture: TextureWrapper,
         outputTexture: TextureWrapper) {
-        super(ExportableDivideRenderNode.NAME, device, buffers, outputTexture);
+        super(ExportableDivideRenderNode.NAME, serviceProvider, outputTexture);
 
         // uniform buffers
         this._uniformConfigArray = new Float32Array(4);
-        this._uniformConfigBuffer = device.createBuffer({
+        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Uniform Config Buffer`,
             size: this._uniformConfigArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
         });
 
         // bind group layout
-        const bindGroupLayout = device.createBindGroupLayout({
+        const bindGroupLayout = serviceProvider.device.createBindGroupLayout({
             label: `${this._name} Bind Group Layout`,
             entries: [
                 {
@@ -56,7 +53,7 @@ export class ExportableDivideRenderNode extends ExportableRenderNodeBase {
         });
 
         // bind group
-        this._bindGroup = this._device.createBindGroup({
+        this._bindGroup = serviceProvider.device.createBindGroup({
             label: `${this._name} Bind Group`,
             layout: bindGroupLayout,
             entries: [
@@ -66,7 +63,7 @@ export class ExportableDivideRenderNode extends ExportableRenderNodeBase {
                 },
                 {
                     binding: 1,
-                    resource: textures.floatSampler,
+                    resource: serviceProvider.textures.floatSampler,
                 },
                 {
                     binding: 2,
@@ -84,6 +81,6 @@ export class ExportableDivideRenderNode extends ExportableRenderNodeBase {
 
     public configureRun(uvOffset: Vector2): void {
         this._uniformConfigArray.set([uvOffset.x, uvOffset.y, this._uvRange.x, this._uvRange.y]);
-        this._device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
+        this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
     }
 }

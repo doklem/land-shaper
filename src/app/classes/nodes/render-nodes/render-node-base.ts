@@ -1,7 +1,7 @@
 import { IDisposable } from '../../disposable';
-import { BufferManager } from '../../gpu-resources/buffer-manager';
-import { ShaderUtils } from '../../gpu-resources/shader-utils';
-import { TextureWrapper } from '../../gpu-resources/texture-wrapper';
+import { ShaderUtils } from '../../services/shader-utils';
+import { TextureWrapper } from '../../services/texture-wrapper';
+import { IServiceProvider } from '../../services/service-provider';
 import { ITextureSettings } from '../../settings/texture-settings';
 
 export abstract class RenderNodeBase implements IDisposable {
@@ -16,8 +16,7 @@ export abstract class RenderNodeBase implements IDisposable {
 
     public constructor(
         protected readonly _name: string,
-        protected readonly _device: GPUDevice,
-        protected readonly _buffers: BufferManager,
+        protected readonly _serviceProvider: IServiceProvider,
         protected readonly _texture: TextureWrapper) {
         this._renderPassDescriptor = {
             label: `${this._name} Render Pass`,
@@ -43,15 +42,15 @@ export abstract class RenderNodeBase implements IDisposable {
         bindGroupLayout: GPUBindGroupLayout,
         fragmentShader: string,
         entryPointFragment?: string): GPURenderPipeline {
-        return this._device.createRenderPipeline({
+        return this._serviceProvider.device.createRenderPipeline({
             label: `${this._name} Render Pipeline`,
-            layout: this._device.createPipelineLayout({
+            layout: this._serviceProvider.device.createPipelineLayout({
                 label: `${this._name} Pipeline Layout`,
                 bindGroupLayouts: [bindGroupLayout],
             }),
-            vertex: this._buffers.clipSpaceQuadVertexState,
+            vertex: this._serviceProvider.buffers.clipSpaceQuadVertexState,
             fragment: {
-                module: this._device.createShaderModule({
+                module: this._serviceProvider.device.createShaderModule({
                     label: `${this._name} Fragment Shader Module`,
                     code: ShaderUtils.applyIncludes(fragmentShader)
                 }),
@@ -62,13 +61,13 @@ export abstract class RenderNodeBase implements IDisposable {
     }
 
     protected createRenderBundle(pipeline: GPURenderPipeline, bindGroup: GPUBindGroup): GPURenderBundle {
-        const renderPassEncoder = this._device.createRenderBundleEncoder({
+        const renderPassEncoder = this._serviceProvider.device.createRenderBundleEncoder({
             label: `${this._name} Render Bundle Encoder`,
             colorFormats: [this._texture.texture.format]
         });
         renderPassEncoder.setPipeline(pipeline);
         renderPassEncoder.setBindGroup(0, bindGroup);
-        this._buffers.drawClipSpaceQuad(renderPassEncoder);
+        this._serviceProvider.buffers.drawClipSpaceQuad(renderPassEncoder);
         return renderPassEncoder.finish();
     }
 }

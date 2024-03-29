@@ -1,18 +1,18 @@
 import { DoubleSide, Mesh, MeshStandardMaterial, PlaneGeometry } from 'three';
 import { IDisposable } from '../disposable';
-import { SettingsManager } from '../settings/settings-manager';
-import { TextureManager } from '../gpu-resources/texture-manager';
+import { TextureService } from '../services/texture-service';
+import { IServiceProvider } from '../services/service-provider';
 
 export class SimpleOcean extends Mesh<PlaneGeometry, MeshStandardMaterial> implements IDisposable {
 
-    constructor(private readonly _settings: SettingsManager) {
+    constructor(private readonly _serviceProvider: IServiceProvider) {
         super(
             new PlaneGeometry(
-                _settings.constants.meshSize.x,
-                _settings.constants.meshSize.y
+                _serviceProvider.settings.constants.meshSize.x,
+                _serviceProvider.settings.constants.meshSize.y
             ),
             new MeshStandardMaterial({
-                color: _settings.ocean.color,
+                color: _serviceProvider.settings.ocean.color,
                 side: DoubleSide,
                 flatShading: true,
             })
@@ -20,13 +20,13 @@ export class SimpleOcean extends Mesh<PlaneGeometry, MeshStandardMaterial> imple
     }
 
     public applySettings(): void {
-        this.material.color.copy(this._settings.ocean.color);
+        this.material.color.copy(this._serviceProvider.settings.ocean.color);
         this.material.needsUpdate = true;
     }
     
     public dispose(): void {
         this.geometry.dispose();
-        TextureManager.disposeMaterialTextures(this.material);
+        TextureService.disposeMaterialTextures(this.material);
         this.material.dispose();
     }    
 }
