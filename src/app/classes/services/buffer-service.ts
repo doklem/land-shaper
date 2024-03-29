@@ -1,7 +1,7 @@
 import VertexShader from './../../shaders/clip-space-quad-vertex.wgsl';
 import { IDisposable } from '../disposable';
 
-export class BufferManager implements IDisposable {
+export class BufferService implements IDisposable {
 
     public readonly clipSpaceQuadVertexBuffer: GPUBuffer;
     public readonly clipSpaceQuadVertexBufferLayout: GPUVertexBufferLayout;

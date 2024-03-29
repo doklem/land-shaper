@@ -1,8 +1,7 @@
 import FragmentShader from './../../../shaders/blur-fragment.wgsl';
-import { BufferManager } from '../../gpu-resources/buffer-manager';
+import { BufferService } from '../../services/buffer-service';
 import { RenderNodeBase } from './render-node-base';
-import { TextureManager } from '../../gpu-resources/texture-manager';
-import { SettingsManager } from '../../settings/settings-manager';
+import { IServiceProvider } from '../../services/service-provider';
 
 export class BlurRenderNode extends RenderNodeBase {
 
@@ -16,45 +15,36 @@ export class BlurRenderNode extends RenderNodeBase {
     protected readonly _renderBundle: GPURenderBundle;
     protected readonly _pipeline: GPURenderPipeline;
 
-    public constructor(
-        private readonly _settings: SettingsManager,
-        device: GPUDevice,
-        buffers: BufferManager,
-        private readonly _textures: TextureManager
-    ) {
-        super(
-            BlurRenderNode.NAME,
-            device,
-            buffers,
-            _textures.displacementFinalCopy);
+    public constructor(serviceProvider: IServiceProvider) {
+        super(BlurRenderNode.NAME, serviceProvider, serviceProvider.textures.displacementFinalCopy);
 
         // buffers
         this._uniformConfigArray = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2 + Float32Array.BYTES_PER_ELEMENT * 2);
-        this._uniformConfigBuffer = device.createBuffer({
+        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Uniform Config Buffer`,
             size: this._uniformConfigArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
         });
 
-        this._stagingBuffer = device.createBuffer({
+        this._stagingBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Staging Buffer`,
             size: this._texture.byteLength,
             usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
         });
 
         // bind group layout
-        const bindGroupLayout = device.createBindGroupLayout({
+        const bindGroupLayout = serviceProvider.device.createBindGroupLayout({
             label: `${this._name} Bind Group Layout`,
             entries: [
                 {
                     binding: 0, // displacement texture
                     visibility: GPUShaderStage.FRAGMENT,
-                    texture: _textures.displacementFinal.bindingLayout,
+                    texture: serviceProvider.textures.displacementFinal.bindingLayout,
                 },
                 {
                     binding: 1, // float sampler
                     visibility: GPUShaderStage.FRAGMENT,
-                    sampler: { type: _textures.displacementFinal.settings.samplerBinding },
+                    sampler: { type: serviceProvider.textures.displacementFinal.settings.samplerBinding },
                 },
                 {
                     binding: 2, // config uniform
@@ -65,17 +55,17 @@ export class BlurRenderNode extends RenderNodeBase {
         });
 
         // bind group
-        this._bindGroup = this._device.createBindGroup({
+        this._bindGroup = serviceProvider.device.createBindGroup({
             label: `${this._name} Bind Group`,
             layout: bindGroupLayout,
             entries: [
                 {
                     binding: 0,
-                    resource: _textures.displacementFinal.view,
+                    resource: serviceProvider.textures.displacementFinal.view,
                 },
                 {
                     binding: 1,
-                    resource: _textures.floatSampler,
+                    resource: serviceProvider.textures.floatSampler,
                 },
                 {
                     binding: 2,
@@ -93,7 +83,7 @@ export class BlurRenderNode extends RenderNodeBase {
 
     public appendRenderPass(commandEncoder: GPUCommandEncoder): void {
         super.appendRenderPass(commandEncoder);
-        commandEncoder.copyTextureToTexture(this._texture, this._textures.displacementFinal, this._texture);
+        commandEncoder.copyTextureToTexture(this._texture, this._serviceProvider.textures.displacementFinal, this._texture);
         commandEncoder.copyTextureToBuffer(
             this._texture,
             {
@@ -104,14 +94,16 @@ export class BlurRenderNode extends RenderNodeBase {
     }
 
     public configureRun(): void {
+        const constants = this._serviceProvider.settings.constants;
+        const blur = this._serviceProvider.settings.blur;
         const uniformConfigView = new DataView(this._uniformConfigArray);
         let offset = 0;
-        uniformConfigView.setInt32(offset, this._settings.blur.size.x, this._settings.constants.littleEndian);
+        uniformConfigView.setInt32(offset, blur.size.x, constants.littleEndian);
         offset += Int32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setInt32(offset, this._settings.blur.size.y, this._settings.constants.littleEndian);
+        uniformConfigView.setInt32(offset, blur.size.y, constants.littleEndian);
         offset += Int32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.blur.strength, this._settings.constants.littleEndian);
-        this._device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
+        uniformConfigView.setFloat32(offset, blur.strength, constants.littleEndian);
+        this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
     }
 
     public override dispose(): void {
@@ -120,6 +112,6 @@ export class BlurRenderNode extends RenderNodeBase {
     }
 
     public async readOutputBuffer(output: Float32Array): Promise<void> {
-        output.set(new Float32Array(await BufferManager.readGPUBuffer(this._stagingBuffer)));
+        output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
     }
 }

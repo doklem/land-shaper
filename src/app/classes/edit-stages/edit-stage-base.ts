@@ -1,9 +1,10 @@
-import { Object3D, Scene } from 'three';
+import { Object3D } from 'three';
 import { ILandscape } from '../objects-3d/landscapes/landscape';
 import { GUI } from 'lil-gui';
-import { IEditorStage } from './editor-stage';
+import { IEditStage } from './edit-stage';
+import { IServiceProvider } from '../services/service-provider';
 
-export abstract class EditorStageBase<T extends ILandscape> implements IEditorStage {
+export abstract class EditStageBase<T extends ILandscape> implements IEditStage {
 
     protected _visible: boolean;
 
@@ -15,12 +16,14 @@ export abstract class EditorStageBase<T extends ILandscape> implements IEditorSt
 
     public changed: boolean;
 
-    constructor(private readonly _scene: Scene) {
+    constructor(protected readonly _serviceProvider: IServiceProvider) {
         this.changed = false;
         this._visible = false;
         this._folders = [];
         this._sceneElements = [];
     }
+
+    public addGUI(parent: GUI): void { }
 
     public animate(delta: number): void { }
 
@@ -51,7 +54,7 @@ export abstract class EditorStageBase<T extends ILandscape> implements IEditorSt
         }
         this._visible = false;
         this._folders.forEach(uiElement => uiElement.hide());
-        this._sceneElements.forEach(sceneElement => this._scene.remove(sceneElement));
+        this._sceneElements.forEach(sceneElement => this._serviceProvider.scene.remove(sceneElement));
         this.onStateChange(false);
     }
 
@@ -61,7 +64,7 @@ export abstract class EditorStageBase<T extends ILandscape> implements IEditorSt
         }
         this._visible = true;
         this._folders.forEach(uiElement => uiElement.show());
-        this._sceneElements.forEach(sceneElement => this._scene.add(sceneElement));
+        this._sceneElements.forEach(sceneElement => this._serviceProvider.scene.add(sceneElement));
         this.onStateChange(true);
     }
 

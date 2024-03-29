@@ -1,12 +1,11 @@
 import ComputeShader from './../../../shaders/rubble-compute.wgsl';
 import { Vector2 } from 'three';
-import { TextureManager } from '../../gpu-resources/texture-manager';
 import { IDisposable } from '../../disposable';
 import { ExportableComputeNodeBase } from './exportable-compute-node-base';
 import { Rubble } from '../../objects-3d/rubble';
 import { MixedColorSettings } from '../../settings/mixed-color-settings';
 import { ITextureSettings } from '../../settings/texture-settings';
-import { SettingsManager } from '../../settings/settings-manager';
+import { IServiceProvider } from '../../services/service-provider';
 
 export class RubbleComputeNode extends ExportableComputeNodeBase implements IDisposable {
 
@@ -19,13 +18,11 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
     protected override readonly _pipeline: GPUComputePipeline;
 
     constructor(
-        private readonly _settings: SettingsManager,
-        textures: TextureManager,
-        device: GPUDevice,
+        serviceProvider: IServiceProvider,
         private readonly _uvRange: Vector2,
         inputTextureSettings: ITextureSettings) {
         super('Rubble',
-            device,
+            serviceProvider,
             Math.ceil((inputTextureSettings.width * inputTextureSettings.height) / RubbleComputeNode.WORKGROUP_SIZE),
             inputTextureSettings);
 
@@ -33,7 +30,7 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
         this._uniformConfigArray = new ArrayBuffer(MixedColorSettings.BYTE_LENGTH
             + 12 * Float32Array.BYTES_PER_ELEMENT
             + Float32Array.BYTES_PER_ELEMENT); // Padding
-        this._uniformConfigBuffer = device.createBuffer({
+        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Uniform Buffer`,
             size: this._uniformConfigArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
@@ -45,17 +42,17 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
                 {
                     binding: 0, // surface texture
                     visibility: GPUShaderStage.COMPUTE,
-                    texture: textures.surface.bindingLayout,
+                    texture: serviceProvider.textures.surface.bindingLayout,
                 },
                 {
                     binding: 1, // displacement texture
                     visibility: GPUShaderStage.COMPUTE,
-                    texture: textures.displacementFinal.bindingLayout,
+                    texture: serviceProvider.textures.displacementFinal.bindingLayout,
                 },
                 {
                     binding: 2, // float sampler
                     visibility: GPUShaderStage.COMPUTE,
-                    sampler: { type: textures.displacementFinal.settings.samplerBinding },
+                    sampler: { type: serviceProvider.textures.displacementFinal.settings.samplerBinding },
                 },
                 {
                     binding: 3, // uniforms
@@ -81,15 +78,15 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
             [
                 {
                     binding: 0,
-                    resource: textures.displacementFinal.view,
+                    resource: serviceProvider.textures.displacementFinal.view,
                 },
                 {
                     binding: 1,
-                    resource: textures.surface.view,
+                    resource: serviceProvider.textures.surface.view,
                 },
                 {
                     binding: 2,
-                    resource: textures.floatSampler,
+                    resource: serviceProvider.textures.floatSampler,
                 },
                 {
                     binding: 3,
@@ -119,38 +116,40 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
         this._pipeline = this.createPipeline(bindGroupLayout, ComputeShader);
     }
 
-    public configureRun(uvOffset?: Vector2): void {        
+    public configureRun(uvOffset?: Vector2): void {       
+        const constants = this._serviceProvider.settings.constants;
+        const rubble = this._serviceProvider.settings.rubble;
         const uniformConfigView = new DataView(this._uniformConfigArray);
         let offset = 0;
-        uniformConfigView.setFloat32(offset, uvOffset?.x ?? 0, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, uvOffset?.x ?? 0, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, uvOffset?.y ?? 0, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, uvOffset?.y ?? 0, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._uvRange.x, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this._uvRange.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._uvRange.y, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this._uvRange.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
 
-        uniformConfigView.setFloat32(offset, this.textureSettings.width, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this.textureSettings.width, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this.textureSettings.height, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this.textureSettings.height, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.constants.meshSize.x, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, constants.meshSize.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT
-        uniformConfigView.setFloat32(offset, this._settings.constants.meshSize.y, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, constants.meshSize.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
 
-        uniformConfigView.setFloat32(offset, this._settings.rubble.scaleFactor.x, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, rubble.scaleFactor.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.rubble.scaleFactor.y, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, rubble.scaleFactor.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.rubble.scaleFactor.z, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, rubble.scaleFactor.z, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         offset += Float32Array.BYTES_PER_ELEMENT; // Padding
 
-        offset = this._settings.rubble.color.serialize(uniformConfigView, offset, this._settings.constants.littleEndian);
+        offset = rubble.color.serialize(uniformConfigView, offset, constants.littleEndian);
 
-        this._device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
+        this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
     }
 
     public dispose(): void {

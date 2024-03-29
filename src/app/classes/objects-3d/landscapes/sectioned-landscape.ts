@@ -1,6 +1,4 @@
 import { Group, Object3D, Vector2 } from 'three';
-import { TextureManager } from '../../gpu-resources/texture-manager';
-import { BufferManager } from '../../gpu-resources/buffer-manager';
 import { Terrain } from '../terrain';
 import { ILandscape } from './landscape';
 import { DiffuseRenderNode } from '../../nodes/render-nodes/diffuse-render-node';
@@ -9,10 +7,9 @@ import { NormalObjectSpaceRenderNode } from '../../nodes/render-nodes/normal-obj
 import { NormalTangentSpaceRenderNode } from '../../nodes/render-nodes/normal-tangent-space-render-node';
 import { SurfaceRenderNode } from '../../nodes/render-nodes/surface-render-node';
 import { RubbleComputeNode } from '../../nodes/compute-nodes/rubbel-compute-node';
-import { MeshManager } from '../../gpu-resources/mesh-manager';
 import { Rubble } from '../rubble';
-import { SettingsManager } from '../../settings/settings-manager';
 import { Ocean } from '../ocean';
+import { IServiceProvider } from '../../services/service-provider';
 
 export class SectionedLandscape extends Group implements ILandscape {
 
@@ -28,101 +25,81 @@ export class SectionedLandscape extends Group implements ILandscape {
 
     private _running: boolean;
 
-    constructor(
-        private readonly _settings: SettingsManager,
-        textures: TextureManager,
-        private readonly _device: GPUDevice,
-        buffers: BufferManager,
-        meshs: MeshManager) {
+    constructor(private readonly _serviceProvider: IServiceProvider) {
         super();
 
         this._running = false;
-        this.applyMatrix4(_settings.constants.transformation);
+        this.applyMatrix4(_serviceProvider.settings.constants.transformation);
         this._rubbles = new Map<string, Rubble>();
 
-        const displacementSectionSize = new Vector2(textures.displacementSection.width, textures.displacementSection.height);
-        const totalPixelsSize = new Vector2(1, 1).divide(_settings.constants.sections.uvRange).multiply(displacementSectionSize);
+        const displacementSectionSize = new Vector2(_serviceProvider.textures.displacementSection.width, _serviceProvider.textures.displacementSection.height);
+        const totalPixelsSize = new Vector2(1, 1).divide(_serviceProvider.settings.constants.sections.uvRange).multiply(displacementSectionSize);
         const singlePixelUvSize = new Vector2(1, 1).divide(totalPixelsSize);
-        const uvRangeInclusive = _settings.constants.sections.uvRange.clone().add(singlePixelUvSize);
-        const meshSizeSection = _settings.constants.meshSize.clone().multiply(_settings.constants.sections.uvRange);
+        const uvRangeInclusive = _serviceProvider.settings.constants.sections.uvRange.clone().add(singlePixelUvSize);
+        const meshSizeSection = _serviceProvider.settings.constants.meshSize.clone().multiply(_serviceProvider.settings.constants.sections.uvRange);
 
         this._displacementRenderNode = new ExportableDivideRenderNode(
-            _device,
-            buffers,
-            textures,
+            _serviceProvider,
             uvRangeInclusive,
-            textures.displacementFinal,
-            textures.displacementSection);
+            _serviceProvider.textures.displacementFinal,
+            _serviceProvider.textures.displacementSection);
         this._normalObjectSpaceRenderNode = new NormalObjectSpaceRenderNode(
-            _settings,
-            _device,
-            buffers,
-            textures,
-            _settings.constants.sections.uvRange,
-            textures.displacementFinal,
-            textures.normalObjectSpaceSection);
+            _serviceProvider,
+            _serviceProvider.settings.constants.sections.uvRange,
+            _serviceProvider.textures.displacementFinal,
+            _serviceProvider.textures.normalObjectSpaceSection);
         this._normalTangentSpaceRenderNode = new NormalTangentSpaceRenderNode(
-            _device,
-            buffers,
-            textures,
-            textures.normalObjectSpaceSection,
-            textures.normalTangentSpaceSection);
+            _serviceProvider,
+            _serviceProvider.textures.normalObjectSpaceSection,
+            _serviceProvider.textures.normalTangentSpaceSection);
         this._surfaceRenderNode = new SurfaceRenderNode(
-            _settings,
-            _device,
-            buffers,
-            textures,
-            _settings.constants.sections.uvRange,
-            textures.normalObjectSpaceSection,
-            textures.displacementFinal,
-            textures.water,
-            textures.surfaceSection);
+            _serviceProvider,
+            _serviceProvider.settings.constants.sections.uvRange,
+            _serviceProvider.textures.normalObjectSpaceSection,
+            _serviceProvider.textures.displacementFinal,
+            _serviceProvider.textures.water,
+            _serviceProvider.textures.surfaceSection);
         this._diffuseRenderNode = new DiffuseRenderNode(
-            _settings,
-            _device,
-            buffers,
-            textures,
-            _settings.constants.sections.uvRange,
-            textures.surfaceSection,
-            textures.displacementFinal,
-            textures.diffuseSection);
+            _serviceProvider,
+            _serviceProvider.settings.constants.sections.uvRange,
+            _serviceProvider.textures.surfaceSection,
+            _serviceProvider.textures.displacementFinal,
+            _serviceProvider.textures.diffuseSection);
         this._rubbleComputeNode = new RubbleComputeNode(
-            _settings,
-            textures,
-            _device,
-            _settings.constants.sections.uvRange,
-            textures.rubbleTextureSection);
+            _serviceProvider,
+            _serviceProvider.settings.constants.sections.uvRange,
+            _serviceProvider.textures.rubbleTextureSection);
 
         this._terrains = new Map<string, Terrain>();
         const meshSectionOffsetTerrain = meshSizeSection.clone().multiplyScalar(0.5);
         const meshSectionOffsetRubble = new Vector2();
-        for (let y = 0; y < 1; y += _settings.constants.sections.uvRange.y) {
-            for (let x = 0; x < 1; x += _settings.constants.sections.uvRange.x) {
+        for (let y = 0; y < 1; y += _serviceProvider.settings.constants.sections.uvRange.y) {
+            for (let x = 0; x < 1; x += _serviceProvider.settings.constants.sections.uvRange.x) {
                 const uvOffset = new Vector2(x, y);
                 const uvOffsetKey = SectionedLandscape.uvOffsetToKey(uvOffset);
 
                 const terrain = new Terrain(
-                    _settings,
+                    _serviceProvider,
                     meshSizeSection,
-                    _settings.constants.sections.vertexSizeMaximum,
-                    _settings.constants.vertexSizeFinalMinimum,
-                    _settings.constants.meshLodDistance * 0.5,
+                    _serviceProvider.settings.constants.sections.vertexSizeMaximum,
+                    _serviceProvider.settings.constants.vertexSizeFinalMinimum,
+                    _serviceProvider.settings.constants.meshLodDistance * 0.5,
                     false,
                     this._normalTangentSpaceRenderNode,
                     this._diffuseRenderNode,
                     this._displacementRenderNode.textureSettings);
-                SectionedLandscape.translateSection(_settings.constants.meshSize, terrain, uvOffset, meshSectionOffsetTerrain);
+                SectionedLandscape.translateSection(_serviceProvider.settings.constants.meshSize, terrain, uvOffset, meshSectionOffsetTerrain);
                 this._terrains.set(uvOffsetKey, terrain);
                 this.add(terrain);
                 
-                const rubble = new Rubble(meshs, _settings.constants.meshLodDistance * 0.5, this._rubbleComputeNode);
-                SectionedLandscape.translateSection(_settings.constants.meshSize, rubble, uvOffset, meshSectionOffsetRubble);
+                const rubble = new Rubble(_serviceProvider, _serviceProvider.settings.constants.meshLodDistance * 0.5, this._rubbleComputeNode);
+                SectionedLandscape.translateSection(_serviceProvider.settings.constants.meshSize, rubble, uvOffset, meshSectionOffsetRubble);
                 this._rubbles.set(uvOffsetKey, rubble);
                 this.add(rubble);
             }
         }
 
-        this._ocean = new Ocean(_settings, meshs);
+        this._ocean = new Ocean(_serviceProvider);
         this.add(this._ocean);
     }
 
@@ -164,22 +141,22 @@ export class SectionedLandscape extends Group implements ILandscape {
         }
         this._running = true;
 
-        for (let y = 0; y < 1; y += this._settings.constants.sections.uvRange.y) {
-            for (let x = 0; x < 1; x += this._settings.constants.sections.uvRange.x) {
+        for (let y = 0; y < 1; y += this._serviceProvider.settings.constants.sections.uvRange.y) {
+            for (let x = 0; x < 1; x += this._serviceProvider.settings.constants.sections.uvRange.x) {
                 const uvOffset = new Vector2(x, y);
                 this._displacementRenderNode.configureRun(uvOffset);
                 this._normalObjectSpaceRenderNode.configureRun(uvOffset);
                 this._surfaceRenderNode.configureRun(uvOffset);
                 this._diffuseRenderNode.configureRun(uvOffset);
                 this._rubbleComputeNode.configureRun(uvOffset);
-                const commandEncoder = this._device.createCommandEncoder();
+                const commandEncoder = this._serviceProvider.device.createCommandEncoder();
                 this._displacementRenderNode.appendRenderPass(commandEncoder);
                 this._normalObjectSpaceRenderNode.appendRenderPass(commandEncoder);
                 this._normalTangentSpaceRenderNode.appendRenderPass(commandEncoder);
                 this._surfaceRenderNode.appendRenderPass(commandEncoder);
                 this._diffuseRenderNode.appendRenderPass(commandEncoder);
                 this._rubbleComputeNode.appendComputePass(commandEncoder);
-                this._device.queue.submit([commandEncoder.finish()]);
+                this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
 
                 const uvOffsetKey = SectionedLandscape.uvOffsetToKey(uvOffset);
                 const promises: Promise<void>[] = [

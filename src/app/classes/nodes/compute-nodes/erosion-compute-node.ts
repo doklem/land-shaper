@@ -1,11 +1,10 @@
 import ComputeShader from './../../../shaders/erosion-compute.wgsl';
 import { IDisposable } from '../../disposable';
-import { TextureManager } from '../../gpu-resources/texture-manager';
-import { BufferManager } from '../../gpu-resources/buffer-manager';
+import { BufferService } from '../../services/buffer-service';
 import { Vector2 } from 'three';
 import { QuadTree } from './quad-tree';
 import { IExportableNode } from '../exportable-node';
-import { SettingsManager } from '../../settings/settings-manager';
+import { IServiceProvider } from '../../services/service-provider';
 
 export class ErosionComputeNode implements IExportableNode, IDisposable {
 
@@ -28,19 +27,16 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
 
     private _iterations: number;
 
-    public constructor(
-        private readonly _settings: SettingsManager,
-        private readonly _device: GPUDevice,
-        private readonly _textures: TextureManager) {
+    public constructor(private readonly _serviceProvider: IServiceProvider) {
         this._name = ErosionComputeNode.NAME;
         this._iterations = 0;
-        this._workgroupSize = _settings.constants.erosion.dropletsSize.x * _settings.constants.erosion.dropletsSize.y;
+        this._workgroupSize = _serviceProvider.settings.constants.erosion.dropletsSize.x * _serviceProvider.settings.constants.erosion.dropletsSize.y;
 
-        const brush = ErosionComputeNode.createBrush(_settings.constants.erosion.brushRadius);
+        const brush = ErosionComputeNode.createBrush(_serviceProvider.settings.constants.erosion.brushRadius);
 
-        /*this._debugClearBuffer = _device.createBuffer({
+        /*this._debugClearBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Debug Clear Buffer`,
-            size: _textures.debug.byteLength,
+            size: _serviceProvider.textures.debug.byteLength,
             usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.UNIFORM
         });*/
 
@@ -48,48 +44,48 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
         this._uniformConfigArray = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT * 5
             + Float32Array.BYTES_PER_ELEMENT * 8
             + Float32Array.BYTES_PER_ELEMENT); // WebGPU byte padding
-        this._uniformConfigBuffer = _device.createBuffer({
+        this._uniformConfigBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Uniform Config Buffer`,
             size: this._uniformConfigArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
         });
 
         const dropletOriginsArray = this.createDropletOrigins();
-        this._dropletOriginsBuffer = _device.createBuffer({
+        this._dropletOriginsBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Droplet Origins Buffer`,
             size: dropletOriginsArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
         });
-        _device.queue.writeBuffer(this._dropletOriginsBuffer, 0, dropletOriginsArray);
+        _serviceProvider.device.queue.writeBuffer(this._dropletOriginsBuffer, 0, dropletOriginsArray);
 
-        const dropletOffsetsArray = this.createDropletOffsets(_settings.constants.erosion.dropletOffsetsMinSize)
-        this._dropletOffsetsBuffer = _device.createBuffer({
+        const dropletOffsetsArray = this.createDropletOffsets(_serviceProvider.settings.constants.erosion.dropletOffsetsMinSize)
+        this._dropletOffsetsBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Droplet Offsets Buffer`,
             size: dropletOffsetsArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
         });
-        _device.queue.writeBuffer(this._dropletOffsetsBuffer, 0, dropletOffsetsArray);
+        _serviceProvider.device.queue.writeBuffer(this._dropletOffsetsBuffer, 0, dropletOffsetsArray);
 
-        this._dropletIterationsBuffer = _device.createBuffer({
+        this._dropletIterationsBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Droplet Iterations Buffer`,
             size: this._workgroupSize * Uint32Array.BYTES_PER_ELEMENT,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
         });
 
-        this._brushBuffer = _device.createBuffer({
+        this._brushBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Brush Buffer`,
             size: brush.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
         });
-        _device.queue.writeBuffer(this._brushBuffer, 0, brush);
+        _serviceProvider.device.queue.writeBuffer(this._brushBuffer, 0, brush);
 
-        this._displacementBuffer = _device.createBuffer({
+        this._displacementBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Displacement Buffer`,
-            size: _textures.displacementFinal.byteLength,
+            size: _serviceProvider.textures.displacementFinal.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.STORAGE
         });
 
-        this._stagingBuffer = _device.createBuffer({
+        this._stagingBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Staging Buffer`,
             size: this._displacementBuffer.size,
             usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
@@ -98,7 +94,7 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
         this.setDisplacement();
 
         // bind group layout
-        const bindGroupLayout = _device.createBindGroupLayout({
+        const bindGroupLayout = _serviceProvider.device.createBindGroupLayout({
             label: `${this._name} Bind Group Layout`,
             entries: [
                 {
@@ -136,16 +132,16 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
                     visibility: GPUShaderStage.COMPUTE,
                     storageTexture:
                     {
-                        format: _textures.debug.settings.format,
+                        format: _serviceProvider.textures.debug.settings.format,
                         access: 'write-only',
-                        viewDimension: _textures.debug.bindingLayout.viewDimension,
+                        viewDimension: _serviceProvider.textures.debug.bindingLayout.viewDimension,
                     },
                 },*/
             ]
         });
 
         // bind group
-        this._bindGroup = this._device.createBindGroup({
+        this._bindGroup = this._serviceProvider.device.createBindGroup({
             label: `${this._name} Bind Group`,
             layout: bindGroupLayout,
             entries: [
@@ -175,7 +171,7 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
                 },
                 /*{
                     binding: 6,
-                    resource: _textures.debug.view,
+                    resource: _serviceProvider.textures.debug.view,
                 },*/
             ]
         })
@@ -188,58 +184,60 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
         /*commandEncoder.copyBufferToTexture(
             {
                 buffer: this._debugClearBuffer,
-                bytesPerRow: this._textures.debug.bytesPerRow,
+                bytesPerRow: this._serviceProvider.textures.debug.bytesPerRow,
             },
-            this._textures.debug,
-            this._textures.debug
+            this._serviceProvider.textures.debug,
+            this._serviceProvider.textures.debug
         );*/
         const computePassEncoder = commandEncoder.beginComputePass();
         computePassEncoder.setPipeline(this._pipeline);
         computePassEncoder.setBindGroup(0, this._bindGroup);
         for (let i = 0; i < this._iterations; i++) {
-            computePassEncoder.dispatchWorkgroups(this._settings.constants.erosion.dropletsWorkgroupCount);
+            computePassEncoder.dispatchWorkgroups(this._serviceProvider.settings.constants.erosion.dropletsWorkgroupCount);
         }
         computePassEncoder.end();
         commandEncoder.copyBufferToTexture(
             {
                 buffer: this._displacementBuffer,
-                bytesPerRow: this._textures.displacementFinal.bytesPerRow,
+                bytesPerRow: this._serviceProvider.textures.displacementFinal.bytesPerRow,
             },
-            this._textures.displacementFinal,
-            this._textures.displacementFinal);
+            this._serviceProvider.textures.displacementFinal,
+            this._serviceProvider.textures.displacementFinal);
         commandEncoder.copyBufferToBuffer(this._displacementBuffer, 0, this._stagingBuffer, 0, this._displacementBuffer.size);
     }
 
     public configureRun(): void {
-        this._iterations = this._settings.erosion.iterations;
+        const constants = this._serviceProvider.settings.constants;
+        const erosion = this._serviceProvider.settings.erosion;
+        this._iterations = erosion.iterations;
         const view = new DataView(this._uniformConfigArray);
         let offset = 0;
-        view.setUint32(offset, this._textures.displacementFinal.width, this._settings.constants.littleEndian);
+        view.setUint32(offset, this._serviceProvider.textures.displacementFinal.width, constants.littleEndian);
         offset += Uint32Array.BYTES_PER_ELEMENT;
-        view.setUint32(offset, this._textures.displacementFinal.height, this._settings.constants.littleEndian);
+        view.setUint32(offset, this._serviceProvider.textures.displacementFinal.height, constants.littleEndian);
         offset += Uint32Array.BYTES_PER_ELEMENT;
-        view.setInt32(offset, this._settings.constants.erosion.brushRadius, this._settings.constants.littleEndian);
+        view.setInt32(offset, constants.erosion.brushRadius, constants.littleEndian);
         offset += Int32Array.BYTES_PER_ELEMENT;
-        view.setUint32(offset, this._settings.erosion.maxLifetime, this._settings.constants.littleEndian);
+        view.setUint32(offset, erosion.maxLifetime, constants.littleEndian);
         offset += Uint32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.inertia, this._settings.constants.littleEndian);
+        view.setFloat32(offset, erosion.inertia, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.sedimentCapacityFactor, this._settings.constants.littleEndian);
+        view.setFloat32(offset, erosion.sedimentCapacityFactor, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.minSedimentCapacity, this._settings.constants.littleEndian);
+        view.setFloat32(offset, erosion.minSedimentCapacity, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.depositSpeed, this._settings.constants.littleEndian);
+        view.setFloat32(offset, erosion.depositSpeed, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.erodeSpeed, this._settings.constants.littleEndian);
+        view.setFloat32(offset, erosion.erodeSpeed, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.evaporateSpeed, this._settings.constants.littleEndian);
+        view.setFloat32(offset, erosion.evaporateSpeed, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.gravity, this._settings.constants.littleEndian);
+        view.setFloat32(offset, erosion.gravity, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.startSpeed, this._settings.constants.littleEndian);
+        view.setFloat32(offset, erosion.startSpeed, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.startWater, this._settings.constants.littleEndian);
-        this._device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
+        view.setFloat32(offset, erosion.startWater, constants.littleEndian);
+        this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
     }
 
     public dispose(): void {
@@ -248,37 +246,37 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
     }
 
     public async readOutputBuffer(output: Float32Array): Promise<void> {
-        output.set(new Float32Array(await BufferManager.readGPUBuffer(this._stagingBuffer)));
+        output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
     }
 
     public setDisplacement(): void {
-        const commandEncoder = this._device.createCommandEncoder();
+        const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         commandEncoder.copyTextureToBuffer(
-            this._textures.displacementFinal,
+            this._serviceProvider.textures.displacementFinal,
             {
                 buffer: this._displacementBuffer,
-                bytesPerRow: this._textures.displacementFinal.bytesPerRow
+                bytesPerRow: this._serviceProvider.textures.displacementFinal.bytesPerRow
             },
-            this._textures.displacementFinal);
-        this._device.queue.submit([commandEncoder.finish()]);
+            this._serviceProvider.textures.displacementFinal);
+        this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
         const dropletIterationsArray = new Uint32Array(this._dropletIterationsBuffer.size / Uint32Array.BYTES_PER_ELEMENT);
         let offset = 0;
         for (let i = 0; i < dropletIterationsArray.length; i++) {
             dropletIterationsArray.set([offset], i);
             offset += 4;
         }
-        this._device.queue.writeBuffer(this._dropletIterationsBuffer, 0, dropletIterationsArray);
+        this._serviceProvider.device.queue.writeBuffer(this._dropletIterationsBuffer, 0, dropletIterationsArray);
     }
 
     private createPipeline(bindGroupLayout: GPUBindGroupLayout, shader: string, name?: string, entryPoint?: string): GPUComputePipeline {
-        return this._device.createComputePipeline({
+        return this._serviceProvider.device.createComputePipeline({
             label: `${name ?? this._name} Compute Pipeline`,
-            layout: this._device.createPipelineLayout({
+            layout: this._serviceProvider.device.createPipelineLayout({
                 label: `${name ?? this._name} Pipeline Layout`,
                 bindGroupLayouts: [bindGroupLayout],
             }),
             compute: {
-                module: this._device.createShaderModule({
+                module: this._serviceProvider.device.createShaderModule({
                     label: `${name ?? this._name} Compute Shader Module`,
                     code: shader,
                 }),
@@ -310,14 +308,14 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
 
     private createDropletOrigins(): Uint32Array {
         const dropletOriginArea = new Vector2(
-            this._textures.displacementFinal.width / this._settings.constants.erosion.dropletsSize.x,
-            this._textures.displacementFinal.height / this._settings.constants.erosion.dropletsSize.y);
+            this._serviceProvider.textures.displacementFinal.width / this._serviceProvider.settings.constants.erosion.dropletsSize.x,
+            this._serviceProvider.textures.displacementFinal.height / this._serviceProvider.settings.constants.erosion.dropletsSize.y);
 
         const originIndices: number[] = [];
         let coordinate = new Vector2();
-        for(let y = 0; y < this._settings.constants.erosion.dropletsSize.y; y++) {
-            for (let x = 0; x < this._settings.constants.erosion.dropletsSize.x; x++) {
-                originIndices.push(coordinate.y * this._textures.displacementFinal.width + coordinate.x);
+        for(let y = 0; y < this._serviceProvider.settings.constants.erosion.dropletsSize.y; y++) {
+            for (let x = 0; x < this._serviceProvider.settings.constants.erosion.dropletsSize.x; x++) {
+                originIndices.push(coordinate.y * this._serviceProvider.textures.displacementFinal.width + coordinate.x);
                 coordinate.setX(coordinate.x + dropletOriginArea.x);
             }
             coordinate.set(0, coordinate.y + dropletOriginArea.y);
@@ -328,8 +326,8 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
 
     private createDropletOffsets(minSize: number): Float32Array {
         const dropletOriginArea = new Vector2(
-            this._textures.displacementFinal.width / this._settings.constants.erosion.dropletsSize.x,
-            this._textures.displacementFinal.height / this._settings.constants.erosion.dropletsSize.y);
+            this._serviceProvider.textures.displacementFinal.width / this._serviceProvider.settings.constants.erosion.dropletsSize.x,
+            this._serviceProvider.textures.displacementFinal.height / this._serviceProvider.settings.constants.erosion.dropletsSize.y);
         const quadTree = new QuadTree(new Vector2(), dropletOriginArea, minSize);
         const offsets: number[] = [];
         const totalOffsets = dropletOriginArea.x * dropletOriginArea.y;

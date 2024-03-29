@@ -1,8 +1,8 @@
 import { Color, Matrix4, Vector2, Vector3 } from 'three';
-import { LightSettings } from './light-settings';
-import { MixedColorSettings } from './mixed-color-settings';
+import { LightSettings } from '../settings/light-settings';
+import { MixedColorSettings } from '../settings/mixed-color-settings';
 
-export class SettingsManager {
+export class SettingsService {
 
     public readonly blur = {
         size: new Vector2(2, 2),

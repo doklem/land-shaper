@@ -13,9 +13,9 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { IDisposable } from '../disposable';
-import { TextureManager } from './texture-manager';
+import { TextureService } from './texture-service';
 
-export class MeshManager implements IDisposable {
+export class MeshService implements IDisposable {
 
     public readonly rubbleGeometries: BufferGeometry<NormalBufferAttributes>[];
 
@@ -42,7 +42,7 @@ export class MeshManager implements IDisposable {
         this.rubbleGeometries.forEach(geometry => geometry?.dispose());
         const material = this.rubbleMaterial;
         if (material) {
-            TextureManager.disposeMaterialTextures(material);
+            TextureService.disposeMaterialTextures(material);
             material.dispose();
         }
         this.waterNomrals?.dispose();

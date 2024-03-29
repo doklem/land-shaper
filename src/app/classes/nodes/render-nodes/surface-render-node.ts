@@ -1,10 +1,8 @@
 import FragmentShader from './../../../shaders/surface-fragment.wgsl';
-import { BufferManager } from '../../gpu-resources/buffer-manager';
-import { TextureManager } from '../../gpu-resources/texture-manager';
 import { RenderNodeBase } from './render-node-base';
-import { TextureWrapper } from '../../gpu-resources/texture-wrapper';
+import { TextureWrapper } from '../../services/texture-wrapper';
 import { Vector2 } from 'three';
-import { SettingsManager } from '../../settings/settings-manager';
+import { IServiceProvider } from '../../services/service-provider';
 
 export class SurfaceRenderNode extends RenderNodeBase {
 
@@ -18,32 +16,25 @@ export class SurfaceRenderNode extends RenderNodeBase {
     protected readonly _pipeline: GPURenderPipeline;
 
     public constructor(
-        private readonly _settings: SettingsManager,
-        device: GPUDevice,
-        buffers: BufferManager,
-        textures: TextureManager,
+        serviceProvider: IServiceProvider,
         private readonly _uvRange: Vector2,
         normalObjectSpaceTexture: TextureWrapper,
         displacementTexture: TextureWrapper,
         waterTexture: TextureWrapper,
         outputTexture: TextureWrapper
     ) {
-        super(
-            SurfaceRenderNode.NAME,
-            device,
-            buffers,
-            outputTexture);
+        super(SurfaceRenderNode.NAME, serviceProvider, outputTexture);
 
         // buffers
         this._uniformConfigArray = new Float32Array(12);
-        this._uniformConfigBuffer = device.createBuffer({
+        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Uniform Config Buffer`,
             size: this._uniformConfigArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
         });
 
         // bind group layout
-        const bindGroupLayout = device.createBindGroupLayout({
+        const bindGroupLayout = serviceProvider.device.createBindGroupLayout({
             label: `${this._name} Bind Group Layout`,
             entries: [
                 {
@@ -75,7 +66,7 @@ export class SurfaceRenderNode extends RenderNodeBase {
         });
 
         // bind group
-        this._bindGroup = this._device.createBindGroup({
+        this._bindGroup = serviceProvider.device.createBindGroup({
             label: `${this._name} Bind Group`,
             layout: bindGroupLayout,
             entries: [
@@ -93,7 +84,7 @@ export class SurfaceRenderNode extends RenderNodeBase {
                 },
                 {
                     binding: 3,
-                    resource: textures.floatSampler,
+                    resource: serviceProvider.textures.floatSampler,
                 },
                 {
                     binding: 4,
@@ -110,21 +101,22 @@ export class SurfaceRenderNode extends RenderNodeBase {
     }
 
     public configureRun(uvOffset?: Vector2): void {
+        const diffuse = this._serviceProvider.settings.diffuse;
         this._uniformConfigArray.set(
             [
                 uvOffset?.x ?? 0,
                 uvOffset?.y ?? 0,
                 this._uvRange.x,
                 this._uvRange.y,
-                this._settings.diffuse.slopStart,
-                this._settings.diffuse.slopRange,
-                this._settings.diffuse.riverStart,
-                this._settings.diffuse.riverRange,
-                this._settings.diffuse.shoreStart,
-                this._settings.diffuse.shoreRange
+                diffuse.slopStart,
+                diffuse.slopRange,
+                diffuse.riverStart,
+                diffuse.riverRange,
+                diffuse.shoreStart,
+                diffuse.shoreRange
             ]
         );
-        this._device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
+        this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
     }
 
     public override dispose(): void {

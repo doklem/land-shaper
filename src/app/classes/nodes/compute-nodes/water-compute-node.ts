@@ -1,9 +1,9 @@
 import ComputeShader from './../../../shaders/water-compute.wgsl';
-import { TextureManager } from '../../gpu-resources/texture-manager';
+import { TextureService } from '../../services/texture-service';
 import { Vector2 } from 'three';
 import { QuadTree } from './quad-tree';
 import { ComputeNodeBase } from './compute-node-base';
-import { SettingsManager } from '../../settings/settings-manager';
+import { IServiceProvider } from '../../services/service-provider';
 
 export class WaterComputeNode extends ComputeNodeBase {
 
@@ -21,43 +21,40 @@ export class WaterComputeNode extends ComputeNodeBase {
     protected override readonly _bindGroup: GPUBindGroup;
     protected override readonly _pipeline: GPUComputePipeline;
 
-    public constructor(
-        private readonly _settings: SettingsManager,
-        device: GPUDevice,
-        private readonly _textures: TextureManager) {
+    public constructor(serviceProvider: IServiceProvider) {
         super(
             WaterComputeNode.NAME,
-            device,
-            WaterComputeNode.getWorkgroupCount(device, _textures),
-            _textures.water.settings);
+            serviceProvider,
+            WaterComputeNode.getWorkgroupCount(serviceProvider.device, serviceProvider.textures),
+            serviceProvider.textures.water.settings);
 
-        this._workgroupSize = _settings.constants.erosion.dropletsSize.x * _settings.constants.erosion.dropletsSize.y;
+        this._workgroupSize = serviceProvider.settings.constants.erosion.dropletsSize.x * serviceProvider.settings.constants.erosion.dropletsSize.y;
 
         // buffers
         this._uniformConfigArray = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT * 3 + Float32Array.BYTES_PER_ELEMENT * 5);
-        this._uniformConfigBuffer = device.createBuffer({
+        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Uniform Config Buffer`,
             size: this._uniformConfigArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
         });
 
         const dropletOriginsArray = this.createDropletOrigins();
-        this._dropletOriginsBuffer = device.createBuffer({
+        this._dropletOriginsBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Droplet Origins Buffer`,
             size: dropletOriginsArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
         });
-        device.queue.writeBuffer(this._dropletOriginsBuffer, 0, dropletOriginsArray);
+        serviceProvider.device.queue.writeBuffer(this._dropletOriginsBuffer, 0, dropletOriginsArray);
 
-        const dropletOffsetsArray = this.createDropletOffsets(_settings.constants.erosion.dropletOffsetsMinSize)
-        this._dropletOffsetsBuffer = device.createBuffer({
+        const dropletOffsetsArray = this.createDropletOffsets(serviceProvider.settings.constants.erosion.dropletOffsetsMinSize)
+        this._dropletOffsetsBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Droplet Offsets Buffer`,
             size: dropletOffsetsArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
         });
-        device.queue.writeBuffer(this._dropletOffsetsBuffer, 0, dropletOffsetsArray);
+        serviceProvider.device.queue.writeBuffer(this._dropletOffsetsBuffer, 0, dropletOffsetsArray);
 
-        this._dropletIterationsBuffer = device.createBuffer({
+        this._dropletIterationsBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Droplet Iterations Buffer`,
             size: this._workgroupSize * Uint32Array.BYTES_PER_ELEMENT,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
@@ -89,12 +86,12 @@ export class WaterComputeNode extends ComputeNodeBase {
                 {
                     binding: 4, // displacement
                     visibility: GPUShaderStage.COMPUTE,
-                    texture: _textures.displacementFinal.bindingLayout,
+                    texture: serviceProvider.textures.displacementFinal.bindingLayout,
                 },
                 {
                     binding: 5, // float sampler
                     visibility: GPUShaderStage.COMPUTE,
-                    sampler: { type: _textures.displacementFinal.settings.samplerBinding },
+                    sampler: { type: serviceProvider.textures.displacementFinal.settings.samplerBinding },
                 },
                 {
                     binding: 6, // water
@@ -126,11 +123,11 @@ export class WaterComputeNode extends ComputeNodeBase {
                 },
                 {
                     binding: 4,
-                    resource: _textures.displacementFinal.view,
+                    resource: serviceProvider.textures.displacementFinal.view,
                 },
                 {
                     binding: 5,
-                    resource: _textures.floatSampler,
+                    resource: serviceProvider.textures.floatSampler,
                 },
                 {
                     binding: 6,
@@ -149,24 +146,26 @@ export class WaterComputeNode extends ComputeNodeBase {
     }
 
     public configureRun(): void {
+        const constants = this._serviceProvider.settings.constants;
+        const erosion = this._serviceProvider.settings.erosion;
         const view = new DataView(this._uniformConfigArray);
         let offset = 0;
-        view.setUint32(offset, this._textures.displacementFinal.width, this._settings.constants.littleEndian);
+        view.setUint32(offset, this._serviceProvider.textures.displacementFinal.width, constants.littleEndian);
         offset += Int32Array.BYTES_PER_ELEMENT;
-        view.setUint32(offset, this._textures.displacementFinal.height, this._settings.constants.littleEndian);
+        view.setUint32(offset, this._serviceProvider.textures.displacementFinal.height, constants.littleEndian);
         offset += Int32Array.BYTES_PER_ELEMENT;
-        view.setUint32(offset, this._settings.erosion.maxLifetime, this._settings.constants.littleEndian);
+        view.setUint32(offset, erosion.maxLifetime, constants.littleEndian);
         offset += Int32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.inertia, this._settings.constants.littleEndian);
+        view.setFloat32(offset, erosion.inertia, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.evaporateSpeed, this._settings.constants.littleEndian);
+        view.setFloat32(offset, erosion.evaporateSpeed, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.gravity, this._settings.constants.littleEndian);
+        view.setFloat32(offset, erosion.gravity, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.startSpeed, this._settings.constants.littleEndian);
+        view.setFloat32(offset, erosion.startSpeed, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        view.setFloat32(offset, this._settings.erosion.startWater, this._settings.constants.littleEndian);
-        this._device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
+        view.setFloat32(offset, erosion.startWater, constants.littleEndian);
+        this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
 
         const dropletIterationsArray = new Uint32Array(this._dropletIterationsBuffer.size / Uint32Array.BYTES_PER_ELEMENT);
         offset = 0;
@@ -174,7 +173,7 @@ export class WaterComputeNode extends ComputeNodeBase {
             dropletIterationsArray.set([offset], i);
             offset += 4;
         }
-        this._device.queue.writeBuffer(this._dropletIterationsBuffer, 0, dropletIterationsArray);
+        this._serviceProvider.device.queue.writeBuffer(this._dropletIterationsBuffer, 0, dropletIterationsArray);
     }
 
     public override dispose(): void {
@@ -183,19 +182,19 @@ export class WaterComputeNode extends ComputeNodeBase {
     }
 
     protected override appendToCommandEncoder(commandEncoder: GPUCommandEncoder): void {
-        this.appendCopyOutputToTexture(commandEncoder, this._textures.water);
+        this.appendCopyOutputToTexture(commandEncoder, this._serviceProvider.textures.water);
     }
 
     private createDropletOrigins(): Uint32Array {
         const dropletOriginArea = new Vector2(
-            this._textures.displacementFinal.width / this._settings.constants.erosion.dropletsSize.x,
-            this._textures.displacementFinal.height / this._settings.constants.erosion.dropletsSize.y);
+            this._serviceProvider.textures.displacementFinal.width / this._serviceProvider.settings.constants.erosion.dropletsSize.x,
+            this._serviceProvider.textures.displacementFinal.height / this._serviceProvider.settings.constants.erosion.dropletsSize.y);
 
         const originIndices: number[] = [];
         let coordinate = new Vector2();
-        for (let y = 0; y < this._settings.constants.erosion.dropletsSize.y; y++) {
-            for (let x = 0; x < this._settings.constants.erosion.dropletsSize.x; x++) {
-                originIndices.push(coordinate.y * this._textures.displacementFinal.width + coordinate.x);
+        for (let y = 0; y < this._serviceProvider.settings.constants.erosion.dropletsSize.y; y++) {
+            for (let x = 0; x < this._serviceProvider.settings.constants.erosion.dropletsSize.x; x++) {
+                originIndices.push(coordinate.y * this._serviceProvider.textures.displacementFinal.width + coordinate.x);
                 coordinate.setX(coordinate.x + dropletOriginArea.x);
             }
             coordinate.set(0, coordinate.y + dropletOriginArea.y);
@@ -206,8 +205,8 @@ export class WaterComputeNode extends ComputeNodeBase {
 
     private createDropletOffsets(minSize: number): Float32Array {
         const dropletOriginArea = new Vector2(
-            this._textures.displacementFinal.width / this._settings.constants.erosion.dropletsSize.x,
-            this._textures.displacementFinal.height / this._settings.constants.erosion.dropletsSize.y);
+            this._serviceProvider.textures.displacementFinal.width / this._serviceProvider.settings.constants.erosion.dropletsSize.x,
+            this._serviceProvider.textures.displacementFinal.height / this._serviceProvider.settings.constants.erosion.dropletsSize.y);
         const quadTree = new QuadTree(new Vector2(), dropletOriginArea, minSize);
         const offsets: number[] = [];
         const totalOffsets = dropletOriginArea.x * dropletOriginArea.y;
@@ -220,7 +219,7 @@ export class WaterComputeNode extends ComputeNodeBase {
         return new Float32Array(offsets);
     }
 
-    private static getWorkgroupCount(device: GPUDevice, textures: TextureManager): number {
+    private static getWorkgroupCount(device: GPUDevice, textures: TextureService): number {
         // Each pixel should be exactly once the origin of a droplet with this.
         const workgroupCount = (textures.water.settings.width * textures.water.settings.height) / WaterComputeNode.WORKGROUP_SIZE;
         return Math.min(workgroupCount, device.limits.maxComputeWorkgroupsPerDimension);

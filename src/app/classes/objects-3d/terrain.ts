@@ -8,13 +8,13 @@ import {
     PlaneGeometry,
     Vector2
 } from 'three';
-import { TextureManager } from '../gpu-resources/texture-manager';
+import { TextureService } from '../services/texture-service';
 import { IDisposable } from '../disposable';
 import { NormalTangentSpaceRenderNode } from '../nodes/render-nodes/normal-tangent-space-render-node';
 import { DiffuseRenderNode } from '../nodes/render-nodes/diffuse-render-node';
 import { IExportableNode } from '../nodes/exportable-node';
 import { ITextureSettings } from '../settings/texture-settings';
-import { SettingsManager } from '../settings/settings-manager';
+import { IServiceProvider } from '../services/service-provider';
 
 export class Terrain extends LOD implements IDisposable {
 
@@ -30,7 +30,7 @@ export class Terrain extends LOD implements IDisposable {
     }
 
     constructor(
-        private readonly _settings: SettingsManager,
+        private readonly _serviceProvider: IServiceProvider,
         meshSize: Vector2,
         vertexSizeMax: Vector2,
         vertexSizeMin: Vector2,
@@ -52,7 +52,7 @@ export class Terrain extends LOD implements IDisposable {
             this._diffuseOutput = new Float32Array(_diffuseRenderNode.textureSettings.length);
         }
 
-        this._displacementMap = displacementMap ?? TextureManager.createDataTexture(this._displacementOutput!, displacementTexture!);
+        this._displacementMap = displacementMap ?? TextureService.createDataTexture(this._displacementOutput!, displacementTexture!);
         const materialParameters: MeshStandardMaterialParameters = {
             displacementMap: this._displacementMap,
             displacementScale: 1,
@@ -62,10 +62,10 @@ export class Terrain extends LOD implements IDisposable {
             side: DoubleSide,
         };
         if (_diffuseRenderNode) {
-            materialParameters.map = TextureManager.createDataTexture(this._diffuseOutput!, _diffuseRenderNode.textureSettings, _settings.constants.anisotropy);
+            materialParameters.map = TextureService.createDataTexture(this._diffuseOutput!, _diffuseRenderNode.textureSettings, _serviceProvider.settings.constants.anisotropy);
         }
         if (_normalTangentSpaceRenderNode) {
-            materialParameters.normalMap = TextureManager.createDataTexture(this._normalOutput!, _normalTangentSpaceRenderNode.textureSettings);
+            materialParameters.normalMap = TextureService.createDataTexture(this._normalOutput!, _normalTangentSpaceRenderNode.textureSettings);
         }
         this._material = new MeshStandardMaterial(materialParameters);
 
@@ -127,12 +127,12 @@ export class Terrain extends LOD implements IDisposable {
     }
 
     public applyDebugSettings(): void {
-        this._material.wireframe = this._settings.debug.wireframe;
+        this._material.wireframe = this._serviceProvider.settings.debug.wireframe;
         this._material.needsUpdate = true;
     }
 
     public dispose(): void {
-        TextureManager.disposeMaterialTextures(this._material);
+        TextureService.disposeMaterialTextures(this._material);
         this._material.dispose();
         this._meshs.forEach(mesh => mesh.geometry.dispose());
     }

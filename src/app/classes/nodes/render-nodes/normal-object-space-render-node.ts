@@ -1,10 +1,8 @@
 import FragmentShader from './../../../shaders/normal-object-space-fragment.wgsl';
-import { BufferManager } from '../../gpu-resources/buffer-manager';
 import { RenderNodeBase } from './render-node-base';
-import { TextureManager } from '../../gpu-resources/texture-manager';
 import { Vector2 } from 'three';
-import { TextureWrapper } from '../../gpu-resources/texture-wrapper';
-import { SettingsManager } from '../../settings/settings-manager';
+import { TextureWrapper } from '../../services/texture-wrapper';
+import { IServiceProvider } from '../../services/service-provider';
 
 export class NormalObjectSpaceRenderNode extends RenderNodeBase {
 
@@ -20,37 +18,30 @@ export class NormalObjectSpaceRenderNode extends RenderNodeBase {
     protected readonly _pipeline: GPURenderPipeline;
 
     public constructor(
-        private readonly _settings: SettingsManager,
-        device: GPUDevice,
-        buffers: BufferManager,
-        textures: TextureManager,
+        serviceProvider: IServiceProvider,
         private readonly _uvRange: Vector2,
         displacementTexture: TextureWrapper,
         outputTexture: TextureWrapper
     ) {
-        super(
-            NormalObjectSpaceRenderNode.NAME,
-            device,
-            buffers,
-            outputTexture);
+        super(NormalObjectSpaceRenderNode.NAME, serviceProvider, outputTexture);
 
         const terrainResolution = new Vector2(1, 1).divide(_uvRange).multiply(new Vector2(this.textureSettings.width, this.textureSettings.height));
         this._sampleDistanceUv = new Vector2(1, 1).divide(terrainResolution);
-        this._sampleDistanceMeters = _settings.constants.meshSize.clone().divide(terrainResolution);
+        this._sampleDistanceMeters = serviceProvider.settings.constants.meshSize.clone().divide(terrainResolution);
 
         // uniform buffers
         this._uniformConfigArray = new ArrayBuffer(
             12 * Float32Array.BYTES_PER_ELEMENT
             + Int32Array.BYTES_PER_ELEMENT
             + 3 * Float32Array.BYTES_PER_ELEMENT); // Padding
-        this._uniformConfigBuffer = device.createBuffer({
+        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Uniform Config Buffer`,
             size: this._uniformConfigArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
         });
 
         // bind group layout
-        const bindGroupLayout = device.createBindGroupLayout({
+        const bindGroupLayout = serviceProvider.device.createBindGroupLayout({
             label: `${this._name} Bind Group Layout`,
             entries: [
                 {
@@ -72,7 +63,7 @@ export class NormalObjectSpaceRenderNode extends RenderNodeBase {
         });
 
         // bind group
-        this._bindGroup = this._device.createBindGroup({
+        this._bindGroup = serviceProvider.device.createBindGroup({
             label: `${this._name} Bind Group`,
             layout: bindGroupLayout,
             entries: [
@@ -82,7 +73,7 @@ export class NormalObjectSpaceRenderNode extends RenderNodeBase {
                 },
                 {
                     binding: 1,
-                    resource: textures.floatSampler,
+                    resource: serviceProvider.textures.floatSampler,
                 },
                 {
                     binding: 2,
@@ -99,36 +90,38 @@ export class NormalObjectSpaceRenderNode extends RenderNodeBase {
     }
 
     public configureRun(uvOffset?: Vector2): void {
+        const constants = this._serviceProvider.settings.constants;
+        const normals = this._serviceProvider.settings.normals;
         const uniformConfigView = new DataView(this._uniformConfigArray);
         let offset = 0;
-        uniformConfigView.setFloat32(offset, uvOffset?.x ?? 0, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, uvOffset?.x ?? 0, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, uvOffset?.y ?? 0, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, uvOffset?.y ?? 0, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._uvRange.x, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this._uvRange.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._uvRange.y, this._settings.constants.littleEndian);
-        offset += Float32Array.BYTES_PER_ELEMENT;
-
-        uniformConfigView.setFloat32(offset, this._sampleDistanceUv.x, this._settings.constants.littleEndian);
-        offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._sampleDistanceUv.y, this._settings.constants.littleEndian);
-        offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._sampleDistanceMeters.x, this._settings.constants.littleEndian);
-        offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._sampleDistanceMeters.y, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this._uvRange.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
 
-        uniformConfigView.setFloat32(offset, this._settings.normals.scale.x, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this._sampleDistanceUv.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.normals.scale.y, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this._sampleDistanceUv.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.normals.seed, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this._sampleDistanceMeters.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this._settings.normals.amplitude, this._settings.constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this._sampleDistanceMeters.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
 
-        uniformConfigView.setInt32(offset, this._settings.normals.octaves, this._settings.constants.littleEndian);
-        this._device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
+        uniformConfigView.setFloat32(offset, normals.scale.x, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, normals.scale.y, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, normals.seed, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, normals.amplitude, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+
+        uniformConfigView.setInt32(offset, normals.octaves, constants.littleEndian);
+        this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
     }
 }
