@@ -7,12 +7,14 @@ import { IExportableNode } from '../../nodes/exportable-node';
 import { ILandscape } from './landscape';
 import { SimpleOcean } from '../simple-ocean';
 import { IServiceProvider } from '../../services/service-provider';
+import { ErosionDifferenceRenderNode } from '../../nodes/render-nodes/erosion-difference-render-node';
 
 export class ErosionLandscape extends Group implements ILandscape {
 
     private readonly _blurRenderNode: BlurRenderNode;
     private readonly _displacementRenderNode: DisplacementRenderNode;
     private readonly _erosionComputeNode: ErosionComputeNode;
+    private readonly _erosionDifferenceRenderNode: ErosionDifferenceRenderNode;
     private readonly _ocean: SimpleOcean;
     private readonly _terrain: Terrain;
 
@@ -30,6 +32,7 @@ export class ErosionLandscape extends Group implements ILandscape {
 
         this._displacementRenderNode = new DisplacementRenderNode(_serviceProvider, false);
         this._erosionComputeNode = new ErosionComputeNode(_serviceProvider);
+        this._erosionDifferenceRenderNode = new ErosionDifferenceRenderNode(_serviceProvider);
         this._blurRenderNode = new BlurRenderNode(_serviceProvider);
 
         this._terrain = new Terrain(
@@ -40,7 +43,7 @@ export class ErosionLandscape extends Group implements ILandscape {
             _serviceProvider.settings.constants.meshLodDistance,
             true,
             undefined,
-            undefined,
+            this._erosionDifferenceRenderNode,
             this._displacementRenderNode.textureSettings);
         this.add(this._terrain);
 
@@ -60,6 +63,7 @@ export class ErosionLandscape extends Group implements ILandscape {
         this._blurRenderNode.dispose();
         this._displacementRenderNode.dispose();
         this._erosionComputeNode.dispose();
+        this._erosionDifferenceRenderNode.dispose();
         this._ocean.dispose();
         this._terrain.dispose();
     }
@@ -74,6 +78,7 @@ export class ErosionLandscape extends Group implements ILandscape {
 
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         this._displacementRenderNode.appendRenderPass(commandEncoder);
+        this._erosionDifferenceRenderNode.appendRenderPass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
         this._erosionComputeNode.setDisplacement();
 
@@ -91,6 +96,7 @@ export class ErosionLandscape extends Group implements ILandscape {
 
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         this._erosionComputeNode.appendComputePass(commandEncoder);
+        this._erosionDifferenceRenderNode.appendRenderPass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
 
         await this.applyRunOutput(this._erosionComputeNode);
@@ -107,6 +113,7 @@ export class ErosionLandscape extends Group implements ILandscape {
 
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         this._blurRenderNode.appendRenderPass(commandEncoder);
+        this._erosionDifferenceRenderNode.appendRenderPass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
         this._erosionComputeNode.setDisplacement();
 

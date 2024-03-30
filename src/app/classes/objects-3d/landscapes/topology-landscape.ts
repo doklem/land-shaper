@@ -25,8 +25,8 @@ export class TopologyLandscape extends Group implements ILandscape {
         this._terrain = new Mesh(
             new PlaneGeometry(_serviceProvider.settings.constants.meshSize.x,
                 _serviceProvider.settings.constants.meshSize.y,
-                _serviceProvider.settings.constants.vertexSizeDraft.x,
-                _serviceProvider.settings.constants.vertexSizeDraft.y),
+                _serviceProvider.settings.constants.vertexSizeTopology.x,
+                _serviceProvider.settings.constants.vertexSizeTopology.y),
             new MeshStandardMaterial({
                 color: 0x86B036,
                 displacementScale: 1,

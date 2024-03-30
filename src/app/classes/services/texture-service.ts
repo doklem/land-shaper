@@ -10,6 +10,7 @@ import { WaterComputeNode } from '../nodes/compute-nodes/water-compute-node';
 import { Rubble } from '../objects-3d/rubble';
 import { SurfaceRenderNode } from '../nodes/render-nodes/surface-render-node';
 import { SettingsService } from './settings-service';
+import { ErosionDifferenceRenderNode } from '../nodes/render-nodes/erosion-difference-render-node';
 
 export class TextureService implements IDisposable {
 
@@ -23,10 +24,12 @@ export class TextureService implements IDisposable {
     private static readonly FLOAT_SAMPLER_BINDING: GPUSamplerBindingType = 'filtering';
     private static readonly FLOAT_TEXTURE_SAMPLE: GPUTextureSampleType = 'float';
 
-    public readonly displacementDraft: TextureWrapper;
-    public readonly displacementFinal: TextureWrapper;
-    public readonly displacementFinalCopy: TextureWrapper;
+    public readonly displacementErosion: TextureWrapper;
+    public readonly displacementErosionCopy: TextureWrapper;
+    public readonly displacementErosionDifference: TextureWrapper;
+    public readonly displacementErosionUntouched: TextureWrapper;
     public readonly displacementSection: TextureWrapper;
+    public readonly displacementTopology: TextureWrapper;
     public readonly diffuse: TextureWrapper;
     public readonly diffuseSection: TextureWrapper;
     public readonly floatSampler: GPUSampler;
@@ -35,7 +38,7 @@ export class TextureService implements IDisposable {
     public readonly normalTangentSpace: TextureWrapper;
     public readonly normalTangentSpaceSection: TextureWrapper;
     public readonly rFloatTextureColors: ITextureSettings;
-    public readonly rFloatTextureDraft: ITextureSettings;
+    public readonly rFloatTextureTopology: ITextureSettings;
     public readonly rFloatTextureTerrain: ITextureSettings;
     public readonly rFloatTextureTerrainSection: ITextureSettings;
     public readonly rgFloatTextureColors: ITextureSettings;
@@ -52,7 +55,7 @@ export class TextureService implements IDisposable {
 
     constructor(settings: SettingsService, device: GPUDevice) {
         this.rFloatTextureColors = TextureService.createTextureSettings(settings.constants.textureSizeColors, 'r32float');
-        this.rFloatTextureDraft = TextureService.createTextureSettings(settings.constants.textureSizeDraft, 'r32float');
+        this.rFloatTextureTopology = TextureService.createTextureSettings(settings.constants.textureSizeTopology, 'r32float');
         this.rFloatTextureTerrain = TextureService.createTextureSettings(settings.constants.textureSizeTerrain, 'r32float');
         this.rFloatTextureTerrainSection = TextureService.createTextureSettings(settings.constants.sections.textureSizeTerrain, 'r32float');
         this.rgFloatTextureColors = TextureService.createTextureSettings(settings.constants.textureSizeColors, 'rg32float');
@@ -78,32 +81,46 @@ export class TextureService implements IDisposable {
             this.rgbaFloatTextureColors
         );*/
 
-        this.displacementDraft = new TextureWrapper(
+        this.displacementTopology = new TextureWrapper(
             device,
             TextureService.FLOAT_TEXTURE_SAMPLE,
             GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-            DisplacementRenderNode.NAME_DRAFT,
-            this.rFloatTextureDraft
+            DisplacementRenderNode.NAME_TOPOLOGY,
+            this.rFloatTextureTopology
         );
-        this.displacementFinal = new TextureWrapper(
-            device,
-            TextureService.FLOAT_TEXTURE_SAMPLE,
-            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
-            DisplacementRenderNode.NAME_FINAL,
-            this.rFloatTextureTerrain
-        );
-        this.displacementFinalCopy = new TextureWrapper(
+        this.displacementErosionUntouched = new TextureWrapper(
             device,
             TextureService.FLOAT_TEXTURE_SAMPLE,
             GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-            `${DisplacementRenderNode.NAME_FINAL} Copy`,
-            this.displacementFinal.settings
+            DisplacementRenderNode.NAME_EROSION_UNTOUCHED,
+            this.rFloatTextureTerrain
+        );
+        this.displacementErosionDifference = new TextureWrapper(
+            device,
+            TextureService.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+            ErosionDifferenceRenderNode.NAME,
+            this.rgbaFloatTextureColors
+        );
+        this.displacementErosion = new TextureWrapper(
+            device,
+            TextureService.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
+            DisplacementRenderNode.NAME_EROSION,
+            this.displacementErosionUntouched.settings
+        );
+        this.displacementErosionCopy = new TextureWrapper(
+            device,
+            TextureService.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+            `${DisplacementRenderNode.NAME_EROSION} Copy`,
+            this.displacementErosionUntouched.settings
         );
         this.displacementSection = new TextureWrapper(
             device,
             TextureService.FLOAT_TEXTURE_SAMPLE,
             GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-            `${DisplacementRenderNode.NAME_FINAL} Section`,
+            `${DisplacementRenderNode.NAME_EROSION} Section`,
             this.rFloatTextureTerrainSection
         );
 
@@ -112,7 +129,7 @@ export class TextureService implements IDisposable {
             TextureService.FLOAT_TEXTURE_SAMPLE,
             GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
             WaterComputeNode.NAME,
-            this.displacementFinal.settings
+            this.displacementErosion.settings
         );
 
         this.surface = new TextureWrapper(
@@ -177,9 +194,11 @@ export class TextureService implements IDisposable {
     }
 
     public dispose(): void {
-        this.displacementDraft.dispose();
-        this.displacementFinal.dispose();
-        this.displacementFinalCopy.dispose();
+        this.displacementErosion.dispose();
+        this.displacementErosionCopy.dispose();
+        this.displacementErosionDifference.dispose();
+        this.displacementErosionUntouched.dispose();
+        this.displacementTopology.dispose();
         this.displacementSection.dispose();
         this.diffuse.dispose();
         this.diffuseSection.dispose();

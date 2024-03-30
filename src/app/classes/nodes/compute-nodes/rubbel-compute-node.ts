@@ -47,12 +47,12 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
                 {
                     binding: 1, // displacement texture
                     visibility: GPUShaderStage.COMPUTE,
-                    texture: serviceProvider.textures.displacementFinal.bindingLayout,
+                    texture: serviceProvider.textures.displacementErosion.bindingLayout,
                 },
                 {
                     binding: 2, // float sampler
                     visibility: GPUShaderStage.COMPUTE,
-                    sampler: { type: serviceProvider.textures.displacementFinal.settings.samplerBinding },
+                    sampler: { type: serviceProvider.textures.displacementErosion.settings.samplerBinding },
                 },
                 {
                     binding: 3, // uniforms
@@ -78,7 +78,7 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
             [
                 {
                     binding: 0,
-                    resource: serviceProvider.textures.displacementFinal.view,
+                    resource: serviceProvider.textures.displacementErosion.view,
                 },
                 {
                     binding: 1,

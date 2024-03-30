@@ -6,8 +6,9 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
 
     private static readonly NAME = 'Displacement';
 
-    public static readonly NAME_DRAFT = `Draft ${DisplacementRenderNode.NAME}`;
-    public static readonly NAME_FINAL = `Final ${DisplacementRenderNode.NAME}`;
+    public static readonly NAME_EROSION = `Erosion ${DisplacementRenderNode.NAME}`;
+    public static readonly NAME_EROSION_UNTOUCHED = `Erosion Untouched ${DisplacementRenderNode.NAME}`;
+    public static readonly NAME_TOPOLOGY = `Topology ${DisplacementRenderNode.NAME}`;
 
     private readonly _bindGroup: GPUBindGroup;
     private readonly _uniformConfigBuffer: GPUBuffer;
@@ -16,11 +17,13 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
     protected readonly _renderBundle: GPURenderBundle;
     protected readonly _pipeline: GPURenderPipeline;
 
-    public constructor(serviceProvider: IServiceProvider, isDraft: boolean) {
+    public constructor(
+        serviceProvider: IServiceProvider,
+        private readonly _isTopology: boolean) {
         super(
-            isDraft ? DisplacementRenderNode.NAME_DRAFT : DisplacementRenderNode.NAME_FINAL,
+            _isTopology ? DisplacementRenderNode.NAME_TOPOLOGY : DisplacementRenderNode.NAME_EROSION_UNTOUCHED,
             serviceProvider,
-            isDraft ? serviceProvider.textures.displacementDraft : serviceProvider.textures.displacementFinal);
+            _isTopology ? serviceProvider.textures.displacementTopology : serviceProvider.textures.displacementErosionUntouched);
 
         // buffers        
         this._uniformConfigArray = new ArrayBuffer(
@@ -101,6 +104,15 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
     public override dispose(): void {
         super.dispose();
         this._uniformConfigBuffer.destroy();
-        this._stagingBuffer.destroy();
+    }
+
+    public override appendRenderPass(commandEncoder: GPUCommandEncoder): void {
+        super.appendRenderPass(commandEncoder);
+        if (!this._isTopology) {
+            commandEncoder.copyTextureToTexture(
+                this._texture,
+                this._serviceProvider.textures.displacementErosion,
+                this._texture);
+        }
     }
 }

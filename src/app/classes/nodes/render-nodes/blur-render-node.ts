@@ -14,7 +14,7 @@ export class BlurRenderNode extends ExportableRenderNodeBase {
     protected readonly _pipeline: GPURenderPipeline;
 
     public constructor(serviceProvider: IServiceProvider) {
-        super(BlurRenderNode.NAME, serviceProvider, serviceProvider.textures.displacementFinalCopy);
+        super(BlurRenderNode.NAME, serviceProvider, serviceProvider.textures.displacementErosionCopy);
 
         // buffers
         this._uniformConfigArray = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2 + Float32Array.BYTES_PER_ELEMENT * 2);
@@ -31,12 +31,12 @@ export class BlurRenderNode extends ExportableRenderNodeBase {
                 {
                     binding: 0, // displacement texture
                     visibility: GPUShaderStage.FRAGMENT,
-                    texture: serviceProvider.textures.displacementFinal.bindingLayout,
+                    texture: serviceProvider.textures.displacementErosion.bindingLayout,
                 },
                 {
                     binding: 1, // float sampler
                     visibility: GPUShaderStage.FRAGMENT,
-                    sampler: { type: serviceProvider.textures.displacementFinal.settings.samplerBinding },
+                    sampler: { type: serviceProvider.textures.displacementErosion.settings.samplerBinding },
                 },
                 {
                     binding: 2, // config uniform
@@ -53,7 +53,7 @@ export class BlurRenderNode extends ExportableRenderNodeBase {
             entries: [
                 {
                     binding: 0,
-                    resource: serviceProvider.textures.displacementFinal.view,
+                    resource: serviceProvider.textures.displacementErosion.view,
                 },
                 {
                     binding: 1,
