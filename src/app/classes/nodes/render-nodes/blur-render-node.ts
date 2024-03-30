@@ -1,14 +1,12 @@
 import FragmentShader from './../../../shaders/blur-fragment.wgsl';
-import { BufferService } from '../../services/buffer-service';
-import { RenderNodeBase } from './render-node-base';
 import { IServiceProvider } from '../../services/service-provider';
+import { ExportableRenderNodeBase } from './exportable-render-node-base';
 
-export class BlurRenderNode extends RenderNodeBase {
+export class BlurRenderNode extends ExportableRenderNodeBase {
 
     public static readonly NAME = 'Blur';
 
     private readonly _bindGroup: GPUBindGroup;
-    private readonly _stagingBuffer: GPUBuffer;
     private readonly _uniformConfigArray: ArrayBuffer;
     private readonly _uniformConfigBuffer: GPUBuffer;
 
@@ -24,12 +22,6 @@ export class BlurRenderNode extends RenderNodeBase {
             label: `${this._name} Uniform Config Buffer`,
             size: this._uniformConfigArray.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-        });
-
-        this._stagingBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Staging Buffer`,
-            size: this._texture.byteLength,
-            usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
         });
 
         // bind group layout
@@ -83,14 +75,7 @@ export class BlurRenderNode extends RenderNodeBase {
 
     public appendRenderPass(commandEncoder: GPUCommandEncoder): void {
         super.appendRenderPass(commandEncoder);
-        commandEncoder.copyTextureToTexture(this._texture, this._serviceProvider.textures.displacementFinal, this._texture);
-        commandEncoder.copyTextureToBuffer(
-            this._texture,
-            {
-                buffer: this._stagingBuffer,
-                bytesPerRow: this._texture.bytesPerRow,
-            },
-            this._texture.settings);
+        commandEncoder.copyTextureToTexture(this._texture, this._serviceProvider.textures.displacementErosion, this._texture);
     }
 
     public configureRun(): void {
@@ -107,11 +92,7 @@ export class BlurRenderNode extends RenderNodeBase {
     }
 
     public override dispose(): void {
-        this._stagingBuffer.destroy();
+        super.dispose();
         this._uniformConfigBuffer.destroy();
-    }
-
-    public async readOutputBuffer(output: Float32Array): Promise<void> {
-        output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
     }
 }
