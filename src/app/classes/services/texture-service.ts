@@ -51,8 +51,6 @@ export class TextureService implements IDisposable {
     public readonly surfaceSection: TextureWrapper;
     public readonly water: TextureWrapper;
     
-    //public readonly debug: TextureWrapper;
-
     constructor(settings: SettingsService, device: GPUDevice) {
         this.rFloatTextureColors = TextureService.createTextureSettings(settings.constants.textureSizeColors, 'r32float');
         this.rFloatTextureTopology = TextureService.createTextureSettings(settings.constants.textureSizeTopology, 'r32float');
@@ -72,14 +70,6 @@ export class TextureService implements IDisposable {
             magFilter: 'linear',
             minFilter: 'linear'
         });
-
-        /*this.debug = new TextureWrapper(
-            device,
-            TextureService.FLOAT_TEXTURE_SAMPLE,
-            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING,
-            'Debug',
-            this.rgbaFloatTextureColors
-        );*/
 
         this.displacementTopology = new TextureWrapper(
             device,

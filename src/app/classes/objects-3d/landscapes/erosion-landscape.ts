@@ -82,7 +82,7 @@ export class ErosionLandscape extends Group implements ILandscape {
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
         this._erosionComputeNode.setDisplacement();
 
-        await this.applyRunOutput(this._displacementRenderNode);
+        await this._terrain.applyRunOutput(this._displacementRenderNode);
         this._running = false;
     }
 
@@ -99,7 +99,7 @@ export class ErosionLandscape extends Group implements ILandscape {
         this._erosionDifferenceRenderNode.appendRenderPass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
 
-        await this.applyRunOutput(this._erosionComputeNode);
+        await this._terrain.applyRunOutput(this._erosionComputeNode);
         this._running = false;
     }
 
@@ -117,11 +117,7 @@ export class ErosionLandscape extends Group implements ILandscape {
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
         this._erosionComputeNode.setDisplacement();
 
-        await this.applyRunOutput(this._blurRenderNode);
+        await this._terrain.applyRunOutput(this._blurRenderNode);
         this._running = false;
-    }
-
-    private async applyRunOutput(displacementProvider: IExportableNode): Promise<void> {
-        await this._terrain.applyRunOutput(displacementProvider);
     }
 }
