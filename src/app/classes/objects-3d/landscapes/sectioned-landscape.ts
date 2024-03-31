@@ -41,12 +41,12 @@ export class SectionedLandscape extends Group implements ILandscape {
         this._displacementRenderNode = new ExportableDivideRenderNode(
             _serviceProvider,
             uvRangeInclusive,
-            _serviceProvider.textures.displacementFinal,
+            _serviceProvider.textures.displacementErosion,
             _serviceProvider.textures.displacementSection);
         this._normalObjectSpaceRenderNode = new NormalObjectSpaceRenderNode(
             _serviceProvider,
             _serviceProvider.settings.constants.sections.uvRange,
-            _serviceProvider.textures.displacementFinal,
+            _serviceProvider.textures.displacementErosion,
             _serviceProvider.textures.normalObjectSpaceSection);
         this._normalTangentSpaceRenderNode = new NormalTangentSpaceRenderNode(
             _serviceProvider,
@@ -56,14 +56,14 @@ export class SectionedLandscape extends Group implements ILandscape {
             _serviceProvider,
             _serviceProvider.settings.constants.sections.uvRange,
             _serviceProvider.textures.normalObjectSpaceSection,
-            _serviceProvider.textures.displacementFinal,
+            _serviceProvider.textures.displacementErosion,
             _serviceProvider.textures.water,
             _serviceProvider.textures.surfaceSection);
         this._diffuseRenderNode = new DiffuseRenderNode(
             _serviceProvider,
             _serviceProvider.settings.constants.sections.uvRange,
             _serviceProvider.textures.surfaceSection,
-            _serviceProvider.textures.displacementFinal,
+            _serviceProvider.textures.displacementErosion,
             _serviceProvider.textures.diffuseSection);
         this._rubbleComputeNode = new RubbleComputeNode(
             _serviceProvider,

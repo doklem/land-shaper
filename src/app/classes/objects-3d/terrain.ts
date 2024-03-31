@@ -11,10 +11,10 @@ import {
 import { TextureService } from '../services/texture-service';
 import { IDisposable } from '../disposable';
 import { NormalTangentSpaceRenderNode } from '../nodes/render-nodes/normal-tangent-space-render-node';
-import { DiffuseRenderNode } from '../nodes/render-nodes/diffuse-render-node';
 import { IExportableNode } from '../nodes/exportable-node';
 import { ITextureSettings } from '../settings/texture-settings';
 import { IServiceProvider } from '../services/service-provider';
+import { ExportableRenderNodeBase } from '../nodes/render-nodes/exportable-render-node-base';
 
 export class Terrain extends LOD implements IDisposable {
 
@@ -37,7 +37,7 @@ export class Terrain extends LOD implements IDisposable {
         meshLodDistance: number,
         flatShading: boolean,
         private readonly _normalTangentSpaceRenderNode?: NormalTangentSpaceRenderNode,
-        private readonly _diffuseRenderNode?: DiffuseRenderNode,
+        private readonly _diffuseRenderNode?: ExportableRenderNodeBase,
         displacementTexture?: ITextureSettings,
         displacementMap?: DataTexture) {
         super();

@@ -1,14 +1,12 @@
 import FragmentShader from './../../../shaders/blur-fragment.wgsl';
-import { BufferService } from '../../services/buffer-service';
-import { RenderNodeBase } from './render-node-base';
 import { IServiceProvider } from '../../services/service-provider';
+import { ExportableRenderNodeBase } from './exportable-render-node-base';
 
-export class BlurRenderNode extends RenderNodeBase {
+export class BlurRenderNode extends ExportableRenderNodeBase {
 
     public static readonly NAME = 'Blur';
 
     private readonly _bindGroup: GPUBindGroup;
-    private readonly _stagingBuffer: GPUBuffer;
     private readonly _uniformConfigArray: ArrayBuffer;
     private readonly _uniformConfigBuffer: GPUBuffer;
 
@@ -16,7 +14,7 @@ export class BlurRenderNode extends RenderNodeBase {
     protected readonly _pipeline: GPURenderPipeline;
 
     public constructor(serviceProvider: IServiceProvider) {
-        super(BlurRenderNode.NAME, serviceProvider, serviceProvider.textures.displacementFinalCopy);
+        super(BlurRenderNode.NAME, serviceProvider, serviceProvider.textures.displacementErosionCopy);
 
         // buffers
         this._uniformConfigArray = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2 + Float32Array.BYTES_PER_ELEMENT * 2);
@@ -26,12 +24,6 @@ export class BlurRenderNode extends RenderNodeBase {
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
         });
 
-        this._stagingBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Staging Buffer`,
-            size: this._texture.byteLength,
-            usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
-        });
-
         // bind group layout
         const bindGroupLayout = serviceProvider.device.createBindGroupLayout({
             label: `${this._name} Bind Group Layout`,
@@ -39,12 +31,12 @@ export class BlurRenderNode extends RenderNodeBase {
                 {
                     binding: 0, // displacement texture
                     visibility: GPUShaderStage.FRAGMENT,
-                    texture: serviceProvider.textures.displacementFinal.bindingLayout,
+                    texture: serviceProvider.textures.displacementErosion.bindingLayout,
                 },
                 {
                     binding: 1, // float sampler
                     visibility: GPUShaderStage.FRAGMENT,
-                    sampler: { type: serviceProvider.textures.displacementFinal.settings.samplerBinding },
+                    sampler: { type: serviceProvider.textures.displacementErosion.settings.samplerBinding },
                 },
                 {
                     binding: 2, // config uniform
@@ -61,7 +53,7 @@ export class BlurRenderNode extends RenderNodeBase {
             entries: [
                 {
                     binding: 0,
-                    resource: serviceProvider.textures.displacementFinal.view,
+                    resource: serviceProvider.textures.displacementErosion.view,
                 },
                 {
                     binding: 1,
@@ -83,14 +75,7 @@ export class BlurRenderNode extends RenderNodeBase {
 
     public appendRenderPass(commandEncoder: GPUCommandEncoder): void {
         super.appendRenderPass(commandEncoder);
-        commandEncoder.copyTextureToTexture(this._texture, this._serviceProvider.textures.displacementFinal, this._texture);
-        commandEncoder.copyTextureToBuffer(
-            this._texture,
-            {
-                buffer: this._stagingBuffer,
-                bytesPerRow: this._texture.bytesPerRow,
-            },
-            this._texture.settings);
+        commandEncoder.copyTextureToTexture(this._texture, this._serviceProvider.textures.displacementErosion, this._texture);
     }
 
     public configureRun(): void {
@@ -107,11 +92,7 @@ export class BlurRenderNode extends RenderNodeBase {
     }
 
     public override dispose(): void {
-        this._stagingBuffer.destroy();
+        super.dispose();
         this._uniformConfigBuffer.destroy();
-    }
-
-    public async readOutputBuffer(output: Float32Array): Promise<void> {
-        output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
     }
 }

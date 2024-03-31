@@ -13,8 +13,8 @@ export class SettingsService {
         readonly anisotropy: number;
         readonly littleEndian: boolean;
         readonly meshSize: Vector2;
-        readonly textureSizeDraft: Vector2;
-        readonly vertexSizeDraft: Vector2;
+        readonly textureSizeTopology: Vector2;
+        readonly vertexSizeTopology: Vector2;
         readonly textureSizeColors: Vector2;
         readonly textureSizeTerrain: Vector2;
         readonly vertexSizeFinalMaximum: Vector2;
@@ -146,8 +146,8 @@ export class SettingsService {
             anisotropy,
             littleEndian: true,
             meshSize: new Vector2(512, 512),
-            textureSizeDraft: new Vector2(64, 64),
-            vertexSizeDraft: new Vector2(64, 64),
+            textureSizeTopology: new Vector2(64, 64),
+            vertexSizeTopology: new Vector2(64, 64),
             textureSizeColors: new Vector2(4096, 4096),
             textureSizeTerrain: new Vector2(1024, 1024),
             vertexSizeFinalMaximum: new Vector2(1024, 1024),

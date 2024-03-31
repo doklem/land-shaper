@@ -34,11 +34,11 @@ export class ColoringLandscape extends Group implements ILandscape {
         this.applyMatrix4(_serviceProvider.settings.constants.transformation);
         const uvRange = new Vector2(1, 1);
 
-        this._normalObjectSpaceRenderNode = new NormalObjectSpaceRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.displacementFinal, _serviceProvider.textures.normalObjectSpace);
+        this._normalObjectSpaceRenderNode = new NormalObjectSpaceRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.displacementErosion, _serviceProvider.textures.normalObjectSpace);
         this._normalTangentSpaceRenderNode = new NormalTangentSpaceRenderNode(_serviceProvider, _serviceProvider.textures.normalObjectSpace, _serviceProvider.textures.normalTangentSpace);
-        this._diffuseRenderNode = new DiffuseRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.surface, _serviceProvider.textures.displacementFinal, _serviceProvider.textures.diffuse);
+        this._diffuseRenderNode = new DiffuseRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.surface, _serviceProvider.textures.displacementErosion, _serviceProvider.textures.diffuse);
         this._rubbleComputeNode = new RubbleComputeNode(_serviceProvider, uvRange, _serviceProvider.textures.rubbleTexture);
-        this._surfaceRenderNode = new SurfaceRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.normalObjectSpace, _serviceProvider.textures.displacementFinal, _serviceProvider.textures.water, _serviceProvider.textures.surface);
+        this._surfaceRenderNode = new SurfaceRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.normalObjectSpace, _serviceProvider.textures.displacementErosion, _serviceProvider.textures.water, _serviceProvider.textures.surface);
         this._waterComputeNode = new WaterComputeNode(_serviceProvider);
 
         this._rubble = new Rubble(_serviceProvider, _serviceProvider.settings.constants.meshLodDistance, this._rubbleComputeNode);
@@ -58,7 +58,7 @@ export class ColoringLandscape extends Group implements ILandscape {
             false,
             this._normalTangentSpaceRenderNode,
             this._diffuseRenderNode,
-            _serviceProvider.textures.displacementFinal.settings,
+            _serviceProvider.textures.displacementErosion.settings,
             displacementMap);
         this.add(this._terrain);
     }

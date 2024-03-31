@@ -1,5 +1,5 @@
 import { IDisposable } from '../../disposable';
-import { ShaderUtils } from '../../services/shader-utils';
+import { ShaderUtils } from '../shader-utils';
 import { TextureWrapper } from '../../services/texture-wrapper';
 import { IServiceProvider } from '../../services/service-provider';
 import { ITextureSettings } from '../../settings/texture-settings';
