@@ -1,4 +1,4 @@
-import { DoubleSide, Group, Mesh, MeshStandardMaterial, PlaneGeometry } from 'three';
+import { Group, Mesh, MeshStandardMaterial, PlaneGeometry } from 'three';
 import { TextureService } from '../../services/texture-service';
 import { DisplacementRenderNode } from '../../nodes/render-nodes/displacement-render-node';
 import { ILandscape } from './landscape';
@@ -34,7 +34,8 @@ export class TopologyLandscape extends Group implements ILandscape {
                 flatShading: true,
                 metalness: 0,
                 roughness: 1,
-                side: DoubleSide,
+                side: _serviceProvider.settings.debug.side,
+                wireframe: _serviceProvider.settings.debug.wireframe
             })
         );
         this._terrain.material.displacementMap!.needsUpdate = true;
@@ -72,8 +73,10 @@ export class TopologyLandscape extends Group implements ILandscape {
     }
 
     public applyDebugSettings(): void {
+        this._terrain.material.side = this._serviceProvider.settings.debug.side;
         this._terrain.material.wireframe = this._serviceProvider.settings.debug.wireframe;
         this._terrain.material.needsUpdate = true;
+        this._ocean.applyDebugSettings();
     }
 
     public applyWaterSettings(): void {

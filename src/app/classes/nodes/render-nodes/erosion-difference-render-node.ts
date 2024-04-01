@@ -62,4 +62,15 @@ export class ErosionDifferenceRenderNode extends ExportableRenderNodeBase {
         // render bundle
         this._renderBundle = this.createRenderBundle(this._pipeline, this._bindGroup);
     }
+
+    /*public appendDebugRenderPass(commandEncoder: GPUCommandEncoder): void {
+        commandEncoder.copyTextureToBuffer(
+            this._texture,
+            {
+                buffer: this._stagingBuffer,
+                bytesPerRow: this._texture.bytesPerRow
+            },
+            this._texture.settings
+        );
+    }*/
 }

@@ -36,7 +36,7 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
 
         /*this._debugClearBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Debug Clear Buffer`,
-            size: _serviceProvider.textures.debug.byteLength,
+            size: _serviceProvider.textures.displacementErosionDifference.byteLength,
             usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.UNIFORM
         });*/
 
@@ -58,7 +58,7 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
         });
         _serviceProvider.device.queue.writeBuffer(this._dropletOriginsBuffer, 0, dropletOriginsArray);
 
-        const dropletOffsetsArray = this.createDropletOffsets(_serviceProvider.settings.constants.erosion.dropletOffsetsMinSize)
+        const dropletOffsetsArray = this.createDropletOffsets();
         this._dropletOffsetsBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Droplet Offsets Buffer`,
             size: dropletOffsetsArray.byteLength,
@@ -132,9 +132,9 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
                     visibility: GPUShaderStage.COMPUTE,
                     storageTexture:
                     {
-                        format: _serviceProvider.textures.debug.settings.format,
+                        format: _serviceProvider.textures.displacementErosionDifference.settings.format,
                         access: 'write-only',
-                        viewDimension: _serviceProvider.textures.debug.bindingLayout.viewDimension,
+                        viewDimension: _serviceProvider.textures.displacementErosionDifference.bindingLayout.viewDimension,
                     },
                 },*/
             ]
@@ -171,7 +171,7 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
                 },
                 /*{
                     binding: 6,
-                    resource: _serviceProvider.textures.debug.view,
+                    resource: _serviceProvider.textures.displacementErosionDifference.view,
                 },*/
             ]
         })
@@ -184,10 +184,10 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
         /*commandEncoder.copyBufferToTexture(
             {
                 buffer: this._debugClearBuffer,
-                bytesPerRow: this._serviceProvider.textures.debug.bytesPerRow,
+                bytesPerRow: this._serviceProvider.textures.displacementErosionDifference.bytesPerRow,
             },
-            this._serviceProvider.textures.debug,
-            this._serviceProvider.textures.debug
+            this._serviceProvider.textures.displacementErosionDifference,
+            this._serviceProvider.textures.displacementErosionDifference
         );*/
         const computePassEncoder = commandEncoder.beginComputePass();
         computePassEncoder.setPipeline(this._pipeline);
@@ -324,11 +324,11 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
         return new Uint32Array(originIndices);
     }
 
-    private createDropletOffsets(minSize: number): Float32Array {
+    private createDropletOffsets(): Float32Array {
         const dropletOriginArea = new Vector2(
             this._serviceProvider.textures.displacementErosion.width / this._serviceProvider.settings.constants.erosion.dropletsSize.x,
             this._serviceProvider.textures.displacementErosion.height / this._serviceProvider.settings.constants.erosion.dropletsSize.y);
-        const quadTree = new QuadTree(new Vector2(), dropletOriginArea, minSize);
+        const quadTree = new QuadTree(new Vector2(), dropletOriginArea, this._serviceProvider.settings.constants.erosion.dropletOffsetsMinSize);
         const offsets: number[] = [];
         const totalOffsets = dropletOriginArea.x * dropletOriginArea.y;
         let coordinate: Vector2;

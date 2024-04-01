@@ -109,6 +109,7 @@ export class SectionedLandscape extends Group implements ILandscape {
 
     public applyDebugSettings(): void {
         this._terrains.forEach(terrain => terrain.applyDebugSettings());
+        this._ocean.applyDebugSettings();
     }
 
     public applyWaterSettings(): void {

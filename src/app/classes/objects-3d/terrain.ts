@@ -1,6 +1,5 @@
 import {
     DataTexture,
-    DoubleSide,
     LOD,
     Mesh,
     MeshStandardMaterial,
@@ -59,7 +58,8 @@ export class Terrain extends LOD implements IDisposable {
             flatShading: flatShading,
             metalness: 0,
             roughness: 1,
-            side: DoubleSide,
+            side: _serviceProvider.settings.debug.side,
+            wireframe: _serviceProvider.settings.debug.wireframe
         };
         if (_diffuseRenderNode) {
             materialParameters.map = TextureService.createDataTexture(this._diffuseOutput!, _diffuseRenderNode.textureSettings, _serviceProvider.settings.constants.anisotropy);
@@ -127,6 +127,7 @@ export class Terrain extends LOD implements IDisposable {
     }
 
     public applyDebugSettings(): void {
+        this._material.side = this._serviceProvider.settings.debug.side;
         this._material.wireframe = this._serviceProvider.settings.debug.wireframe;
         this._material.needsUpdate = true;
     }

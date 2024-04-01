@@ -1,4 +1,4 @@
-import { Color, Matrix4, Vector2, Vector3 } from 'three';
+import { Color, FrontSide, Matrix4, Vector2, Vector3 } from 'three';
 import { LightSettings } from '../settings/light-settings';
 import { MixedColorSettings } from '../settings/mixed-color-settings';
 
@@ -43,6 +43,7 @@ export class SettingsService {
     };
 
     public readonly debug = {
+        side: FrontSide,
         wireframe: false,
     };
 
@@ -162,7 +163,7 @@ export class SettingsService {
             },
             erosion: {
                 dropletsSize: new Vector2(8, 8),
-                dropletOffsetsMinSize: 1,
+                dropletOffsetsMinSize: 0.25,
                 dropletsWorkgroupCount: 1,
                 brushRadius: 4,
             },
