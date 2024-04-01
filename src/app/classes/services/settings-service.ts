@@ -1,4 +1,4 @@
-import { Color, Matrix4, Vector2, Vector3 } from 'three';
+import { Color, FrontSide, Matrix4, Vector2, Vector3 } from 'three';
 import { LightSettings } from '../settings/light-settings';
 import { MixedColorSettings } from '../settings/mixed-color-settings';
 
@@ -43,6 +43,7 @@ export class SettingsService {
     };
 
     public readonly debug = {
+        side: FrontSide,
         wireframe: false,
     };
 

@@ -17,10 +17,17 @@ export class Ocean extends Water implements IDisposable {
             sunColor: new Color(),
             waterColor: new Color(),
             distortionScale: _serviceProvider.settings.ocean.distortionScale,
+            side: _serviceProvider.settings.debug.side,
             fog: false
         });
         this._waterSpeed = _serviceProvider.settings.ocean.waterSpeed;
         this.applySettings();
+    }
+
+    public applyDebugSettings(): void {
+        this.material.side = this._serviceProvider.settings.debug.side;
+        this.material.wireframe = this._serviceProvider.settings.debug.wireframe;
+        this.material.needsUpdate = true;
     }
 
     public applySettings(): void {

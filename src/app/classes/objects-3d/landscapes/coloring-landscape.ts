@@ -69,6 +69,7 @@ export class ColoringLandscape extends Group implements ILandscape {
 
     public applyDebugSettings(): void {
         this._terrain.applyDebugSettings();
+        this._ocean.applyDebugSettings();
     }
 
     public applyWaterSettings(): void {

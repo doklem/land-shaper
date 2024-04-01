@@ -5,6 +5,7 @@ import { TemplateType } from '../settings/template-type';
 import { SettingsService } from './settings-service';
 import { EditStageService } from './edit-stage-service';
 import { SkyBox } from '../objects-3d/sky-box';
+import { BackSide, DoubleSide, FrontSide } from 'three';
 
 export class GUIService implements IDisposable {
 
@@ -71,6 +72,15 @@ export class GUIService implements IDisposable {
     private addDebugFolder(): void {
         const folder = this._gui.addFolder('Debug').close();
         folder.add(this._settings.debug, 'wireframe').name('Wireframe').onChange(() => this._stages.applyDebugSettings());
+        folder.add(
+            this._settings.debug,
+            'side',
+            {
+                Front: FrontSide,
+                Back: BackSide,
+                Double: DoubleSide
+            })
+            .name('Side').onChange(() => this._stages.applyDebugSettings());
     }
 
     private addFileFolder(): { folder: GUI, button: Controller } {
