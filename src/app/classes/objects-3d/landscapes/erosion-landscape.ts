@@ -3,7 +3,6 @@ import { DisplacementRenderNode } from '../../nodes/render-nodes/displacement-re
 import { ErosionComputeNode } from '../../nodes/compute-nodes/erosion-compute-node';
 import { BlurRenderNode } from '../../nodes/render-nodes/blur-render-node';
 import { Terrain } from '../terrain';
-import { IExportableNode } from '../../nodes/exportable-node';
 import { ILandscape } from './landscape';
 import { SimpleOcean } from '../simple-ocean';
 import { IServiceProvider } from '../../services/service-provider';
@@ -96,6 +95,7 @@ export class ErosionLandscape extends Group implements ILandscape {
 
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         this._erosionComputeNode.appendComputePass(commandEncoder);
+        //this._erosionDifferenceRenderNode.appendDebugRenderPass(commandEncoder);
         this._erosionDifferenceRenderNode.appendRenderPass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
 

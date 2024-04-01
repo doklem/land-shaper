@@ -50,7 +50,7 @@ export class TextureService implements IDisposable {
     public readonly surface: TextureWrapper;
     public readonly surfaceSection: TextureWrapper;
     public readonly water: TextureWrapper;
-    
+
     constructor(settings: SettingsService, device: GPUDevice) {
         this.rFloatTextureColors = TextureService.createTextureSettings(settings.constants.textureSizeColors, 'r32float');
         this.rFloatTextureTopology = TextureService.createTextureSettings(settings.constants.textureSizeTopology, 'r32float');
@@ -88,7 +88,7 @@ export class TextureService implements IDisposable {
         this.displacementErosionDifference = new TextureWrapper(
             device,
             TextureService.FLOAT_TEXTURE_SAMPLE,
-            GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+            GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC/* | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.COPY_DST*/,
             ErosionDifferenceRenderNode.NAME,
             this.rgbaFloatTextureColors
         );

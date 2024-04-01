@@ -36,7 +36,7 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
 
         /*this._debugClearBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Debug Clear Buffer`,
-            size: _serviceProvider.textures.debug.byteLength,
+            size: _serviceProvider.textures.displacementErosionDifference.byteLength,
             usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.UNIFORM
         });*/
 
@@ -132,9 +132,9 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
                     visibility: GPUShaderStage.COMPUTE,
                     storageTexture:
                     {
-                        format: _serviceProvider.textures.debug.settings.format,
+                        format: _serviceProvider.textures.displacementErosionDifference.settings.format,
                         access: 'write-only',
-                        viewDimension: _serviceProvider.textures.debug.bindingLayout.viewDimension,
+                        viewDimension: _serviceProvider.textures.displacementErosionDifference.bindingLayout.viewDimension,
                     },
                 },*/
             ]
@@ -171,7 +171,7 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
                 },
                 /*{
                     binding: 6,
-                    resource: _serviceProvider.textures.debug.view,
+                    resource: _serviceProvider.textures.displacementErosionDifference.view,
                 },*/
             ]
         })
@@ -184,10 +184,10 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
         /*commandEncoder.copyBufferToTexture(
             {
                 buffer: this._debugClearBuffer,
-                bytesPerRow: this._serviceProvider.textures.debug.bytesPerRow,
+                bytesPerRow: this._serviceProvider.textures.displacementErosionDifference.bytesPerRow,
             },
-            this._serviceProvider.textures.debug,
-            this._serviceProvider.textures.debug
+            this._serviceProvider.textures.displacementErosionDifference,
+            this._serviceProvider.textures.displacementErosionDifference
         );*/
         const computePassEncoder = commandEncoder.beginComputePass();
         computePassEncoder.setPipeline(this._pipeline);
