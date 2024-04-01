@@ -58,7 +58,7 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
         });
         _serviceProvider.device.queue.writeBuffer(this._dropletOriginsBuffer, 0, dropletOriginsArray);
 
-        const dropletOffsetsArray = this.createDropletOffsets(_serviceProvider.settings.constants.erosion.dropletOffsetsMinSize)
+        const dropletOffsetsArray = this.createDropletOffsets();
         this._dropletOffsetsBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Droplet Offsets Buffer`,
             size: dropletOffsetsArray.byteLength,
@@ -324,11 +324,11 @@ export class ErosionComputeNode implements IExportableNode, IDisposable {
         return new Uint32Array(originIndices);
     }
 
-    private createDropletOffsets(minSize: number): Float32Array {
+    private createDropletOffsets(): Float32Array {
         const dropletOriginArea = new Vector2(
             this._serviceProvider.textures.displacementErosion.width / this._serviceProvider.settings.constants.erosion.dropletsSize.x,
             this._serviceProvider.textures.displacementErosion.height / this._serviceProvider.settings.constants.erosion.dropletsSize.y);
-        const quadTree = new QuadTree(new Vector2(), dropletOriginArea, minSize);
+        const quadTree = new QuadTree(new Vector2(), dropletOriginArea, this._serviceProvider.settings.constants.erosion.dropletOffsetsMinSize);
         const offsets: number[] = [];
         const totalOffsets = dropletOriginArea.x * dropletOriginArea.y;
         let coordinate: Vector2;

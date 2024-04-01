@@ -162,7 +162,7 @@ export class SettingsService {
             },
             erosion: {
                 dropletsSize: new Vector2(8, 8),
-                dropletOffsetsMinSize: 1,
+                dropletOffsetsMinSize: 0.25,
                 dropletsWorkgroupCount: 1,
                 brushRadius: 4,
             },
