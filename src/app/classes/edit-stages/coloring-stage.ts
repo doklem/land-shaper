@@ -47,9 +47,9 @@ export class ColoringStage extends EditStageBase<ColoringLandscape> {
         this._folders.push(rubbleFolder);
         rubbleFolder.add(rubble, 'slopStart', 0, 1, 0.001).name('Slop Angle').onChange(() => this.runDiffuse());
         rubbleFolder.add(rubble, 'slopRange', 0, 10, 0.01).name('Slop Gradient').onChange(() => this.runDiffuse());
-        rubbleFolder.add(rubble.scaleFactor, 'x', 0, 10, 0.1).name('Scale X').onChange(() => this.runDiffuse());
-        rubbleFolder.add(rubble.scaleFactor, 'y', 0, 10, 0.1).name('Scale Y').onChange(() => this.runDiffuse());
-        rubbleFolder.add(rubble.scaleFactor, 'z', 0, 10, 0.1).name('Scale Z').onChange(() => this.runDiffuse());
+        rubbleFolder.add(rubble.scale, 'x', 0, 10, 0.1).name('Scale X').onChange(() => this.runDiffuse());
+        rubbleFolder.add(rubble.scale, 'y', 0, 10, 0.1).name('Scale Y').onChange(() => this.runDiffuse());
+        rubbleFolder.add(rubble.scale, 'z', 0, 10, 0.1).name('Scale Z').onChange(() => this.runDiffuse());
         MixedColorSettings.createGUI(rubble.color, rubbleFolder, 'Color', () => this.runDiffuse());
     }
 

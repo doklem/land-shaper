@@ -89,7 +89,7 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, topology.scale.z, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setInt32(offset, topology.octaveCount, constants.littleEndian);
+        uniformConfigView.setInt32(offset, topology.octaves, constants.littleEndian);
         offset += Int32Array.BYTES_PER_ELEMENT;
 
         uniformConfigView.setFloat32(offset, topology.turbulence.x, constants.littleEndian);

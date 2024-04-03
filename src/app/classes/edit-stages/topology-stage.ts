@@ -20,7 +20,7 @@ export class TopologyStage extends EditStageBase<TopologyLandscape> {
         const topologyFolder = parent.addFolder('Topology').hide();
         this._folders.push(topologyFolder);
         topologyFolder.add(topology, 'seed', -10, 10, 0.005).name('Seed').onChange(async () => await this.runTopology());
-        topologyFolder.add(topology, 'octaveCount', 1, 15, 1).name('Octaves').onChange(async () => await this.runTopology());
+        topologyFolder.add(topology, 'octaves', 1, 15, 1).name('Octaves').onChange(async () => await this.runTopology());
         topologyFolder.add(topology.offset, 'x', -300, 300, 0.01).name('Offset X').onChange(async () => await this.runTopology());
         topologyFolder.add(topology.offset, 'y', -300, 300, 0.01).name('Offset Y').onChange(async () => await this.runTopology());
         topologyFolder.add(topology.offset, 'z', -150, 150, 0.5).name('Offset Z').onChange(async () => await this.runTopology());

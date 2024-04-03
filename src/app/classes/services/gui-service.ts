@@ -6,6 +6,7 @@ import { SettingsService } from './settings-service';
 import { EditStageService } from './edit-stage-service';
 import { SkyBox } from '../objects-3d/sky-box';
 import { BackSide, DoubleSide, FrontSide } from 'three';
+import { ISettingsOptions } from '../settings/settings-options';
 
 export class GUIService implements IDisposable {
 
@@ -25,7 +26,7 @@ export class GUIService implements IDisposable {
         load: async () => await this.loadSettings(),
         next: async () => await this.nextStage(),
         previous: async () => await this.previousStage(),
-        save: async () => await SettingsIOHelper.save(this._editFolder),
+        save: async () => await SettingsIOHelper.save(this._settings.get()),
         source: () => window.open(GUIService.SOURCE_URL, '_blank'),
     };
     private readonly _templateButton: Controller;
@@ -112,8 +113,8 @@ export class GUIService implements IDisposable {
 
         const waterFolder = folder.addFolder('Water').close();
         waterFolder.add(this._settings.ocean, 'distortionScale', 0, 8, 0.1).name('Distortion Scale').onChange(() => this.updateWorld());
-        waterFolder.add(this._settings.ocean, 'waterSize', 0.1, 10, 0.1).name('Size').onChange(() => this.updateWorld());
-        waterFolder.add(this._settings.ocean, 'waterSpeed', 0.0001, 0.01, 0.0001).name('Speed').onChange(() => this.updateWorld());
+        waterFolder.add(this._settings.ocean, 'size', 0.1, 10, 0.1).name('Size').onChange(() => this.updateWorld());
+        waterFolder.add(this._settings.ocean, 'speed', 0.0001, 0.01, 0.0001).name('Speed').onChange(() => this.updateWorld());
         waterFolder.addColor(this._settings.ocean, 'color').name('Color').onChange(() => this.updateWorld());
     }
 
@@ -132,16 +133,16 @@ export class GUIService implements IDisposable {
     }
 
     private async loadSettings(): Promise<void> {
-        const settings = await SettingsIOHelper.load();
-        if (settings) {
-            await this.restart(settings);
+        const options = await SettingsIOHelper.load();
+        if (options) {
+            await this.restart(options);
         }
     }
 
     private async loadTemplate(): Promise<void> {
-        const settings = await SettingsIOHelper.loadTemplate(this._template);
-        if (settings) {
-            await this.restart(settings);
+        const options = SettingsIOHelper.loadTemplate(this._template);
+        if (options) {
+            await this.restart(options);
             this._template = TemplateType.unknown;
             this._templateButton.updateDisplay();
         }
@@ -157,11 +158,11 @@ export class GUIService implements IDisposable {
         }
     }
 
-    private async restart(settings: any): Promise<void> {
+    private async restart(options: ISettingsOptions): Promise<void> {
         this.setState(false);
         this._stages.hideAll();
-        this._editFolder.load(settings, true);
-        this._settings.calculateSettings();
+        this._settings.set(options);
+        this._editFolder.controllersRecursive().forEach(controller => controller.updateDisplay());
         await this._stages.initialize();
         this.updateWorld();
         this._stages.applyDebugSettings();

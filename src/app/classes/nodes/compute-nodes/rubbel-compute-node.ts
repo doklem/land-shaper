@@ -139,11 +139,11 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
         uniformConfigView.setFloat32(offset, constants.meshSize.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
 
-        uniformConfigView.setFloat32(offset, rubble.scaleFactor.x, constants.littleEndian);
+        uniformConfigView.setFloat32(offset, rubble.scale.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, rubble.scaleFactor.y, constants.littleEndian);
+        uniformConfigView.setFloat32(offset, rubble.scale.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, rubble.scaleFactor.z, constants.littleEndian);
+        uniformConfigView.setFloat32(offset, rubble.scale.z, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         offset += Float32Array.BYTES_PER_ELEMENT; // Padding
 

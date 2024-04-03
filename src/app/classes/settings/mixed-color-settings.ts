@@ -1,20 +1,29 @@
 import { Color, Vector2 } from 'three';
 import { GUI, Controller } from 'lil-gui';
+import { IMixedColorOptions } from './mixed-color-options';
 
-export class MixedColorSettings {
+export class MixedColorSettings implements IMixedColorOptions {
 
     public static readonly BYTE_LENGTH = Float32Array.BYTES_PER_ELEMENT * 14
         + Int32Array.BYTES_PER_ELEMENT
         + Float32Array.BYTES_PER_ELEMENT; // Byte pading
 
-    constructor(
-        public colorA: Color,
-        public colorB: Color,
-        public seed: number,
-        public octaves: number,
-        public start: number,
-        public range: number,
-        public scale: Vector2) {
+    public colorA: Color;
+    public colorB: Color;
+    public seed: number;
+    public octaves: number;
+    public start: number;
+    public range: number;
+    public scale: Vector2;
+
+    constructor() {
+        this.colorA = new Color();
+        this.colorB = new Color();
+        this.seed = 0;
+        this.octaves = 0;
+        this.start = 0;
+        this.range = 0;
+        this.scale = new Vector2();
     }
 
     public static createGUI(settings: MixedColorSettings, gui: GUI, name: string, applyChange: () => Promise<void>): Controller[] {
@@ -62,5 +71,15 @@ export class MixedColorSettings {
         offset += Float32Array.BYTES_PER_ELEMENT;
         view.setFloat32(offset, color.b, littleEndian);
         return offset + Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT; // Move two because of the alpha channel
+    }
+
+    public set(options: IMixedColorOptions): void {
+        this.colorA.set(options.colorA);
+        this.colorB.set(options.colorB);
+        this.octaves = options.octaves;
+        this.range = options.range;
+        this.start = options.start;
+        this.scale.set(options.scale.x, options.scale.y);
+        this.seed = options.seed;
     }
 }
