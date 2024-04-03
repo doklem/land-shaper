@@ -14,7 +14,7 @@ export class BlurRenderNode extends ExportableRenderNodeBase {
     protected readonly _pipeline: GPURenderPipeline;
 
     public constructor(serviceProvider: IServiceProvider) {
-        super(BlurRenderNode.NAME, serviceProvider, serviceProvider.textures.displacementErosionCopy);
+        super(BlurRenderNode.NAME, serviceProvider, serviceProvider.textures.displacementErosionBlur);
 
         // buffers
         this._uniformConfigArray = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2 + Float32Array.BYTES_PER_ELEMENT * 2);

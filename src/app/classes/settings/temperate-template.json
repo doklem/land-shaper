@@ -1,155 +1,136 @@
 {
-    "controllers": {},
-    "folders": {
-        "Erosion": {
-            "controllers": {
-                "Iterations": 1000,
-                "Maximum Lifetime": 50,
-                "Inertia": 0.05,
-                "Gravity": 9.807,
-                "Sediment Capacity Factor": 4,
-                "Minimum Sediment Capacity": 0.1,
-                "Deposit Speed": 0.2,
-                "Erode Speed": 0.2,
-                "Evaporate Speed": 0.1,
-                "Start Speed": 1,
-                "Start Water": 1
-            },
-            "folders": {}
+    "blur": {
+        "size": {
+            "x": 2,
+            "y": 2
         },
-        "Blur": {
-            "controllers": {
-                "Radius X": 2,
-                "Radius Y": 2,
-                "Strength": 0.5
-            },
-            "folders": {}
-        },
-        "Topology": {
-            "controllers": {
-                "Seed": 0,
-                "Octaves": 9,
-                "Offset X": -243.89,
-                "Offset Y": -211.03,
-                "Offset Z": -49.5,
-                "Scale X": 0.0025,
-                "Scale Y": 0.0025,
-                "Scale Z": 82.25,
-                "Turbulence X": 0.2,
-                "Turbulence Y": 0.2,
-                "Ridge Threshold": 0
-            },
-            "folders": {}
-        },
-        "Colors": {
-            "controllers": {
-                "Slop Angle": 0.85,
-                "Slop Gradient": 0.05,
-                "River Start": 20,
-                "River Gradient": 30,
-                "Shore Start Height": 3,
-                "Shore Gradient": 0.2
-            },
-            "folders": {
-                "Normal Bumps": {
-                    "controllers": {
-                        "Seed": 0,
-                        "Octaves": 3,
-                        "Amplitude": 0.03,
-                        "Scale X": 1000,
-                        "Scale Y": 1000
-                    },
-                    "folders": {}
-                },
-                "Vegetation": {
-                    "controllers": {
-                        "Color A": "#0f1e09",
-                        "Color B": "#364d00",
-                        "Seed": 0,
-                        "Octaves": 2,
-                        "Start": -1,
-                        "Range": 2,
-                        "Scale X": 50,
-                        "Scale Y": 50
-                    },
-                    "folders": {}
-                },
-                "Bedrock": {
-                    "controllers": {
-                        "Color A": "#ffffff",
-                        "Color B": "#4c4c4c",
-                        "Seed": 0.7,
-                        "Octaves": 1,
-                        "Start": -0.75,
-                        "Range": 1.5,
-                        "Scale X": 8,
-                        "Scale Y": 8
-                    },
-                    "folders": {}
-                },
-                "Gravel": {
-                    "controllers": {
-                        "Color A": "#ffffff",
-                        "Color B": "#4c4c4c",
-                        "Seed": 0,
-                        "Octaves": 1,
-                        "Start": -1,
-                        "Range": 2,
-                        "Scale X": 500,
-                        "Scale Y": 500
-                    },
-                    "folders": {}
-                },
-                "Rubble": {
-                    "controllers": {
-                        "Slop Angle": 0.7,
-                        "Slop Gradient": 0.1,
-                        "Scale X": 0.5,
-                        "Scale Y": 0.5,
-                        "Scale Z": 0.5
-                    },
-                    "folders": {
-                        "Color": {
-                            "controllers": {
-                                "Color A": "#878787",
-                                "Color B": "#dbdbdb",
-                                "Seed": 0,
-                                "Octaves": 1,
-                                "Start": -0.25,
-                                "Range": 0.5,
-                                "Scale X": 10,
-                                "Scale Y": 10
-                            },
-                            "folders": {}
-                        }
-                    }
-                }
+        "strength": 0.5
+    },
+    "diffuse": {
+        "slopStart": 0.85,
+        "slopRange": 0.05,
+        "riverStart": 20,
+        "riverRange": 30,
+        "shoreStart": 3,
+        "shoreRange": 0.2,
+        "vegetation": {
+            "colorA": 4546613,
+            "colorB": 8361216,
+            "seed": 0,
+            "octaves": 2,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 50,
+                "y": 50
             }
         },
-        "World": {
-            "controllers": {},
-            "folders": {
-                "Sky": {
-                    "controllers": {
-                        "Elevation": 45,
-                        "Azimuth": 92,
-                        "Turbidity": 0.1,
-                        "Rayleigh": 0.1,
-                        "Ambient": "#9ac7de",
-                        "Directional": "#ffffff"
-                    },
-                    "folders": {}
-                },
-                "Water": {
-                    "controllers": {
-                        "Distortion Scale": 3.7,
-                        "Size": 10,
-                        "Speed": 0.0005,
-                        "Color": "#001e0f"
-                    },
-                    "folders": {}
-                }
+        "bedrock": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0.7,
+            "octaves": 1,
+            "start": -0.75,
+            "range": 1.5,
+            "scale": {
+                "x": 8,
+                "y": 8
             }
+        },
+        "gravel": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        }
+    },
+    "erosion": {
+        "iterations": 1000,
+        "maxLifetime": 50,
+        "inertia": 0.05,
+        "sedimentCapacityFactor": 4,
+        "minSedimentCapacity": 0.1,
+        "depositSpeed": 0.2,
+        "erodeSpeed": 0.2,
+        "evaporateSpeed": 0.1,
+        "gravity": 9.807,
+        "startSpeed": 1,
+        "startWater": 1
+    },
+    "light": {
+        "ambient": 13428208,
+        "azimuth": 92,
+        "directional": 16777215,
+        "elevation": 45
+    },
+    "normals": {
+        "seed": 0,
+        "octaves": 3,
+        "scale": {
+            "x": 1000,
+            "y": 1000
+        },
+        "amplitude": 0.03
+    },
+    "ocean": {
+        "distortionScale": 3.7,
+        "size": 10,
+        "speed": 0.0005,
+        "color": 24645
+    },
+    "rubble": {
+        "scale": {
+            "x": 0.5,
+            "y": 0.5,
+            "z": 0.5
+        },
+        "slopStart": 0.7,
+        "slopRange": 0.1,
+        "color": {
+            "colorA": 12632256,
+            "colorB": 15658734,
+            "seed": 0,
+            "octaves": 1,
+            "start": -0.25,
+            "range": 0.5,
+            "scale": {
+                "x": 10,
+                "y": 10
+            }
+        }
+    },
+    "sky": {
+        "turbidity": 0.1,
+        "rayleigh": 0.1
+    },
+    "topology": {
+        "octaves": 9,
+        "offset": {
+            "x": -243.89,
+            "y": -211.03,
+            "z": -59
+        },
+        "ridgeThreshold": 0.2,
+        "rotationAngle": 115.7,
+        "rotationOffset": {
+            "x": 0,
+            "y": 0
+        },
+        "scale": {
+            "x": 0.0025,
+            "y": 0.0025,
+            "z": 82.25
+        },
+        "seed": 0,
+        "turbulence": {
+            "x": 0.2,
+            "y": 0.2
         }
     }
 }

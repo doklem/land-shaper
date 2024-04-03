@@ -1,12 +1,15 @@
 import { Color, FrontSide, Matrix4, Vector2, Vector3 } from 'three';
 import { LightSettings } from '../settings/light-settings';
 import { MixedColorSettings } from '../settings/mixed-color-settings';
+import { SettingsIOHelper } from '../settings/settings-io-helper';
+import { TemplateType } from '../settings/template-type';
+import { ISettingsOptions } from '../settings/settings-options';
 
-export class SettingsService {
+export class SettingsService implements ISettingsOptions {
 
     public readonly blur = {
-        size: new Vector2(2, 2),
-        strength: 0.5,
+        size: new Vector2(),
+        strength: 0,
     };
 
     public readonly constants: {
@@ -48,98 +51,68 @@ export class SettingsService {
     };
 
     public readonly diffuse = {
-        slopStart: 0.85,
-        slopRange: 0.05,
-        riverStart: 20,
-        riverRange: 30,
-        shoreStart: 3,
-        shoreRange: 0.2,
-        vegetation: new MixedColorSettings(
-            new Color(0.059, 0.118, 0.039),
-            new Color(0.212, 0.302, 0),
-            0,
-            2,
-            -1,
-            2,
-            new Vector2(50, 50)),
-        bedrock: new MixedColorSettings(
-            new Color(1, 1, 1),
-            new Color(0.3, 0.3, 0.3),
-            0.7,
-            1,
-            -0.75,
-            1.5,
-            new Vector2(8, 8)),
-        gravel: new MixedColorSettings(
-            new Color(1, 1, 1),
-            new Color(0.3, 0.3, 0.3),
-            0,
-            1,
-            -1,
-            2,
-            new Vector2(500, 500)),
+        slopStart: 0,
+        slopRange: 0,
+        riverStart: 0,
+        riverRange: 0,
+        shoreStart: 0,
+        shoreRange: 0,
+        vegetation: new MixedColorSettings(),
+        bedrock: new MixedColorSettings(),
+        gravel: new MixedColorSettings(),
     };
 
     public readonly erosion = {
-        iterations: 1000,
-        maxLifetime: 50,
-        inertia: 0.05,
-        sedimentCapacityFactor: 4,
-        minSedimentCapacity: 0.1,
-        depositSpeed: 0.2,
-        erodeSpeed: 0.2,
-        evaporateSpeed: 0.1,
-        gravity: 9.807,
-        startSpeed: 1,
-        startWater: 1,
+        iterations: 0,
+        maxLifetime: 0,
+        inertia: 0,
+        sedimentCapacityFactor: 0,
+        minSedimentCapacity: 0,
+        depositSpeed: 0,
+        erodeSpeed: 0,
+        evaporateSpeed: 0,
+        gravity: 0,
+        startSpeed: 0,
+        startWater: 0,
     };
 
-    public readonly light = new LightSettings(
-        45,
-        92,
-        new Color(0.604, 0.784, 0.874),
-        new Color(1, 1, 1));
+    public readonly light = new LightSettings();
 
     public readonly normals = {
         seed: 0,
-        octaves: 3,
-        scale: new Vector2(1000, 1000),
-        amplitude: 0.03,
+        octaves: 0,
+        scale: new Vector2(),
+        amplitude: 0,
     };
 
     public readonly ocean = {
-        distortionScale: 3.7,
-        waterSize: 10,
-        waterSpeed: 0.0005,
-        color: new Color(0, 0.118, 0.059),
+        distortionScale: 0,
+        size: 0,
+        speed: 0,
+        color: new Color(),
     };
 
     public readonly rubble = {
-        scaleFactor: new Vector3(.5, .5, .5),
-        slopStart: 0.7,
-        slopRange: 0.1,
-        color: new MixedColorSettings(
-            new Color(0.53, 0.53, 0.53),
-            new Color(0.86, 0.86, 0.86),
-            0,
-            1,
-            -0.25,
-            0.5,
-            new Vector2(10, 10)),
+        scale: new Vector3(),
+        slopStart: 0,
+        slopRange: 0,
+        color: new MixedColorSettings(),
     };
 
     public readonly sky = {
-        turbidity: 0.1,
-        rayleigh: 0.1,
+        turbidity: 0,
+        rayleigh: 0,
     };
 
     public readonly topology = {
-        offset: new Vector3(-243.89, -211.03, -49.5),
-        scale: new Vector3(0.0025, 0.0025, 82.25),
-        seed: 0,
-        turbulence: new Vector2(0.2, 0.2),
-        octaveCount: 9,
+        octaves: 0,
+        offset: new Vector3(),
         ridgeThreshold: 0,
+        rotationAngle: 0,
+        rotationOffset: new Vector2(),
+        scale: new Vector3(),
+        seed: 0,
+        turbulence: new Vector2(),
     };
 
     constructor(anisotropy: number) {
@@ -175,9 +148,83 @@ export class SettingsService {
                 textureSize: new Vector2(512, 512),
             }
         };
+        this.set(SettingsIOHelper.loadTemplate(TemplateType.temperate)!);
     }
 
-    public calculateSettings(): void {
-        this.light.updateSunPosition();
+    public get(): ISettingsOptions {
+        return {
+            blur: this.blur,
+            diffuse: this.diffuse,
+            erosion: this.erosion,
+            light: {
+                ambient: this.light.ambient,
+                azimuth: this.light.azimuth,
+                directional: this.light.directional,
+                elevation: this.light.elevation
+            },
+            normals: this.normals,
+            ocean: this.ocean,
+            rubble: this.rubble,
+            sky: this.sky,
+            topology: this.topology
+        };
+    }
+
+    public set(options: ISettingsOptions): void {
+        this.blur.size.set(options.blur.size.x, options.blur.size.y);
+        this.blur.strength = options.blur.strength;
+
+        this.diffuse.bedrock.set(options.diffuse.bedrock);
+        this.diffuse.gravel.set(options.diffuse.gravel);
+        this.diffuse.riverRange = options.diffuse.riverRange;
+        this.diffuse.riverStart = options.diffuse.riverStart;
+        this.diffuse.shoreRange = options.diffuse.shoreRange;
+        this.diffuse.shoreStart = options.diffuse.shoreStart;
+        this.diffuse.slopRange = options.diffuse.slopRange;
+        this.diffuse.shoreStart = options.diffuse.shoreStart;
+        this.diffuse.slopRange = options.diffuse.slopRange;
+        this.diffuse.slopStart = options.diffuse.slopStart;
+        this.diffuse.vegetation.set(options.diffuse.vegetation);
+
+        this.erosion.depositSpeed = options.erosion.depositSpeed;
+        this.erosion.erodeSpeed = options.erosion.erodeSpeed;
+        this.erosion.evaporateSpeed = options.erosion.evaporateSpeed;
+        this.erosion.gravity = options.erosion.gravity;
+        this.erosion.inertia = options.erosion.inertia;
+        this.erosion.iterations = options.erosion.iterations;
+        this.erosion.maxLifetime = options.erosion.maxLifetime;
+        this.erosion.minSedimentCapacity = options.erosion.minSedimentCapacity;
+        this.erosion.sedimentCapacityFactor = options.erosion.sedimentCapacityFactor;
+        this.erosion.startSpeed = options.erosion.startSpeed;
+        this.erosion.startWater = options.erosion.startWater;
+
+        this.light.set(options.light);
+
+        this.normals.amplitude = options.normals.amplitude;
+        this.normals.octaves = options.normals.octaves;
+        this.normals.scale.set(options.normals.scale.x, options.normals.scale.y);
+        this.normals.seed = options.normals.seed;
+
+        this.ocean.color.set(options.ocean.color);
+        this.ocean.distortionScale = options.ocean.distortionScale;
+        this.ocean.size = options.ocean.size;
+        this.ocean.speed = options.ocean.speed;
+
+        this.rubble.color.set(options.rubble.color);
+        this.rubble.scale.set(options.rubble.scale.x, options.rubble.scale.y, options.rubble.scale.z);
+        this.rubble.slopRange = options.rubble.slopRange;
+        this.rubble.slopStart = options.rubble.slopStart;
+
+        this.sky.rayleigh = options.sky.rayleigh;
+        this.sky.turbidity = options.sky.turbidity;
+
+        this.topology.octaves = options.topology.octaves;
+        this.topology.offset.set(options.topology.offset.x, options.topology.offset.y, options.topology.offset.z);
+        this.topology.ridgeThreshold = options.topology.ridgeThreshold;
+        this.topology.rotationAngle = options.topology.rotationAngle;
+        this.topology.rotationOffset.set(options.topology.rotationOffset.x, options.topology.rotationOffset.y);
+        this.topology.scale.set(options.topology.scale.x, options.topology.scale.y, options.topology.scale.z);
+        this.topology.seed = options.topology.seed;
+        this.topology.turbulence.set(options.topology.turbulence.x, options.topology.turbulence.y);
     }
 }

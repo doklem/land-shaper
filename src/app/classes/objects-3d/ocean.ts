@@ -20,7 +20,7 @@ export class Ocean extends Water implements IDisposable {
             side: _serviceProvider.settings.debug.side,
             fog: false
         });
-        this._waterSpeed = _serviceProvider.settings.ocean.waterSpeed;
+        this._waterSpeed = _serviceProvider.settings.ocean.speed;
         this.applySettings();
     }
 
@@ -33,11 +33,11 @@ export class Ocean extends Water implements IDisposable {
     public applySettings(): void {
         this.material.uniforms['sunDirection'].value.copy(this._serviceProvider.settings.light.sunPosition).normalize();
         this.material.uniforms['distortionScale'].value = this._serviceProvider.settings.ocean.distortionScale;
-        this.material.uniforms['size'].value = this._serviceProvider.settings.ocean.waterSize;
+        this.material.uniforms['size'].value = this._serviceProvider.settings.ocean.size;
         this.material.uniforms['sunColor'].value.copy(this._serviceProvider.settings.light.directional);
         this.material.uniforms['waterColor'].value.copy(this._serviceProvider.settings.ocean.color);
         this.material.needsUpdate = true;
-        this._waterSpeed = this._serviceProvider.settings.ocean.waterSpeed;
+        this._waterSpeed = this._serviceProvider.settings.ocean.speed;
     }
 
     public animate(delta: number): void {

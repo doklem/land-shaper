@@ -1,6 +1,7 @@
 const E3: vec3f = vec3f(17., 59.4, 15.);
 const F3: f32 = .3333333;
 const G3: f32 = .1666667;
+const BASE_AMPLITUDE: f32 = .5333333;
 
 // 	<www.shadertoy.com/view/XsX3zB>
 //	by Nikita Miropolskiy
@@ -40,7 +41,7 @@ fn snoise(p : vec3f) -> f32 {
 }
 
 fn snoiseFractal(m: vec3f, octaveCount: i32) -> f32 {
-    var amplitude: f32 = .5333333;
+    var amplitude: f32 = BASE_AMPLITUDE;
     var octave: f32 = 1.;
     var value: f32 = 0.;
     for(var i: i32 = 0; i < octaveCount; i++) {
@@ -51,6 +52,14 @@ fn snoiseFractal(m: vec3f, octaveCount: i32) -> f32 {
     return value;
 }
 
-fn multiRidgedFractal(m: vec3f, octaveCount: i32, ridgeThreshold: f32) -> f32 {
-    return 1. - (abs(snoiseFractal(m, octaveCount) + ridgeThreshold) - ridgeThreshold);
+fn ridgedNoiseFractal(m: vec3f, octaveCount: i32, ridgeThreshold: f32) -> f32 {
+    var amplitude: f32 = BASE_AMPLITUDE;
+    var octave: f32 = 1.;
+    var value: f32 = 0.;
+    for(var i: i32 = 0; i < octaveCount; i++) {
+        value += amplitude * (1. - (abs(snoise(octave * m) + ridgeThreshold) - ridgeThreshold));
+        amplitude *= 0.5;
+        octave *= 2.;
+    }
+    return value;
 }

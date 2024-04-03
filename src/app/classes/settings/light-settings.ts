@@ -1,10 +1,14 @@
-import { Color, Vector3 } from 'three';
+import { Color, MathUtils, Vector3 } from 'three';
+import { ILightOptions } from './light-options';
 
-export class LightSettings {
+export class LightSettings implements ILightOptions {
 
     private _elevation: number;
     private _azimuth: number;
     private _sunPosition = new Vector3();
+
+    public ambient: Color;
+    public directional: Color;
 
     public get elevation(): number {
         return this._elevation;
@@ -28,28 +32,25 @@ export class LightSettings {
         return this._sunPosition;
     }
 
-    constructor(elevation: number, azimuth: number, public ambient: Color, public directional: Color) {
-        this._elevation = elevation;
-        this._azimuth = azimuth;
+    constructor() {
+        this._azimuth = 0;
+        this._elevation = 0;
+        this.updateSunPosition();
+        this.ambient = new Color();
+        this.directional = new Color();
+    }
+
+    public set(options: ILightOptions): void {
+        this.ambient.set(options.ambient);
+        this._azimuth = options.azimuth;
+        this._elevation = options.elevation;
+        this.directional.set(options.directional);
         this.updateSunPosition();
     }
 
-    public static replacer(key: string, value: any): any {
-        switch (key) {
-            case '_sunPosition':
-                return undefined;
-            default:
-                return value;
-        }
-    }
-
-    public updateSunPosition(): void {
-        const phi = LightSettings.degToRad(90 - this._elevation);
-        const theta = LightSettings.degToRad(this._azimuth);
+    private updateSunPosition(): void {
+        const phi = MathUtils.degToRad(90 - this._elevation);
+        const theta = MathUtils.degToRad(this._azimuth);
         this._sunPosition = new Vector3().setFromSphericalCoords(1, phi, theta);
-    }
-
-    private static degToRad(value: number): number {
-        return value * Math.PI / 180;
     }
 }

@@ -1,8 +1,7 @@
-import { GUI } from 'lil-gui';
-import { LightSettings } from './light-settings';
 import temperateTemplate from './temperate-template.json';
 import desertTemplate from './desert-template.json';
 import { TemplateType } from './template-type';
+import { ISettingsOptions } from './settings-options';
 
 export class SettingsIOHelper {
 
@@ -27,7 +26,7 @@ export class SettingsIOHelper {
     };
 
 
-    public static async load(): Promise<any | undefined> {
+    public static async load(): Promise<ISettingsOptions | undefined> {
         try {
             const fileHandle = await window.showOpenFilePicker(SettingsIOHelper.OPEN_PICKER_OPTIONS);
             if (fileHandle.length < 1) {
@@ -35,25 +34,25 @@ export class SettingsIOHelper {
             }
             const file = await fileHandle[0].getFile();
             const json = await file.text();
-            return JSON.parse(json);
+            return JSON.parse(json) as ISettingsOptions;
         }
         catch (error) {
             console.debug(error);
         }
     }
 
-    public static async loadTemplate(template: TemplateType): Promise<any | undefined> {
+    public static loadTemplate(template: TemplateType): ISettingsOptions | undefined {
         switch (template) {
             case TemplateType.desert:
-                return desertTemplate;
+                return desertTemplate as ISettingsOptions;
             case TemplateType.temperate:
-                return temperateTemplate;
+                return temperateTemplate as ISettingsOptions;
         }
     }
 
-    public static async save(gui: GUI): Promise<void> {
+    public static async save(options: ISettingsOptions): Promise<void> {
         var blob = new Blob(
-            [JSON.stringify(gui.save(true), LightSettings.replacer)],
+            [JSON.stringify(options)],
             { type: SettingsIOHelper.JSON_MIME_TYPE }
         );
         try {
