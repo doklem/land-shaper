@@ -1,3 +1,4 @@
+import { Color, MathUtils, Vector3 } from 'three';
 import { ILightOptions } from './light-options';
 
 export class LightSettings implements ILightOptions {
@@ -47,13 +48,9 @@ export class LightSettings implements ILightOptions {
         this.updateSunPosition();
     }
 
-    public updateSunPosition(): void {
-        const phi = LightSettings.degToRad(90 - this._elevation);
-        const theta = LightSettings.degToRad(this._azimuth);
+    private updateSunPosition(): void {
+        const phi = MathUtils.degToRad(90 - this._elevation);
+        const theta = MathUtils.degToRad(this._azimuth);
         this._sunPosition = new Vector3().setFromSphericalCoords(1, phi, theta);
-    }
-
-    private static degToRad(value: number): number {
-        return value * Math.PI / 180;
     }
 }

@@ -1,11 +1,11 @@
 import FragmentShader from './../../../shaders/displacement-fragment.wgsl';
 import { ExportableRenderNodeBase } from './exportable-render-node-base';
 import { IServiceProvider } from '../../services/service-provider';
+import { MathUtils } from 'three';
 
 export class DisplacementRenderNode extends ExportableRenderNodeBase {
 
     private static readonly NAME = 'Displacement';
-    private static readonly DEGREE_RADIAN_FACTOR = Math.PI / 180;
 
     public static readonly NAME_EROSION = `Erosion ${DisplacementRenderNode.NAME}`;
     public static readonly NAME_EROSION_UNTOUCHED = `Erosion Untouched ${DisplacementRenderNode.NAME}`;
@@ -101,7 +101,7 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
         uniformConfigView.setFloat32(offset, constants.meshSize.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         
-        const angle = topology.rotationAngle * DisplacementRenderNode.DEGREE_RADIAN_FACTOR;
+        const angle = MathUtils.degToRad(topology.rotationAngle);
         const angleCos = Math.cos(angle);
         const angleSin = Math.sin(angle);
         uniformConfigView.setFloat32(offset, angleCos, constants.littleEndian);
