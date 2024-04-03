@@ -114,10 +114,10 @@
         "offset": {
             "x": -243.89,
             "y": -211.03,
-            "z": -49.5
+            "z": -59
         },
-        "ridgeThreshold": 0,
-        "rotationAngle": 0,
+        "ridgeThreshold": 0.2,
+        "rotationAngle": 115.7,
         "rotationOffset": {
             "x": 0,
             "y": 0
