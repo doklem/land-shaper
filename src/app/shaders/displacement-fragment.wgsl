@@ -33,7 +33,7 @@ fn main(@location(0) uv: vec2f) -> @location(0) vec4f
 
     // Calculate Z coordinate.
     return vec4f(
-        multiRidgedFractal(
+        ridgedNoiseFractal(
             vec3f(coordinate.xy, config.seed),
             config.octaveCount,
             config.ridgeThreshold) * config.scale.z + config.origin.z,
