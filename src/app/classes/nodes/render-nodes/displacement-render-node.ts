@@ -5,6 +5,7 @@ import { IServiceProvider } from '../../services/service-provider';
 export class DisplacementRenderNode extends ExportableRenderNodeBase {
 
     private static readonly NAME = 'Displacement';
+    private static readonly DEGREE_RADIAN_FACTOR = Math.PI / 180;
 
     public static readonly NAME_EROSION = `Erosion ${DisplacementRenderNode.NAME}`;
     public static readonly NAME_EROSION_UNTOUCHED = `Erosion Untouched ${DisplacementRenderNode.NAME}`;
@@ -27,9 +28,9 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
 
         // buffers        
         this._uniformConfigArray = new ArrayBuffer(
-            12 * Float32Array.BYTES_PER_ELEMENT
+            18 * Float32Array.BYTES_PER_ELEMENT
             + Int32Array.BYTES_PER_ELEMENT
-            + 3 * Float32Array.BYTES_PER_ELEMENT // Padding
+            + Float32Array.BYTES_PER_ELEMENT // Padding
         );
         this._uniformConfigBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Uniform Config Buffer`,
@@ -81,6 +82,7 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, topology.seed, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
+
         uniformConfigView.setFloat32(offset, topology.scale.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, topology.scale.y, constants.littleEndian);
@@ -89,6 +91,7 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setInt32(offset, topology.octaveCount, constants.littleEndian);
         offset += Int32Array.BYTES_PER_ELEMENT;
+
         uniformConfigView.setFloat32(offset, topology.turbulence.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, topology.turbulence.y, constants.littleEndian);
@@ -96,6 +99,23 @@ export class DisplacementRenderNode extends ExportableRenderNodeBase {
         uniformConfigView.setFloat32(offset, constants.meshSize.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, constants.meshSize.y, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        
+        const angle = topology.rotationAngle * DisplacementRenderNode.DEGREE_RADIAN_FACTOR;
+        const angleCos = Math.cos(angle);
+        const angleSin = Math.sin(angle);
+        uniformConfigView.setFloat32(offset, angleCos, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, angleSin, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, -angleSin, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, angleCos, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+
+        uniformConfigView.setFloat32(offset, topology.rotationOffset.x, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, topology.rotationOffset.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, topology.ridgeThreshold, constants.littleEndian);
         this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);

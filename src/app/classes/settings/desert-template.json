@@ -37,7 +37,10 @@
                 "Scale Z": 59.9,
                 "Turbulence X": 0.7,
                 "Turbulence Y": 0.7,
-                "Ridge Threshold": 0.62
+                "Ridge Threshold": 0.62,
+                "Rotation Offset X": 0,
+                "Rotation Offset Y": 0,
+                "Rotation Angle": 0
             },
             "folders": {}
         },

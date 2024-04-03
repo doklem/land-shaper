@@ -8,11 +8,17 @@ struct ShaderConfig {
     octaveCount: i32,
     turbulence: vec2f,
     meshSize: vec2f,
+    rotationMatrix: mat2x2<f32>,
+    rotationOffset: vec2f,
     ridgeThreshold: f32,
 }
 
 @group(0) @binding(0)
 var<uniform> config: ShaderConfig;
+
+fn rotate(coordinate: vec2f) -> vec2f {
+    return (coordinate - config.rotationOffset) * config.rotationMatrix + config.rotationOffset;
+}
 
 @fragment
 fn main(@location(0) uv: vec2f) -> @location(0) vec4f
@@ -20,8 +26,8 @@ fn main(@location(0) uv: vec2f) -> @location(0) vec4f
     // Get the local X and Y coordinate.
     let localCoordinate = uv * config.meshSize;
 
-    // Translate and scale the X and Y coordinate.
-    var coordinate = vec3f((config.origin.xy + localCoordinate) * config.scale.xy, 0.);
+    // Translate, rotate and scale the X and Y coordinate.
+    var coordinate = vec3f(rotate((config.origin.xy + localCoordinate)) * config.scale.xy, 0.);
 
     // Apply turbulence.
     coordinate = coordinate

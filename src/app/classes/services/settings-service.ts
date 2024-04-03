@@ -134,12 +134,14 @@ export class SettingsService {
     };
 
     public readonly topology = {
+        octaveCount: 9,
         offset: new Vector3(-243.89, -211.03, -49.5),
+        ridgeThreshold: 0,
+        rotationAngle: 0,
+        rotationOffset: new Vector2(),
         scale: new Vector3(0.0025, 0.0025, 82.25),
         seed: 0,
         turbulence: new Vector2(0.2, 0.2),
-        octaveCount: 9,
-        ridgeThreshold: 0,
     };
 
     constructor(anisotropy: number) {
