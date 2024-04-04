@@ -1,4 +1,4 @@
-import { DataTexture, FloatType, MeshStandardMaterial, PixelFormat, RedFormat, RGBAFormat, RGFormat, Vector2 } from 'three';
+import { DataTexture, FloatType, MeshStandardMaterial, PixelFormat, RedFormat, RGBAFormat, RGFormat, TextureDataType, UnsignedByteType, Vector2 } from 'three';
 import { IDisposable } from '../disposable';
 import { ITextureSettings } from '../settings/texture-settings';
 import { TextureWrapper } from './texture-wrapper';
@@ -21,6 +21,7 @@ export class TextureService implements IDisposable {
     private static readonly R_FLOAT_PIXEL_BYTE_LENGTH = TextureService.R_PIXEL_LENGTH * Float32Array.BYTES_PER_ELEMENT;
     private static readonly RG_FLOAT_PIXEL_BYTE_LENGTH = TextureService.RG_PIXEL_LENGTH * Float32Array.BYTES_PER_ELEMENT;
     private static readonly RGBA_FLOAT_PIXEL_BYTE_LENGTH = TextureService.RGBA_PIXEL_LENGTH * Float32Array.BYTES_PER_ELEMENT;
+    private static readonly RGBA_BYTE_PIXEL_BYTE_LENGTH = TextureService.RGBA_PIXEL_LENGTH * Uint8Array.BYTES_PER_ELEMENT;
     private static readonly FLOAT_SAMPLER_BINDING: GPUSamplerBindingType = 'filtering';
     private static readonly FLOAT_TEXTURE_SAMPLE: GPUTextureSampleType = 'float';
 
@@ -45,6 +46,8 @@ export class TextureService implements IDisposable {
     public readonly rgFloatTextureColorsSection: ITextureSettings;
     public readonly rgbaFloatTextureColors: ITextureSettings;
     public readonly rgbaFloatTextureColorsSection: ITextureSettings;
+    public readonly rgbaByteTextureColors: ITextureSettings;
+    public readonly rgbaByteTextureColorsSection: ITextureSettings;
     public readonly rubbleTexture: ITextureSettings;
     public readonly rubbleTextureSection: ITextureSettings;
     public readonly surface: TextureWrapper;
@@ -60,6 +63,8 @@ export class TextureService implements IDisposable {
         this.rgFloatTextureColorsSection = TextureService.createTextureSettings(settings.constants.sections.textureSizeColors, 'rg32float');
         this.rgbaFloatTextureColors = TextureService.createTextureSettings(settings.constants.textureSizeColors, 'rgba32float');
         this.rgbaFloatTextureColorsSection = TextureService.createTextureSettings(settings.constants.sections.textureSizeColors, 'rgba32float');
+        this.rgbaByteTextureColors = TextureService.createTextureSettings(settings.constants.textureSizeColors, 'rgba8unorm');
+        this.rgbaByteTextureColorsSection = TextureService.createTextureSettings(settings.constants.sections.textureSizeColors, 'rgba8unorm');
         this.rubbleTexture = TextureService.createTextureSettings(settings.constants.rubble.dimensions, 'rgba32float', Rubble.ITEM_LENGTH, Rubble.ITEM_BYTE_LENGTH);
         this.rubbleTextureSection = TextureService.createTextureSettings(settings.constants.rubble.dimensionsSection, 'rgba32float', Rubble.ITEM_LENGTH, Rubble.ITEM_BYTE_LENGTH);
 
@@ -90,7 +95,7 @@ export class TextureService implements IDisposable {
             TextureService.FLOAT_TEXTURE_SAMPLE,
             GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC/* | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.COPY_DST*/,
             ErosionDifferenceRenderNode.NAME,
-            this.rgbaFloatTextureColors
+            this.rgbaByteTextureColors
         );
         this.displacementErosion = new TextureWrapper(
             device,
@@ -142,14 +147,14 @@ export class TextureService implements IDisposable {
             TextureService.FLOAT_TEXTURE_SAMPLE,
             GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
             DiffuseRenderNode.NAME,
-            this.rgbaFloatTextureColors
+            this.rgbaByteTextureColors
         );
         this.diffuseSection = new TextureWrapper(
             device,
             TextureService.FLOAT_TEXTURE_SAMPLE,
             GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
             `${DiffuseRenderNode.NAME} Section`,
-            this.rgbaFloatTextureColorsSection
+            this.rgbaByteTextureColorsSection
         );
 
         this.normalObjectSpace = new TextureWrapper(
@@ -234,12 +239,16 @@ export class TextureService implements IDisposable {
                     pixelLength = TextureService.RGBA_PIXEL_LENGTH;
                     pixelByteLength = TextureService.RGBA_FLOAT_PIXEL_BYTE_LENGTH;
                     break;
+                case 'rgba8unorm':
+                    pixelLength = TextureService.RGBA_PIXEL_LENGTH;
+                    pixelByteLength = TextureService.RGBA_BYTE_PIXEL_BYTE_LENGTH;
+                    break;
                 default:
                     throw new Error(`There is no pixel length and pixel byte length defined for the texture format ${format}`);
             }
         }
-        
-        const pixelCount = size.x * size.y;        
+
+        const pixelCount = size.x * size.y;
         return {
             width: size.x,
             height: size.y,
@@ -251,20 +260,28 @@ export class TextureService implements IDisposable {
         };
     }
 
-    public static createDataTexture(array: Float32Array, settings: ITextureSettings, anisotropy?: number): DataTexture {
+    public static createDataTexture(array: Float32Array | Uint8Array, settings: ITextureSettings, anisotropy?: number): DataTexture {
         if (array.length != settings.length) {
             throw new Error(`The given array's size is ${array.length}, but it has to be ${settings.length} to match the given texture settings`);
         }
         let format: PixelFormat;
+        let type: TextureDataType;
         switch (settings.format) {
             case 'r32float':
                 format = RedFormat;
-                break;        
+                type = FloatType;
+                break;
             case 'rg32float':
                 format = RGFormat;
+                type = FloatType;
                 break;
             case 'rgba32float':
                 format = RGBAFormat;
+                type = FloatType;
+                break;
+            case 'rgba8unorm':
+                format = RGBAFormat;
+                type = UnsignedByteType;
                 break;
             default:
                 throw new Error(`There is no data texture format defined for the given texture settings format ${settings.format}`);
@@ -274,7 +291,7 @@ export class TextureService implements IDisposable {
             settings.width,
             settings.height,
             format,
-            FloatType,
+            type,
             undefined,
             undefined,
             undefined,

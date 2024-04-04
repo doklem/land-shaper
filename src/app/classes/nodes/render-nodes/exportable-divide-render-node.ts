@@ -1,10 +1,10 @@
 import FragmentShader from './../../../shaders/divide-fragment.wgsl';
 import { Vector2 } from 'three';
 import { TextureWrapper } from '../../services/texture-wrapper';
-import { ExportableRenderNodeBase } from './exportable-render-node-base';
 import { IServiceProvider } from '../../services/service-provider';
+import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';
 
-export class ExportableDivideRenderNode extends ExportableRenderNodeBase {
+export class ExportableDivideRenderNode extends ExportableFloatRenderNodeBase {
 
     private static readonly NAME = 'Exportable Divide';
 

@@ -1,9 +1,9 @@
 import FragmentShader from './../../../shaders/normal-tangent-space-fragment.wgsl';
-import { ExportableRenderNodeBase } from './exportable-render-node-base';
 import { TextureWrapper } from '../../services/texture-wrapper';
 import { IServiceProvider } from '../../services/service-provider';
+import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';
 
-export class NormalTangentSpaceRenderNode extends ExportableRenderNodeBase {
+export class NormalTangentSpaceRenderNode extends ExportableFloatRenderNodeBase {
 
     public static readonly NAME = 'Normal Tangent Space';
 

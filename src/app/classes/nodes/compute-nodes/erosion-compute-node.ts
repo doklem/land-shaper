@@ -6,7 +6,7 @@ import { QuadTree } from './quad-tree';
 import { IExportableNode } from '../exportable-node';
 import { IServiceProvider } from '../../services/service-provider';
 
-export class ErosionComputeNode implements IExportableNode, IDisposable {
+export class ErosionComputeNode implements IExportableNode<Float32Array>, IDisposable {
 
     private static readonly NAME = 'Erosion';
 

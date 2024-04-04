@@ -1,8 +1,8 @@
 import FragmentShader from './../../../shaders/blur-fragment.wgsl';
 import { IServiceProvider } from '../../services/service-provider';
-import { ExportableRenderNodeBase } from './exportable-render-node-base';
+import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';
 
-export class BlurRenderNode extends ExportableRenderNodeBase {
+export class BlurRenderNode extends ExportableFloatRenderNodeBase {
 
     public static readonly NAME = 'Blur';
 

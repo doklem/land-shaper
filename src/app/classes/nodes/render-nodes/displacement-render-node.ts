@@ -1,9 +1,9 @@
 import FragmentShader from './../../../shaders/displacement-fragment.wgsl';
-import { ExportableRenderNodeBase } from './exportable-render-node-base';
 import { IServiceProvider } from '../../services/service-provider';
 import { MathUtils } from 'three';
+import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';
 
-export class DisplacementRenderNode extends ExportableRenderNodeBase {
+export class DisplacementRenderNode extends ExportableFloatRenderNodeBase {
 
     private static readonly NAME = 'Displacement';
 
