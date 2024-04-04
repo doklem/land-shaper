@@ -63,7 +63,7 @@ export class ExportableDivideRenderNode extends ExportableFloatRenderNodeBase {
                 },
                 {
                     binding: 1,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
                 {
                     binding: 2,

@@ -24,7 +24,7 @@ var<storage, read_write> iterations: array<u32>;
 var displacementTexture: texture_2d<f32>;
 
 @group(0)@binding(5)
-var floatSampler: sampler;
+var samplerLinearClamp: sampler;
 
 //TODO: Use a read & write texture for this as soon as they are supported to allow bigger maps.
 @group(0) @binding(6)
@@ -44,17 +44,17 @@ fn calculateHeightAndGradient(position: vec2f) -> vec3f {
     let uvNE = (positionNW + vec2f(1., 0.)) / mapSize;
     let uvSW = (positionNW + vec2f(0., 1.)) / mapSize;
     let uvSE = (positionNW + vec2f(1., 1.)) / mapSize;
-    let heightNW = textureSampleLevel(displacementTexture, floatSampler, uvNW, 0.).x;
-    let heightNE = textureSampleLevel(displacementTexture, floatSampler, uvNE, 0.).x;
-    let heightSW = textureSampleLevel(displacementTexture, floatSampler, uvSW, 0.).x;
-    let heightSE = textureSampleLevel(displacementTexture, floatSampler, uvSE, 0.).x;
+    let heightNW = textureSampleLevel(displacementTexture, samplerLinearClamp, uvNW, 0.).x;
+    let heightNE = textureSampleLevel(displacementTexture, samplerLinearClamp, uvNE, 0.).x;
+    let heightSW = textureSampleLevel(displacementTexture, samplerLinearClamp, uvSW, 0.).x;
+    let heightSE = textureSampleLevel(displacementTexture, samplerLinearClamp, uvSE, 0.).x;
 
     // Calculate droplet's direction of flow with linear interpolation of height difference along the edges
     let gradientX = mix(heightNE - heightNW, heightSE - heightSW, offset.y);
     let gradientY = mix(heightSW - heightNW, heightSE - heightNE, offset.x);
 
     // Calculate height with bilinear interpolation of the heights of the nodes of the cell
-    let height = textureSampleLevel(displacementTexture, floatSampler, uv, 0.).x;
+    let height = textureSampleLevel(displacementTexture, samplerLinearClamp, uv, 0.).x;
 
     return vec3f(gradientX, gradientY, height);
 }

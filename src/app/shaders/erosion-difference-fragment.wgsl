@@ -13,12 +13,12 @@ var displacementOriginalTexture: texture_2d<f32>;
 var displacementErodedTexture: texture_2d<f32>;
 
 @group(0)@binding(2)
-var floatSampler: sampler;
+var samplerLinearClamp: sampler;
 
 @fragment
 fn main(@location(0) uv: vec2f) -> @location(0) vec4f
 {
-    var difference = textureSample(displacementErodedTexture, floatSampler, uv).x - textureSample(displacementOriginalTexture, floatSampler, uv).x;
+    var difference = textureSample(displacementErodedTexture, samplerLinearClamp, uv).x - textureSample(displacementOriginalTexture, samplerLinearClamp, uv).x;
 
     var erodedShadeColor = mix(RED, ORANGE, smoothstep(-FULL_RANGE, -MID_RANGE, difference));
     var erodedColor = mix(erodedShadeColor, WHITE, smoothstep(-MID_RANGE, 0., difference));

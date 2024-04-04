@@ -28,7 +28,7 @@ export class NormalTangentSpaceRenderNode extends ExportableFloatRenderNodeBase 
                     texture: normalObjectSpaceTexture.bindingLayout,
                 },
                 {
-                    binding: 1, // float sampler
+                    binding: 1, // sampler
                     visibility: GPUShaderStage.FRAGMENT,
                     sampler: { type: normalObjectSpaceTexture.settings.samplerBinding },
                 },
@@ -46,7 +46,7 @@ export class NormalTangentSpaceRenderNode extends ExportableFloatRenderNodeBase 
                 },
                 {
                     binding: 1,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
             ]
         });

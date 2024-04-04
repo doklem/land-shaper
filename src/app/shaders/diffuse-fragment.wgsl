@@ -16,7 +16,7 @@ var surfaceTexture: texture_2d<f32>;
 var displacementTexture: texture_2d<f32>;
 
 @group(0)@binding(2)
-var floatSampler: sampler;
+var samplerLinearClamp: sampler;
 
 @group(0) @binding(3)
 var<uniform> config: ShaderConfig;
@@ -28,11 +28,11 @@ var debugTexture: texture_2d<f32>;*/
 fn main(@location(0) uv: vec2f) -> @location(0) vec4f
 {
     let sectionUv = applyUvSection(uv, config.uvSection);
-    let surface = textureSample(surfaceTexture, floatSampler, uv);
+    let surface = textureSample(surfaceTexture, samplerLinearClamp, uv);
     let gravelColor = getMixedColor(config.gravel, sectionUv);
-    let bedrockColor = getMixedColorWithSeed(config.bedrock, sectionUv, textureSample(displacementTexture, floatSampler, sectionUv).r * config.bedrock.seed);
+    let bedrockColor = getMixedColorWithSeed(config.bedrock, sectionUv, textureSample(displacementTexture, samplerLinearClamp, sectionUv).r * config.bedrock.seed);
     let dirtColor = mix(gravelColor, bedrockColor, surface.r);
     let vegetationColor = getMixedColor(config.vegetation, sectionUv);
     return mix(dirtColor, vegetationColor, surface.g);
-    //return textureSample(debugTexture, floatSampler, uv);
+    //return textureSample(debugTexture, samplerLinearClamp, uv);
 }

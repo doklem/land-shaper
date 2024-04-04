@@ -51,7 +51,7 @@ export class ErosionDifferenceRenderNode extends ExportableByteRenderNodeBase {
                 },
                 {
                     binding: 2,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
             ]
         });

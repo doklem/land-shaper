@@ -34,7 +34,7 @@ export class BlurRenderNode extends ExportableFloatRenderNodeBase {
                     texture: serviceProvider.textures.displacementErosion.bindingLayout,
                 },
                 {
-                    binding: 1, // float sampler
+                    binding: 1, // sampler
                     visibility: GPUShaderStage.FRAGMENT,
                     sampler: { type: serviceProvider.textures.displacementErosion.settings.samplerBinding },
                 },
@@ -57,7 +57,7 @@ export class BlurRenderNode extends ExportableFloatRenderNodeBase {
                 },
                 {
                     binding: 1,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
                 {
                     binding: 2,

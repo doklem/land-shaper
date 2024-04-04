@@ -89,7 +89,7 @@ export class WaterComputeNode extends ComputeNodeBase {
                     texture: serviceProvider.textures.displacementErosion.bindingLayout,
                 },
                 {
-                    binding: 5, // float sampler
+                    binding: 5, // sampler
                     visibility: GPUShaderStage.COMPUTE,
                     sampler: { type: serviceProvider.textures.displacementErosion.settings.samplerBinding },
                 },
@@ -127,7 +127,7 @@ export class WaterComputeNode extends ComputeNodeBase {
                 },
                 {
                     binding: 5,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
                 {
                     binding: 6,

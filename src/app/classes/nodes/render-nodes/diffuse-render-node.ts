@@ -82,7 +82,7 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
                 },
                 {
                     binding: 2,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
                 {
                     binding: 3,

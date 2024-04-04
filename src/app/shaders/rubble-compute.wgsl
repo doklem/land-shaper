@@ -17,7 +17,7 @@ var displacementTexture: texture_2d<f32>;
 var surfaceTexture: texture_2d<f32>;
 
 @group(0)@binding(2)
-var floatSampler: sampler;
+var samplerLinearClamp: sampler;
 
 @group(0) @binding(3)
 var<uniform> config: ShaderConfig;
@@ -80,9 +80,9 @@ fn main(
     let gridUv = gridPosition / config.itemsDimensions;
     let uv = config.uvSection.offset + gridUv * config.uvSection.range;
     
-    let vegetation = smoothstep(.8, .9, 1. - textureSampleLevel(surfaceTexture, floatSampler, uv, 0).y);
+    let vegetation = smoothstep(.8, .9, 1. - textureSampleLevel(surfaceTexture, samplerLinearClamp, uv, 0).y);
     let scale = vegetation * (random3(vec3f(uv, 1.)) + 1.5) * config.scaleFactor;
-    let height = textureSampleLevel(displacementTexture, floatSampler, uv, 0).x;
+    let height = textureSampleLevel(displacementTexture, samplerLinearClamp, uv, 0).x;
     let rotation = random3(vec3f(uv, 2.));
     let position2d = config.meshSize * (uv - config.uvSection.offset);
     let position = vec3f(position2d, height);

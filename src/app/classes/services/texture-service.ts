@@ -22,7 +22,6 @@ export class TextureService implements IDisposable {
     private static readonly RG_FLOAT_PIXEL_BYTE_LENGTH = TextureService.RG_PIXEL_LENGTH * Float32Array.BYTES_PER_ELEMENT;
     private static readonly RGBA_FLOAT_PIXEL_BYTE_LENGTH = TextureService.RGBA_PIXEL_LENGTH * Float32Array.BYTES_PER_ELEMENT;
     private static readonly RGBA_BYTE_PIXEL_BYTE_LENGTH = TextureService.RGBA_PIXEL_LENGTH * Uint8Array.BYTES_PER_ELEMENT;
-    private static readonly FLOAT_SAMPLER_BINDING: GPUSamplerBindingType = 'filtering';
     private static readonly FLOAT_TEXTURE_SAMPLE: GPUTextureSampleType = 'float';
 
     public readonly displacementErosion: TextureWrapper;
@@ -33,7 +32,6 @@ export class TextureService implements IDisposable {
     public readonly displacementTopology: TextureWrapper;
     public readonly diffuse: TextureWrapper;
     public readonly diffuseSection: TextureWrapper;
-    public readonly floatSampler: GPUSampler;
     public readonly normalObjectSpace: TextureWrapper;
     public readonly normalObjectSpaceSection: TextureWrapper;
     public readonly normalTangentSpace: TextureWrapper;
@@ -50,6 +48,7 @@ export class TextureService implements IDisposable {
     public readonly rgbaByteTextureColorsSection: ITextureSettings;
     public readonly rubbleTexture: ITextureSettings;
     public readonly rubbleTextureSection: ITextureSettings;
+    public readonly samplerLinearClamping: GPUSampler;
     public readonly surface: TextureWrapper;
     public readonly surfaceSection: TextureWrapper;
     public readonly water: TextureWrapper;
@@ -68,8 +67,8 @@ export class TextureService implements IDisposable {
         this.rubbleTexture = TextureService.createTextureSettings(settings.constants.rubble.dimensions, 'rgba32float', Rubble.ITEM_LENGTH, Rubble.ITEM_BYTE_LENGTH);
         this.rubbleTextureSection = TextureService.createTextureSettings(settings.constants.rubble.dimensionsSection, 'rgba32float', Rubble.ITEM_LENGTH, Rubble.ITEM_BYTE_LENGTH);
 
-        this.floatSampler = device.createSampler({
-            label: 'Float Sampler',
+        this.samplerLinearClamping = device.createSampler({
+            label: 'Sampler Linear Clamping',
             addressModeU: 'clamp-to-edge',
             addressModeV: 'clamp-to-edge',
             magFilter: 'linear',
@@ -256,7 +255,7 @@ export class TextureService implements IDisposable {
             bytesPerRow: size.x * pixelByteLength,
             byteLength: pixelCount * pixelByteLength,
             valuesLength: pixelCount * pixelLength,
-            samplerBinding: TextureService.FLOAT_SAMPLER_BINDING,
+            samplerBinding: 'filtering',
             format
         };
     }

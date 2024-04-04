@@ -22,13 +22,13 @@ var displacementTexture: texture_2d<f32>;
 var waterTexture: texture_2d<f32>;
 
 @group(0)@binding(3)
-var floatSampler: sampler;
+var samplerLinearClamp: sampler;
 
 @group(0) @binding(4)
 var<uniform> config: ShaderConfig;
 
 fn getSlopeGradient(uv: vec2f) -> f32 {
-    let normal = textureSample(normalTexture, floatSampler, uv).xyz;
+    let normal = textureSample(normalTexture, samplerLinearClamp, uv).xyz;
     return smoothstep(config.slopStart, config.slopStart + config.slopRange, dot(UP, normal));
 }
 
@@ -36,8 +36,8 @@ fn getSlopeGradient(uv: vec2f) -> f32 {
 fn main(@location(0) uv: vec2f) -> @location(0) vec4f
 {
     let sectionUv = applyUvSection(uv, config.uvSection);
-    let shore = smoothstep(config.shoreStart, config.shoreStart + config.shoreRange, textureSample(displacementTexture, floatSampler, sectionUv).x);
-    let river = 1. - smoothstep(config.riverStart, config.riverStart + config.riverRange, textureSample(waterTexture, floatSampler, sectionUv).x);
+    let shore = smoothstep(config.shoreStart, config.shoreStart + config.shoreRange, textureSample(displacementTexture, samplerLinearClamp, sectionUv).x);
+    let river = 1. - smoothstep(config.riverStart, config.riverStart + config.riverRange, textureSample(waterTexture, samplerLinearClamp, sectionUv).x);
     let dirt = min(shore, river);
     return vec4f(
         dirt, // gradient of dirt type between gravel and bedrock
