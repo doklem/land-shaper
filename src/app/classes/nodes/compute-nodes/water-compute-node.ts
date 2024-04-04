@@ -221,7 +221,7 @@ export class WaterComputeNode extends ComputeNodeBase {
 
     private static getWorkgroupCount(device: GPUDevice, textures: TextureService): number {
         // Each pixel should be exactly once the origin of a droplet with this.
-        const workgroupCount = (textures.water.settings.width * textures.water.settings.height) / WaterComputeNode.WORKGROUP_SIZE;
+        const workgroupCount = textures.water.settings.size / WaterComputeNode.WORKGROUP_SIZE;
         return Math.min(workgroupCount, device.limits.maxComputeWorkgroupsPerDimension);
     }
 }

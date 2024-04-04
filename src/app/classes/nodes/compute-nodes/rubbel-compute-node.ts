@@ -23,7 +23,7 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
         inputTextureSettings: ITextureSettings) {
         super('Rubble',
             serviceProvider,
-            Math.ceil((inputTextureSettings.width * inputTextureSettings.height) / RubbleComputeNode.WORKGROUP_SIZE),
+            Math.ceil(inputTextureSettings.size / RubbleComputeNode.WORKGROUP_SIZE),
             inputTextureSettings);
 
         // uniform buffer
@@ -97,7 +97,7 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
                     resource:
                     {
                         buffer: this.outputBuffer,
-                        size: Rubble.MATRIX_LENGTH * this.textureSettings.height * this.textureSettings.width * Float32Array.BYTES_PER_ELEMENT
+                        size: Rubble.MATRIX_LENGTH * this.textureSettings.size * Float32Array.BYTES_PER_ELEMENT
                     },
                 },
                 {
@@ -105,8 +105,8 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
                     resource:
                     {
                         buffer: this.outputBuffer,
-                        offset: Rubble.MATRIX_LENGTH * this.textureSettings.height * this.textureSettings.width * Float32Array.BYTES_PER_ELEMENT,
-                        size: Rubble.RGBA_LENGTH * this.textureSettings.height * this.textureSettings.width * Float32Array.BYTES_PER_ELEMENT
+                        offset: Rubble.MATRIX_LENGTH * this.textureSettings.size * Float32Array.BYTES_PER_ELEMENT,
+                        size: Rubble.RGBA_LENGTH * this.textureSettings.size * Float32Array.BYTES_PER_ELEMENT
                     },
                 }
             ]

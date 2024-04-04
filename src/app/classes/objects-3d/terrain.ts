@@ -42,13 +42,13 @@ export class Terrain extends LOD implements IDisposable {
         super();
 
         if (displacementTexture) {
-            this._displacementOutput = new Float32Array(displacementTexture.length);
+            this._displacementOutput = new Float32Array(displacementTexture.valuesLength);
         }
         if (_normalTangentSpaceRenderNode) {
-            this._normalOutput = new Float32Array(_normalTangentSpaceRenderNode.textureSettings.length);
+            this._normalOutput = new Float32Array(_normalTangentSpaceRenderNode.textureSettings.valuesLength);
         }
         if (_diffuseRenderNode) {
-            this._diffuseOutput = new Uint8Array(_diffuseRenderNode.textureSettings.length);
+            this._diffuseOutput = new Uint8Array(_diffuseRenderNode.textureSettings.valuesLength);
         }
 
         this._displacementMap = displacementMap ?? TextureService.createDataTexture(this._displacementOutput!, displacementTexture!);

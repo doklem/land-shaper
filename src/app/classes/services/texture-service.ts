@@ -252,17 +252,18 @@ export class TextureService implements IDisposable {
         return {
             width: size.x,
             height: size.y,
+            size: pixelCount,
             bytesPerRow: size.x * pixelByteLength,
             byteLength: pixelCount * pixelByteLength,
-            length: pixelCount * pixelLength,
+            valuesLength: pixelCount * pixelLength,
             samplerBinding: TextureService.FLOAT_SAMPLER_BINDING,
             format
         };
     }
 
     public static createDataTexture(array: Float32Array | Uint8Array, settings: ITextureSettings, anisotropy?: number): DataTexture {
-        if (array.length != settings.length) {
-            throw new Error(`The given array's size is ${array.length}, but it has to be ${settings.length} to match the given texture settings`);
+        if (array.length != settings.valuesLength) {
+            throw new Error(`The given array's size is ${array.length}, but it has to be ${settings.valuesLength} to match the given texture settings`);
         }
         let format: PixelFormat;
         let type: TextureDataType;

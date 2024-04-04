@@ -20,7 +20,7 @@ export class TopologyLandscape extends Group implements ILandscape {
         this.applyMatrix4(_serviceProvider.settings.constants.transformation);
 
         this._displacementRenderNode = new DisplacementRenderNode(_serviceProvider, true);
-        this._displacementOutput = new Float32Array(this._displacementRenderNode.textureSettings.length);
+        this._displacementOutput = new Float32Array(this._displacementRenderNode.textureSettings.valuesLength);
 
         this._terrain = new Mesh(
             new PlaneGeometry(_serviceProvider.settings.constants.meshSize.x,
