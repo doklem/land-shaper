@@ -1,10 +1,9 @@
-import { BufferService } from '../../services/buffer-service';
 import { TextureWrapper } from '../../services/texture-wrapper';
 import { IServiceProvider } from '../../services/service-provider';
 import { IExportableNode } from '../exportable-node';
 import { RenderNodeBase } from './render-node-base';
 
-export abstract class ExportableRenderNodeBase extends RenderNodeBase implements IExportableNode {
+export abstract class ExportableRenderNodeBase<T extends Float32Array | Uint8Array> extends RenderNodeBase implements IExportableNode<T> {
 
     protected readonly _stagingBuffer: GPUBuffer;
 
@@ -28,9 +27,7 @@ export abstract class ExportableRenderNodeBase extends RenderNodeBase implements
         this._stagingBuffer.destroy();
     }
 
-    public async readOutputBuffer(output: Float32Array): Promise<void> {
-        output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
-    }
+    public abstract readOutputBuffer(output: T): Promise<void>;
 
     public override appendRenderPass(commandEncoder: GPUCommandEncoder): void {
         super.appendRenderPass(commandEncoder);

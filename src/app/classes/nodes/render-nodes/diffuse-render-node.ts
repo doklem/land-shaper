@@ -1,11 +1,11 @@
 import FragmentShader from './../../../shaders/diffuse-fragment.wgsl';
-import { ExportableRenderNodeBase } from './exportable-render-node-base';
 import { MixedColorSettings } from '../../settings/mixed-color-settings';
 import { TextureWrapper } from '../../services/texture-wrapper';
 import { Vector2 } from 'three';
 import { IServiceProvider } from '../../services/service-provider';
+import { ExportableByteRenderNodeBase } from './exportable-byte-render-node-base';
 
-export class DiffuseRenderNode extends ExportableRenderNodeBase {
+export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
 
     public static readonly NAME = 'Diffuse';
 
@@ -82,7 +82,7 @@ export class DiffuseRenderNode extends ExportableRenderNodeBase {
                 },
                 {
                     binding: 2,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
                 {
                     binding: 3,

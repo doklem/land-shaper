@@ -89,7 +89,7 @@ export class WaterComputeNode extends ComputeNodeBase {
                     texture: serviceProvider.textures.displacementErosion.bindingLayout,
                 },
                 {
-                    binding: 5, // float sampler
+                    binding: 5, // sampler
                     visibility: GPUShaderStage.COMPUTE,
                     sampler: { type: serviceProvider.textures.displacementErosion.settings.samplerBinding },
                 },
@@ -127,7 +127,7 @@ export class WaterComputeNode extends ComputeNodeBase {
                 },
                 {
                     binding: 5,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
                 {
                     binding: 6,
@@ -221,7 +221,7 @@ export class WaterComputeNode extends ComputeNodeBase {
 
     private static getWorkgroupCount(device: GPUDevice, textures: TextureService): number {
         // Each pixel should be exactly once the origin of a droplet with this.
-        const workgroupCount = (textures.water.settings.width * textures.water.settings.height) / WaterComputeNode.WORKGROUP_SIZE;
+        const workgroupCount = textures.water.settings.size / WaterComputeNode.WORKGROUP_SIZE;
         return Math.min(workgroupCount, device.limits.maxComputeWorkgroupsPerDimension);
     }
 }

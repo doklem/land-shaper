@@ -15,7 +15,7 @@ struct ShaderConfig {
 var displacementTexture: texture_2d<f32>;
 
 @group(0)@binding(1)
-var floatSampler: sampler;
+var samplerLinearClamp: sampler;
 
 @group(0) @binding(2)
 var<uniform> config: ShaderConfig;
@@ -23,7 +23,7 @@ var<uniform> config: ShaderConfig;
 fn getDisplacement(uv: vec2f) -> f32 {
     let scaledUv = uv * config.bumpsScale;
     let bump = snoiseFractal(vec3f(scaledUv.x, scaledUv.y, config.bumpsSeed), config.bumpsOctaves) * config.bumpsAmplitude;
-    return textureSample(displacementTexture, floatSampler, uv).r + bump;
+    return textureSample(displacementTexture, samplerLinearClamp, uv).r + bump;
 }
 
 fn getNormal(uv: vec2f) -> vec3f {

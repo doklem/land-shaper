@@ -53,7 +53,7 @@ export class SurfaceRenderNode extends RenderNodeBase {
                     texture: waterTexture.bindingLayout,
                 },
                 {
-                    binding: 3, // float sampler
+                    binding: 3, // sampler
                     visibility: GPUShaderStage.FRAGMENT,
                     sampler: { type: normalObjectSpaceTexture.settings.samplerBinding },
                 },
@@ -84,7 +84,7 @@ export class SurfaceRenderNode extends RenderNodeBase {
                 },
                 {
                     binding: 3,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
                 {
                     binding: 4,

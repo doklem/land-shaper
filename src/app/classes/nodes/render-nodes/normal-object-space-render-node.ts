@@ -50,7 +50,7 @@ export class NormalObjectSpaceRenderNode extends RenderNodeBase {
                     texture: displacementTexture.bindingLayout,
                 },
                 {
-                    binding: 1, // float sampler
+                    binding: 1, // sampler
                     visibility: GPUShaderStage.FRAGMENT,
                     sampler: { type: displacementTexture.settings.samplerBinding },
                 },
@@ -73,7 +73,7 @@ export class NormalObjectSpaceRenderNode extends RenderNodeBase {
                 },
                 {
                     binding: 1,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
                 {
                     binding: 2,

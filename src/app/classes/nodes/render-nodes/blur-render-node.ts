@@ -1,8 +1,8 @@
 import FragmentShader from './../../../shaders/blur-fragment.wgsl';
 import { IServiceProvider } from '../../services/service-provider';
-import { ExportableRenderNodeBase } from './exportable-render-node-base';
+import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';
 
-export class BlurRenderNode extends ExportableRenderNodeBase {
+export class BlurRenderNode extends ExportableFloatRenderNodeBase {
 
     public static readonly NAME = 'Blur';
 
@@ -34,7 +34,7 @@ export class BlurRenderNode extends ExportableRenderNodeBase {
                     texture: serviceProvider.textures.displacementErosion.bindingLayout,
                 },
                 {
-                    binding: 1, // float sampler
+                    binding: 1, // sampler
                     visibility: GPUShaderStage.FRAGMENT,
                     sampler: { type: serviceProvider.textures.displacementErosion.settings.samplerBinding },
                 },
@@ -57,7 +57,7 @@ export class BlurRenderNode extends ExportableRenderNodeBase {
                 },
                 {
                     binding: 1,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
                 {
                     binding: 2,

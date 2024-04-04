@@ -13,11 +13,11 @@ import { NormalTangentSpaceRenderNode } from '../nodes/render-nodes/normal-tange
 import { IExportableNode } from '../nodes/exportable-node';
 import { ITextureSettings } from '../settings/texture-settings';
 import { IServiceProvider } from '../services/service-provider';
-import { ExportableRenderNodeBase } from '../nodes/render-nodes/exportable-render-node-base';
+import { ExportableByteRenderNodeBase } from '../nodes/render-nodes/exportable-byte-render-node-base';
 
 export class Terrain extends LOD implements IDisposable {
 
-    private readonly _diffuseOutput?: Float32Array;
+    private readonly _diffuseOutput?: Uint8Array;
     private readonly _displacementOutput?: Float32Array;
     private readonly _material: MeshStandardMaterial;
     private readonly _meshs: Mesh[];
@@ -36,19 +36,19 @@ export class Terrain extends LOD implements IDisposable {
         meshLodDistance: number,
         flatShading: boolean,
         private readonly _normalTangentSpaceRenderNode?: NormalTangentSpaceRenderNode,
-        private readonly _diffuseRenderNode?: ExportableRenderNodeBase,
+        private readonly _diffuseRenderNode?: ExportableByteRenderNodeBase,
         displacementTexture?: ITextureSettings,
         displacementMap?: DataTexture) {
         super();
 
         if (displacementTexture) {
-            this._displacementOutput = new Float32Array(displacementTexture.length);
+            this._displacementOutput = new Float32Array(displacementTexture.valuesLength);
         }
         if (_normalTangentSpaceRenderNode) {
-            this._normalOutput = new Float32Array(_normalTangentSpaceRenderNode.textureSettings.length);
+            this._normalOutput = new Float32Array(_normalTangentSpaceRenderNode.textureSettings.valuesLength);
         }
         if (_diffuseRenderNode) {
-            this._diffuseOutput = new Float32Array(_diffuseRenderNode.textureSettings.length);
+            this._diffuseOutput = new Uint8Array(_diffuseRenderNode.textureSettings.valuesLength);
         }
 
         this._displacementMap = displacementMap ?? TextureService.createDataTexture(this._displacementOutput!, displacementTexture!);
@@ -94,7 +94,7 @@ export class Terrain extends LOD implements IDisposable {
         }
     }
 
-    public async applyRunOutput(displacementProvider?: IExportableNode | undefined): Promise<void> {
+    public async applyRunOutput(displacementProvider?: IExportableNode<Float32Array> | undefined): Promise<void> {
         const promises: Promise<void>[] = [];
         if (displacementProvider && this._displacementOutput) {
             promises.push(displacementProvider.readOutputBuffer(this._displacementOutput));

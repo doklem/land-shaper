@@ -4,7 +4,7 @@ import { ITextureSettings } from '../../settings/texture-settings';
 import { ComputeNodeBase } from './compute-node-base';
 import { IServiceProvider } from '../../services/service-provider';
 
-export abstract class ExportableComputeNodeBase extends ComputeNodeBase implements IExportableNode {
+export abstract class ExportableComputeNodeBase extends ComputeNodeBase implements IExportableNode<Float32Array> {
 
     protected readonly _stagingBuffer: GPUBuffer;
 

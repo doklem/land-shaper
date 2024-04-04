@@ -23,7 +23,7 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
         inputTextureSettings: ITextureSettings) {
         super('Rubble',
             serviceProvider,
-            Math.ceil((inputTextureSettings.width * inputTextureSettings.height) / RubbleComputeNode.WORKGROUP_SIZE),
+            Math.ceil(inputTextureSettings.size / RubbleComputeNode.WORKGROUP_SIZE),
             inputTextureSettings);
 
         // uniform buffer
@@ -50,7 +50,7 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
                     texture: serviceProvider.textures.displacementErosion.bindingLayout,
                 },
                 {
-                    binding: 2, // float sampler
+                    binding: 2, // sampler
                     visibility: GPUShaderStage.COMPUTE,
                     sampler: { type: serviceProvider.textures.displacementErosion.settings.samplerBinding },
                 },
@@ -86,7 +86,7 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
                 },
                 {
                     binding: 2,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
                 {
                     binding: 3,
@@ -97,7 +97,7 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
                     resource:
                     {
                         buffer: this.outputBuffer,
-                        size: Rubble.MATRIX_LENGTH * this.textureSettings.height * this.textureSettings.width * Float32Array.BYTES_PER_ELEMENT
+                        size: Rubble.MATRIX_LENGTH * this.textureSettings.size * Float32Array.BYTES_PER_ELEMENT
                     },
                 },
                 {
@@ -105,8 +105,8 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
                     resource:
                     {
                         buffer: this.outputBuffer,
-                        offset: Rubble.MATRIX_LENGTH * this.textureSettings.height * this.textureSettings.width * Float32Array.BYTES_PER_ELEMENT,
-                        size: Rubble.RGBA_LENGTH * this.textureSettings.height * this.textureSettings.width * Float32Array.BYTES_PER_ELEMENT
+                        offset: Rubble.MATRIX_LENGTH * this.textureSettings.size * Float32Array.BYTES_PER_ELEMENT,
+                        size: Rubble.RGBA_LENGTH * this.textureSettings.size * Float32Array.BYTES_PER_ELEMENT
                     },
                 }
             ]

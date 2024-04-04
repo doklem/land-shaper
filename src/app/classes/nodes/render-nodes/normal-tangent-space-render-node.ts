@@ -1,9 +1,9 @@
 import FragmentShader from './../../../shaders/normal-tangent-space-fragment.wgsl';
-import { ExportableRenderNodeBase } from './exportable-render-node-base';
 import { TextureWrapper } from '../../services/texture-wrapper';
 import { IServiceProvider } from '../../services/service-provider';
+import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';
 
-export class NormalTangentSpaceRenderNode extends ExportableRenderNodeBase {
+export class NormalTangentSpaceRenderNode extends ExportableFloatRenderNodeBase {
 
     public static readonly NAME = 'Normal Tangent Space';
 
@@ -28,7 +28,7 @@ export class NormalTangentSpaceRenderNode extends ExportableRenderNodeBase {
                     texture: normalObjectSpaceTexture.bindingLayout,
                 },
                 {
-                    binding: 1, // float sampler
+                    binding: 1, // sampler
                     visibility: GPUShaderStage.FRAGMENT,
                     sampler: { type: normalObjectSpaceTexture.settings.samplerBinding },
                 },
@@ -46,7 +46,7 @@ export class NormalTangentSpaceRenderNode extends ExportableRenderNodeBase {
                 },
                 {
                     binding: 1,
-                    resource: serviceProvider.textures.floatSampler,
+                    resource: serviceProvider.textures.samplerLinearClamping,
                 },
             ]
         });
