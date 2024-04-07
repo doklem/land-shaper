@@ -1,4 +1,19 @@
-import { DataTexture, FloatType, MeshStandardMaterial, PixelFormat, RedFormat, RGBAFormat, RGFormat, TextureDataType, UnsignedByteType, Vector2 } from 'three';
+import {
+    ClampToEdgeWrapping,
+    DataTexture,
+    FloatType,
+    LinearFilter,
+    LinearMipmapLinearFilter,
+    MeshStandardMaterial,
+    PixelFormat,
+    RedFormat,
+    RGBAFormat,
+    RGFormat,
+    TextureDataType,
+    UnsignedByteType,
+    UVMapping,
+    Vector2
+} from 'three';
 import { IDisposable } from '../disposable';
 import { ITextureSettings } from '../settings/texture-settings';
 import { TextureWrapper } from './texture-wrapper';
@@ -286,17 +301,19 @@ export class TextureService implements IDisposable {
             default:
                 throw new Error(`There is no data texture format defined for the given texture settings format ${settings.format}`);
         }
-        return new DataTexture(
+        const texture = new DataTexture(
             array,
             settings.width,
             settings.height,
             format,
             type,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
+            UVMapping,
+            ClampToEdgeWrapping,
+            ClampToEdgeWrapping,
+            LinearFilter,
+            LinearMipmapLinearFilter,
             anisotropy);
+        texture.generateMipmaps = true;
+        return texture;
     }
 }
