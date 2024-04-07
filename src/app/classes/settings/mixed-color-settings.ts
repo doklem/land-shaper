@@ -26,18 +26,23 @@ export class MixedColorSettings implements IMixedColorOptions {
         this.scale = new Vector2();
     }
 
-    public static createGUI(settings: MixedColorSettings, gui: GUI, name: string, applyChange: () => Promise<void>): Controller[] {
+    public static createGUI(settings: MixedColorSettings, gui: GUI, name: string, applyChange: () => Promise<void>, onFinish?: boolean): Controller[] {
         const mixedColorFolder = gui.addFolder(name).close();
         const controllers = [
-            mixedColorFolder.addColor(settings, 'colorA').name('Color A').onChange(() => applyChange()),
-            mixedColorFolder.addColor(settings, 'colorB').name('Color B').onChange(() => applyChange()),
-            mixedColorFolder.add(settings, 'seed', -10, 10, 0.1).name('Seed').onChange(() => applyChange()),
-            mixedColorFolder.add(settings, 'octaves', 1, 15, 1).name('Octaves').onChange(() => applyChange()),
-            mixedColorFolder.add(settings, 'start', -2, 2, 0.01).name('Start').onChange(() => applyChange()),
-            mixedColorFolder.add(settings, 'range', 0, 10, 0.1).name('Range').onChange(() => applyChange()),
-            mixedColorFolder.add(settings.scale, 'x', 0, 1000, 1).name('Scale X').onChange(() => applyChange()),
-            mixedColorFolder.add(settings.scale, 'y', 0, 1000, 1).name('Scale Y').onChange(() => applyChange())
+            mixedColorFolder.addColor(settings, 'colorA').name('Color A'),
+            mixedColorFolder.addColor(settings, 'colorB').name('Color B'),
+            mixedColorFolder.add(settings, 'seed', -10, 10, 0.1).name('Seed'),
+            mixedColorFolder.add(settings, 'octaves', 1, 15, 1).name('Octaves'),
+            mixedColorFolder.add(settings, 'start', -2, 2, 0.01).name('Start'),
+            mixedColorFolder.add(settings, 'range', 0, 10, 0.1).name('Range'),
+            mixedColorFolder.add(settings.scale, 'x', 0, 1000, 1).name('Scale X'),
+            mixedColorFolder.add(settings.scale, 'y', 0, 1000, 1).name('Scale Y')
         ];
+        if (onFinish) {
+            controllers.forEach(controller => controller.onFinishChange(() => applyChange()));
+        } else {
+            controllers.forEach(controller => controller.onChange(() => applyChange()));
+        }
         return controllers;
     }
 
