@@ -95,13 +95,44 @@ export class ColoringLandscape extends Group implements ILandscape {
         this._running = true;
 
         this._waterComputeNode.configureRun();
-        this.configureRun();
+        this._normalObjectSpaceRenderNode.configureRun();
+        this._surfaceRenderNode.configureRun();
+        this._diffuseRenderNode.configureRun();
+        this._rubbleComputeNode.configureRun();
 
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         this._waterComputeNode.appendComputePass(commandEncoder);
-        this.submitRun(commandEncoder);
+        this._normalObjectSpaceRenderNode.appendRenderPass(commandEncoder);
+        this._normalTangentSpaceRenderNode.appendRenderPass(commandEncoder);
+        this._surfaceRenderNode.appendRenderPass(commandEncoder);
+        this._diffuseRenderNode.appendRenderPass(commandEncoder);
+        this._rubbleComputeNode.appendComputePass(commandEncoder);
+        this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
 
-        await this.applyRunOutput(this._terrain.applyRunOutput());
+        await Promise.all([this._terrain.applyRunOutput(), this._rubble.applyRunOutput()]);
+        this._running = false;
+    }
+
+    public async runBumps(): Promise<void> {
+        if (this._running) {
+            return;
+        }
+        this._running = true;
+
+        this._normalObjectSpaceRenderNode.configureRun();
+        this._surfaceRenderNode.configureRun();
+        this._diffuseRenderNode.configureRun();
+        this._rubbleComputeNode.configureRun();
+
+        const commandEncoder = this._serviceProvider.device.createCommandEncoder();
+        this._normalObjectSpaceRenderNode.appendRenderPass(commandEncoder);
+        this._normalTangentSpaceRenderNode.appendRenderPass(commandEncoder);
+        this._surfaceRenderNode.appendRenderPass(commandEncoder);
+        this._diffuseRenderNode.appendRenderPass(commandEncoder);
+        this._rubbleComputeNode.appendComputePass(commandEncoder);
+        this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
+
+        await Promise.all([this._terrain.updateDiffuse(), this._rubble.applyRunOutput()]);
         this._running = false;
     }
 
@@ -111,32 +142,51 @@ export class ColoringLandscape extends Group implements ILandscape {
         }
         this._running = true;
 
-        this.configureRun();
+        this._surfaceRenderNode.configureRun();
+        this._diffuseRenderNode.configureRun();
 
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
-        this.submitRun(commandEncoder);
+        this._surfaceRenderNode.appendRenderPass(commandEncoder);
+        this._diffuseRenderNode.appendRenderPass(commandEncoder);
+        this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
 
-        await this.applyRunOutput(this._terrain.updateDiffuse());
+        await this._terrain.updateDiffuse();
         this._running = false;
     }
 
-    private async applyRunOutput(terrainPromise: Promise<void>): Promise<void> {
-        await Promise.all([terrainPromise, this._rubble.applyRunOutput()]);
+    public async runRubble(): Promise<void> {
+        if (this._running) {
+            return;
+        }
+        this._running = true;
+
+        this._rubbleComputeNode.configureRun();
+
+        const commandEncoder = this._serviceProvider.device.createCommandEncoder();
+        this._rubbleComputeNode.appendComputePass(commandEncoder);
+        this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
+
+        await this._rubble.applyRunOutput();
+        this._running = false;
     }
 
-    private configureRun(): void {
-        this._normalObjectSpaceRenderNode.configureRun();
+    public async runSurface(): Promise<void> {
+        if (this._running) {
+            return;
+        }
+        this._running = true;
+
         this._surfaceRenderNode.configureRun();
         this._diffuseRenderNode.configureRun();
         this._rubbleComputeNode.configureRun();
-    }
 
-    private submitRun(commandEncoder: GPUCommandEncoder): void {
-        this._normalObjectSpaceRenderNode.appendRenderPass(commandEncoder);
-        this._normalTangentSpaceRenderNode.appendRenderPass(commandEncoder);
+        const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         this._surfaceRenderNode.appendRenderPass(commandEncoder);
         this._diffuseRenderNode.appendRenderPass(commandEncoder);
         this._rubbleComputeNode.appendComputePass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
+
+        await Promise.all([this._terrain.updateDiffuse(), this._rubble.applyRunOutput()]);
+        this._running = false;
     }
 }
