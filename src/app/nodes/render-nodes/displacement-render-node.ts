@@ -1,4 +1,4 @@
-import FragmentShader from './../../../shaders/displacement-fragment.wgsl';
+import FragmentShader from '../../../shaders/fragment/displacement.wgsl';
 import { IServiceProvider } from '../../services/service-provider';
 import { MathUtils } from 'three';
 import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';

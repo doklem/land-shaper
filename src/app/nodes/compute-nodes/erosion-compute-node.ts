@@ -1,4 +1,4 @@
-import ComputeShader from './../../../shaders/erosion-compute.wgsl';
+import ComputeShader from '../../../shaders/compute/erosion.wgsl';
 import { IDisposable } from '../../disposable';
 import { BufferService } from '../../services/buffer-service';
 import { Vector2 } from 'three';

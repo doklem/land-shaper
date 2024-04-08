@@ -1,17 +1,18 @@
-import FragmentShader from './../../../shaders/diffuse-fragment.wgsl';
-import { MixedColorSettings } from '../../settings/mixed-color-settings';
-import { TextureWrapper } from '../../services/texture-wrapper';
+import FragmentShader from '../../../shaders/fragment/normal-object-space.wgsl';
+import { RenderNodeBase } from './render-node-base';
 import { Vector2 } from 'three';
+import { TextureWrapper } from '../../services/texture-wrapper';
 import { IServiceProvider } from '../../services/service-provider';
-import { ExportableByteRenderNodeBase } from './exportable-byte-render-node-base';
 
-export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
+export class NormalObjectSpaceRenderNode extends RenderNodeBase {
 
-    public static readonly NAME = 'Diffuse';
+    public static readonly NAME = 'Normal Object Space';
 
     private readonly _bindGroup: GPUBindGroup;
     private readonly _uniformConfigArray: ArrayBuffer;
     private readonly _uniformConfigBuffer: GPUBuffer;
+    private readonly _sampleDistanceUv: Vector2;
+    private readonly _sampleDistanceMeters: Vector2;
 
     protected readonly _renderBundle: GPURenderBundle;
     protected readonly _pipeline: GPURenderPipeline;
@@ -19,16 +20,20 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
     public constructor(
         serviceProvider: IServiceProvider,
         private readonly _uvRange: Vector2,
-        surfaceTexture: TextureWrapper,
         displacementTexture: TextureWrapper,
         outputTexture: TextureWrapper
     ) {
-        super(DiffuseRenderNode.NAME, serviceProvider, outputTexture);
+        super(NormalObjectSpaceRenderNode.NAME, serviceProvider, outputTexture);
 
-        // buffers
+        const terrainResolution = new Vector2(1, 1).divide(_uvRange).multiply(new Vector2(this.textureSettings.width, this.textureSettings.height));
+        this._sampleDistanceUv = new Vector2(1, 1).divide(terrainResolution);
+        this._sampleDistanceMeters = serviceProvider.settings.constants.meshSize.clone().divide(terrainResolution);
+
+        // uniform buffers
         this._uniformConfigArray = new ArrayBuffer(
-            Float32Array.BYTES_PER_ELEMENT * 4
-            + MixedColorSettings.BYTE_LENGTH * 3);
+            12 * Float32Array.BYTES_PER_ELEMENT
+            + Int32Array.BYTES_PER_ELEMENT
+            + 3 * Float32Array.BYTES_PER_ELEMENT); // Padding
         this._uniformConfigBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Uniform Config Buffer`,
             size: this._uniformConfigArray.byteLength,
@@ -40,30 +45,20 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
             label: `${this._name} Bind Group Layout`,
             entries: [
                 {
-                    binding: 0,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: surfaceTexture.bindingLayout,
-                },
-                {
-                    binding: 1,
+                    binding: 0, // displacement texture
                     visibility: GPUShaderStage.FRAGMENT,
                     texture: displacementTexture.bindingLayout,
                 },
                 {
-                    binding: 2,
+                    binding: 1, // sampler
                     visibility: GPUShaderStage.FRAGMENT,
-                    sampler: { type: surfaceTexture.settings.samplerBinding },
+                    sampler: { type: displacementTexture.settings.samplerBinding },
                 },
                 {
-                    binding: 3,
+                    binding: 2, // config uniform
                     visibility: GPUShaderStage.FRAGMENT,
                     buffer: {}
                 },
-                /*{
-                    binding: 4,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: textures.debug.bindingLayout,
-                },*/
             ]
         });
 
@@ -74,24 +69,16 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
             entries: [
                 {
                     binding: 0,
-                    resource: surfaceTexture.view,
-                },
-                {
-                    binding: 1,
                     resource: displacementTexture.view,
                 },
                 {
-                    binding: 2,
+                    binding: 1,
                     resource: serviceProvider.textures.samplerLinearClamping,
                 },
                 {
-                    binding: 3,
+                    binding: 2,
                     resource: { buffer: this._uniformConfigBuffer },
                 },
-                /*{
-                    binding: 4,
-                    resource: serviceProvider.textures.debug.view,
-                },*/
             ]
         });
 
@@ -104,7 +91,7 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
 
     public configureRun(uvOffset?: Vector2): void {
         const constants = this._serviceProvider.settings.constants;
-        const diffuse = this._serviceProvider.settings.diffuse;
+        const normals = this._serviceProvider.settings.normals;
         const uniformConfigView = new DataView(this._uniformConfigArray);
         let offset = 0;
         uniformConfigView.setFloat32(offset, uvOffset?.x ?? 0, constants.littleEndian);
@@ -115,14 +102,26 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, this._uvRange.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        offset = diffuse.vegetation.serialize(uniformConfigView, offset, constants.littleEndian);
-        offset = diffuse.bedrock.serialize(uniformConfigView, offset, constants.littleEndian);
-        offset = diffuse.gravel.serialize(uniformConfigView, offset, constants.littleEndian);
-        this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
-    }
 
-    public override dispose(): void {
-        super.dispose();
-        this._uniformConfigBuffer.destroy();
+        uniformConfigView.setFloat32(offset, this._sampleDistanceUv.x, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, this._sampleDistanceUv.y, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, this._sampleDistanceMeters.x, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, this._sampleDistanceMeters.y, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+
+        uniformConfigView.setFloat32(offset, normals.scale.x, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, normals.scale.y, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, normals.seed, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, normals.amplitude, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+
+        uniformConfigView.setInt32(offset, normals.octaves, constants.littleEndian);
+        this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
     }
 }

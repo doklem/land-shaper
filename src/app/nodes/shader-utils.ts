@@ -1,6 +1,6 @@
-import NoiseInclude from './../../shaders/noise-include.wgsl';
-import MixedColorInclude from './../../shaders/mixed-color-include.wgsl';
-import UvSectionInclude from './../../shaders/uv-section-include.wgsl';
+import NoiseInclude from '../../shaders/include/noise.wgsl';
+import MixedColorInclude from '../../shaders/include/mixed-color.wgsl';
+import UvSectionInclude from '../../shaders/include/uv-section.wgsl';
 
 export class ShaderUtils {
     public static applyIncludes(shader: string): string {

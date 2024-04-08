@@ -1,4 +1,4 @@
-import ComputeShader from './../../../shaders/water-compute.wgsl';
+import ComputeShader from '../../../shaders/compute/water.wgsl';
 import { TextureService } from '../../services/texture-service';
 import { Vector2 } from 'three';
 import { QuadTree } from './quad-tree';

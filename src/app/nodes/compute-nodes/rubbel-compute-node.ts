@@ -1,4 +1,4 @@
-import ComputeShader from './../../../shaders/rubble-compute.wgsl';
+import ComputeShader from '../../../shaders/compute/rubble.wgsl';
 import { Vector2 } from 'three';
 import { IDisposable } from '../../disposable';
 import { ExportableComputeNodeBase } from './exportable-compute-node-base';

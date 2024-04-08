@@ -1,23 +1,29 @@
-import FragmentShader from './../../../shaders/blur-fragment.wgsl';
+import FragmentShader from '../../../shaders/fragment/divide.wgsl';
+import { Vector2 } from 'three';
+import { TextureWrapper } from '../../services/texture-wrapper';
 import { IServiceProvider } from '../../services/service-provider';
 import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';
 
-export class BlurRenderNode extends ExportableFloatRenderNodeBase {
+export class ExportableDivideRenderNode extends ExportableFloatRenderNodeBase {
 
-    public static readonly NAME = 'Blur';
+    private static readonly NAME = 'Exportable Divide';
 
     private readonly _bindGroup: GPUBindGroup;
-    private readonly _uniformConfigArray: ArrayBuffer;
+    private readonly _uniformConfigArray: Float32Array;
     private readonly _uniformConfigBuffer: GPUBuffer;
 
     protected readonly _renderBundle: GPURenderBundle;
     protected readonly _pipeline: GPURenderPipeline;
 
-    public constructor(serviceProvider: IServiceProvider) {
-        super(BlurRenderNode.NAME, serviceProvider, serviceProvider.textures.displacementErosionBlur);
+    constructor(
+        serviceProvider: IServiceProvider,
+        private readonly _uvRange: Vector2,
+        inputTexture: TextureWrapper,
+        outputTexture: TextureWrapper) {
+        super(ExportableDivideRenderNode.NAME, serviceProvider, outputTexture);
 
-        // buffers
-        this._uniformConfigArray = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2 + Float32Array.BYTES_PER_ELEMENT * 2);
+        // uniform buffers
+        this._uniformConfigArray = new Float32Array(4);
         this._uniformConfigBuffer = serviceProvider.device.createBuffer({
             label: `${this._name} Uniform Config Buffer`,
             size: this._uniformConfigArray.byteLength,
@@ -29,14 +35,14 @@ export class BlurRenderNode extends ExportableFloatRenderNodeBase {
             label: `${this._name} Bind Group Layout`,
             entries: [
                 {
-                    binding: 0, // displacement texture
+                    binding: 0,
                     visibility: GPUShaderStage.FRAGMENT,
-                    texture: serviceProvider.textures.displacementErosion.bindingLayout,
+                    texture: inputTexture.bindingLayout,
                 },
                 {
-                    binding: 1, // sampler
+                    binding: 1,
                     visibility: GPUShaderStage.FRAGMENT,
-                    sampler: { type: serviceProvider.textures.displacementErosion.settings.samplerBinding },
+                    sampler: { type: inputTexture.settings.samplerBinding },
                 },
                 {
                     binding: 2, // config uniform
@@ -53,7 +59,7 @@ export class BlurRenderNode extends ExportableFloatRenderNodeBase {
             entries: [
                 {
                     binding: 0,
-                    resource: serviceProvider.textures.displacementErosion.view,
+                    resource: inputTexture.view,
                 },
                 {
                     binding: 1,
@@ -70,29 +76,11 @@ export class BlurRenderNode extends ExportableFloatRenderNodeBase {
         this._pipeline = this.createPipeline(bindGroupLayout, FragmentShader);
 
         // render bundle
-        this._renderBundle = this.createRenderBundle(this._pipeline, this._bindGroup);
+        this._renderBundle = this.createRenderBundle(this._pipeline, this._bindGroup);  
     }
 
-    public appendRenderPass(commandEncoder: GPUCommandEncoder): void {
-        super.appendRenderPass(commandEncoder);
-        commandEncoder.copyTextureToTexture(this._texture, this._serviceProvider.textures.displacementErosion, this._texture);
-    }
-
-    public configureRun(): void {
-        const constants = this._serviceProvider.settings.constants;
-        const blur = this._serviceProvider.settings.blur;
-        const uniformConfigView = new DataView(this._uniformConfigArray);
-        let offset = 0;
-        uniformConfigView.setInt32(offset, blur.size.x, constants.littleEndian);
-        offset += Int32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setInt32(offset, blur.size.y, constants.littleEndian);
-        offset += Int32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, blur.strength, constants.littleEndian);
+    public configureRun(uvOffset: Vector2): void {
+        this._uniformConfigArray.set([uvOffset.x, uvOffset.y, this._uvRange.x, this._uvRange.y]);
         this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
-    }
-
-    public override dispose(): void {
-        super.dispose();
-        this._uniformConfigBuffer.destroy();
     }
 }

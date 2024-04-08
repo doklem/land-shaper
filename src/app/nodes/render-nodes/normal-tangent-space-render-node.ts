@@ -1,4 +1,4 @@
-import FragmentShader from './../../../shaders/normal-tangent-space-fragment.wgsl';
+import FragmentShader from '../../../shaders/fragment/normal-tangent-space.wgsl';
 import { TextureWrapper } from '../../services/texture-wrapper';
 import { IServiceProvider } from '../../services/service-provider';
 import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';

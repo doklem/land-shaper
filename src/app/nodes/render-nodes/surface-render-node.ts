@@ -1,4 +1,4 @@
-import FragmentShader from './../../../shaders/surface-fragment.wgsl';
+import FragmentShader from '../../../shaders/fragment/surface.wgsl';
 import { RenderNodeBase } from './render-node-base';
 import { TextureWrapper } from '../../services/texture-wrapper';
 import { Vector2 } from 'three';

@@ -1,4 +1,4 @@
-import VertexShader from './../../shaders/clip-space-quad-vertex.wgsl';
+import VertexShader from '../../shaders/vertex/clip-space-quad.wgsl';
 import { IDisposable } from '../disposable';
 
 export class BufferService implements IDisposable {

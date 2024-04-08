@@ -1,5 +1,5 @@
+import FragmentShader from '../../../shaders/fragment/erosion-difference.wgsl';
 import { IServiceProvider } from '../../services/service-provider';
-import FragmentShader from './../../../shaders/erosion-difference-fragment.wgsl';
 import { ExportableByteRenderNodeBase } from './exportable-byte-render-node-base';
 
 export class ErosionDifferenceRenderNode extends ExportableByteRenderNodeBase {
