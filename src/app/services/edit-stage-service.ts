@@ -31,7 +31,7 @@ export class EditStageService implements IDisposable {
         this._stages = [
             new TopologyStage(serviceProvider),
             erosionStage,
-            new ColoringStage(serviceProvider, erosionStage.displacementMap),
+            new ColoringStage(serviceProvider, erosionStage.displacement),
             new SectionedStage(serviceProvider)
         ];
     }

@@ -1,8 +1,8 @@
-import { DataTexture } from 'three';
 import { EditStageBase } from './edit-stage-base';
 import { GUI, Controller } from 'lil-gui';
 import { ErosionLandscape } from '../objects-3d/landscapes/erosion-landscape';
 import { IServiceProvider } from '../services/service-provider';
+import { IDisplacementDefinition } from '../objects-3d/displacement-definition';
 
 export class ErosionStage extends EditStageBase<ErosionLandscape> {
     
@@ -13,16 +13,15 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
     };
     
     private _erosionToggle?: Controller;
+    private _erosionRunning: boolean;
 
     protected readonly _landscape: ErosionLandscape;
 
     public readonly helpPageName = 'Erosion-Stage';
 
-    public get displacementMap(): DataTexture {
-        return this._landscape.displacementMap;
+    public get displacement(): IDisplacementDefinition {
+        return this._landscape.displacement;
     }
-
-    private _erosionRunning: boolean;
 
     constructor(serviceProvider: IServiceProvider) {
         super(serviceProvider);

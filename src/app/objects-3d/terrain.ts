@@ -5,7 +5,8 @@ import {
     MeshStandardMaterial,
     MeshStandardMaterialParameters,
     PlaneGeometry,
-    Vector2
+    Vector2,
+    Vector3
 } from 'three';
 import { TextureService } from '../services/texture-service';
 import { IDisposable } from '../disposable';
@@ -14,18 +15,30 @@ import { IExportableNode } from '../nodes/exportable-node';
 import { ITextureSettings } from '../settings/texture-settings';
 import { IServiceProvider } from '../services/service-provider';
 import { ExportableByteRenderNodeBase } from '../nodes/render-nodes/exportable-byte-render-node-base';
+import { IMultiExportableNode } from '../nodes/multi-exportable-node';
+import { IDisplacementDefinition } from './displacement-definition';
 
-export class Terrain extends LOD implements IDisposable {
+export class Terrain extends LOD implements IDisposable, IDisplacementDefinition {
 
     private readonly _diffuseOutput?: Uint8Array;
+    private readonly _displacementMap: DataTexture;
     private readonly _displacementOutput?: Float32Array;
+    private readonly _displacementRadius: Int32Array[];
+    private readonly _displacementRange: Int32Array[];
     private readonly _material: MeshStandardMaterial;
     private readonly _meshs: Mesh[];
     private readonly _normalOutput?: Float32Array;
-    private readonly _displacementMap: DataTexture;
 
     public get displacementMap(): DataTexture {
         return this._displacementMap;
+    }
+
+    public get displacementRadius(): Int32Array[] {
+        return this._displacementRadius;
+    }
+
+    public get displacementRange(): Int32Array[] {
+        return this._displacementRange;
     }
 
     constructor(
@@ -38,20 +51,36 @@ export class Terrain extends LOD implements IDisposable {
         private readonly _normalTangentSpaceRenderNode?: NormalTangentSpaceRenderNode,
         private readonly _diffuseRenderNode?: ExportableByteRenderNodeBase,
         displacementTexture?: ITextureSettings,
-        displacementMap?: DataTexture) {
+        displacement?: IDisplacementDefinition) {
         super();
 
         if (displacementTexture) {
             this._displacementOutput = new Float32Array(displacementTexture.valuesLength);
+            this._displacementMap = TextureService.createDataTexture(this._displacementOutput, displacementTexture);
+            this._displacementRadius = [
+                new Int32Array(_serviceProvider.textures.displacementRadius.size)
+            ];
+            this._displacementRange = [
+                new Int32Array(_serviceProvider.textures.displacementRange.size),
+                new Int32Array(_serviceProvider.textures.displacementRange.size)
+            ];
+        } else if (displacement) {
+            this._displacementMap = displacement.displacementMap;
+            this._displacementRadius = displacement.displacementRadius;
+            this._displacementRange = displacement.displacementRange;
+        } else {
+            throw new Error('No displacement source was provided')
         }
+        const displacementAverage = new Vector3(0, 0, (this._displacementRange[0][0] + this._displacementRange[1][0]) * 0.5);
+
         if (_normalTangentSpaceRenderNode) {
             this._normalOutput = new Float32Array(_normalTangentSpaceRenderNode.textureSettings.valuesLength);
         }
+
         if (_diffuseRenderNode) {
             this._diffuseOutput = new Uint8Array(_diffuseRenderNode.textureSettings.valuesLength);
         }
 
-        this._displacementMap = displacementMap ?? TextureService.createDataTexture(this._displacementOutput!, displacementTexture!);
         const materialParameters: MeshStandardMaterialParameters = {
             displacementMap: this._displacementMap,
             displacementScale: 1,
@@ -86,18 +115,25 @@ export class Terrain extends LOD implements IDisposable {
                 this._material);
             mesh.castShadow = false;
             mesh.receiveShadow = true;
-
             this._meshs.push(mesh);
+            this.setBoundingShpere(mesh, displacementAverage);
             this.addLevel(mesh, lodLevel * meshLodDistance);
             factor *= 0.5;
             lodLevel++;
         }
     }
 
-    public async applyRunOutput(displacementProvider?: IExportableNode<Float32Array> | undefined): Promise<void> {
+    public async applyRunOutput(
+        displacementProviders?: {
+            displacement: IExportableNode<Float32Array>,
+            range: IMultiExportableNode<Int32Array>,
+            radius: IMultiExportableNode<Int32Array>
+        }): Promise<void> {
         const promises: Promise<void>[] = [];
-        if (displacementProvider && this._displacementOutput) {
-            promises.push(displacementProvider.readOutputBuffer(this._displacementOutput));
+        if (displacementProviders && this._displacementOutput) {
+            promises.push(displacementProviders.displacement.readOutputBuffer(this._displacementOutput));
+            promises.push(displacementProviders.range.readOutputBuffer(this._displacementRange));
+            promises.push(displacementProviders.radius.readOutputBuffer(this._displacementRadius));
         }
         if (this._normalTangentSpaceRenderNode && this._normalOutput) {
             promises.push(this._normalTangentSpaceRenderNode.readOutputBuffer(this._normalOutput));
@@ -109,21 +145,21 @@ export class Terrain extends LOD implements IDisposable {
             await Promise.all(promises);
         }
 
-        if (this._displacementOutput) {
-            this._material.displacementMap!.needsUpdate = true;
+        if (this._displacementOutput && this._material.displacementMap) {
+            this._material.displacementMap.needsUpdate = true;
         }
-        if (this._normalTangentSpaceRenderNode) {
-            this._material.normalMap!.needsUpdate = true;
+        if (this._normalTangentSpaceRenderNode && this._material.normalMap) {
+            this._material.normalMap.needsUpdate = true;
         }
-        if (this._diffuseRenderNode) {
-            this._material.map!.needsUpdate = true;
+        if (this._diffuseRenderNode && this._material.map) {
+            this._material.map.needsUpdate = true;
         }
         this._material.needsUpdate = true;
 
-        this._meshs.forEach(mesh => {
-            mesh.geometry.computeBoundingBox();
-            mesh.geometry.computeBoundingSphere();
-        });
+        if (displacementProviders) {
+            const displacementAverage = new Vector3(0, 0, (this._displacementRange[0][0] + this._displacementRange[1][0]) * 0.5);
+            this._meshs.forEach(mesh => this.setBoundingShpere(mesh, displacementAverage));
+        }
     }
 
     public applyDebugSettings(): void {
@@ -145,5 +181,11 @@ export class Terrain extends LOD implements IDisposable {
         await this._diffuseRenderNode.readOutputBuffer(this._diffuseOutput!);
         this._material.map!.needsUpdate = true;
         this._material.needsUpdate = true;
+    }
+
+    private setBoundingShpere(mesh: Mesh, displacementAverage: Vector3): void {
+        mesh.geometry.computeBoundingSphere();
+        mesh.geometry.boundingSphere!.radius = this._displacementRadius[0][0];
+        mesh.geometry.boundingSphere!.center.add(displacementAverage);
     }
 }

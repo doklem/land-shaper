@@ -10,9 +10,13 @@ import { RubbleComputeNode } from '../../nodes/compute-nodes/rubbel-compute-node
 import { Rubble } from '../rubble';
 import { Ocean } from '../ocean';
 import { IServiceProvider } from '../../services/service-provider';
+import { DisplacementRangeComputeNode } from '../../nodes/compute-nodes/displacement-range-compute-node';
+import { DisplacementRadiusComputeNode } from '../../nodes/compute-nodes/displacement-radius-compute-node';
 
 export class SectionedLandscape extends Group implements ILandscape {
 
+    private readonly _displacementRadiusComputeNode: DisplacementRadiusComputeNode;
+    private readonly _displacementRangeComputeNode: DisplacementRangeComputeNode;
     private readonly _diffuseRenderNode: DiffuseRenderNode;
     private readonly _displacementRenderNode: ExportableDivideRenderNode;
     private readonly _normalObjectSpaceRenderNode: NormalObjectSpaceRenderNode;
@@ -43,6 +47,17 @@ export class SectionedLandscape extends Group implements ILandscape {
             uvRangeInclusive,
             _serviceProvider.textures.displacementErosion,
             _serviceProvider.textures.displacementSection);
+        this._displacementRangeComputeNode = new DisplacementRangeComputeNode(
+            _serviceProvider,
+            _serviceProvider.textures.displacementSection
+        );
+        this._displacementRadiusComputeNode = new DisplacementRadiusComputeNode(
+            _serviceProvider,
+            _serviceProvider.textures.displacementSection,
+            meshSizeSection,
+            this._displacementRangeComputeNode.outputBuffers[0],
+            this._displacementRangeComputeNode.outputBuffers[1]
+        );
         this._normalObjectSpaceRenderNode = new NormalObjectSpaceRenderNode(
             _serviceProvider,
             _serviceProvider.settings.constants.sections.uvRange,
@@ -91,7 +106,7 @@ export class SectionedLandscape extends Group implements ILandscape {
                 SectionedLandscape.translateSection(_serviceProvider.settings.constants.meshSize, terrain, uvOffset, meshSectionOffsetTerrain);
                 this._terrains.set(uvOffsetKey, terrain);
                 this.add(terrain);
-                
+
                 const rubble = new Rubble(_serviceProvider, _serviceProvider.settings.constants.meshLodDistance * 0.5, this._rubbleComputeNode);
                 SectionedLandscape.translateSection(_serviceProvider.settings.constants.meshSize, rubble, uvOffset, meshSectionOffsetRubble);
                 this._rubbles.set(uvOffsetKey, rubble);
@@ -119,6 +134,8 @@ export class SectionedLandscape extends Group implements ILandscape {
     public dispose(): void {
         this._terrains.forEach(terrain => terrain.dispose());
         this._rubbles.forEach(rubble => rubble.dispose());
+        this._displacementRadiusComputeNode.dispose();
+        this._displacementRangeComputeNode.dispose();
         this._diffuseRenderNode.dispose();
         this._displacementRenderNode.dispose();
         this._normalObjectSpaceRenderNode.dispose();
@@ -132,8 +149,7 @@ export class SectionedLandscape extends Group implements ILandscape {
         const translation = meshSize.clone().multiply(uvOffset)
             .sub(meshSize.clone().multiplyScalar(0.5))
             .add(meshSectionOffset);
-        object3D.translateX(translation.x);
-        object3D.translateY(translation.y);
+        object3D.position.set(translation.x, translation.y, 0);
     }
 
     public async runLandscape(): Promise<void> {
@@ -145,13 +161,18 @@ export class SectionedLandscape extends Group implements ILandscape {
         for (let y = 0; y < 1; y += this._serviceProvider.settings.constants.sections.uvRange.y) {
             for (let x = 0; x < 1; x += this._serviceProvider.settings.constants.sections.uvRange.x) {
                 const uvOffset = new Vector2(x, y);
+
                 this._displacementRenderNode.configureRun(uvOffset);
+                this._displacementRangeComputeNode.configureRun();
                 this._normalObjectSpaceRenderNode.configureRun(uvOffset);
                 this._surfaceRenderNode.configureRun(uvOffset);
                 this._diffuseRenderNode.configureRun(uvOffset);
                 this._rubbleComputeNode.configureRun(uvOffset);
+
                 const commandEncoder = this._serviceProvider.device.createCommandEncoder();
                 this._displacementRenderNode.appendRenderPass(commandEncoder);
+                this._displacementRangeComputeNode.appendComputePass(commandEncoder);
+                this._displacementRadiusComputeNode.appendComputePass(commandEncoder);
                 this._normalObjectSpaceRenderNode.appendRenderPass(commandEncoder);
                 this._normalTangentSpaceRenderNode.appendRenderPass(commandEncoder);
                 this._surfaceRenderNode.appendRenderPass(commandEncoder);
@@ -161,7 +182,11 @@ export class SectionedLandscape extends Group implements ILandscape {
 
                 const uvOffsetKey = SectionedLandscape.uvOffsetToKey(uvOffset);
                 const promises: Promise<void>[] = [
-                    this._terrains.get(uvOffsetKey)!.applyRunOutput(this._displacementRenderNode),
+                    this._terrains.get(uvOffsetKey)!.applyRunOutput({
+                        displacement: this._displacementRenderNode,
+                        range: this._displacementRangeComputeNode,
+                        radius: this._displacementRadiusComputeNode
+                    }),
                     this._rubbles.get(uvOffsetKey)!.applyRunOutput()
                 ];
                 await Promise.all(promises);

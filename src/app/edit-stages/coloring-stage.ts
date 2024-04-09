@@ -1,19 +1,21 @@
-import { DataTexture } from 'three';
 import { EditStageBase } from './edit-stage-base';
 import { MixedColorSettings } from '../settings/mixed-color-settings';
 import { ColoringLandscape } from '../objects-3d/landscapes/coloring-landscape';
 import { IServiceProvider } from '../services/service-provider';
 import { GUI } from 'lil-gui';
+import { IDisplacementDefinition } from '../objects-3d/displacement-definition';
 export class ColoringStage extends EditStageBase<ColoringLandscape> {
 
     protected readonly _landscape: ColoringLandscape;
 
     public readonly helpPageName = 'Coloring-Stage';
 
-    constructor(serviceProvider: IServiceProvider, displacementMap: DataTexture) {
+    constructor(
+        serviceProvider: IServiceProvider,
+        displacement: IDisplacementDefinition) {
         super(serviceProvider);
         
-        this._landscape = new ColoringLandscape(serviceProvider, displacementMap);
+        this._landscape = new ColoringLandscape(serviceProvider, displacement);
         this._sceneElements.push(this._landscape);
     }
 

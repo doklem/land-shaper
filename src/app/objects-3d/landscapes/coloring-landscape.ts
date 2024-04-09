@@ -1,4 +1,4 @@
-import { DataTexture, Group, Vector2 } from 'three';
+import { Group, Vector2 } from 'three';
 import { NormalObjectSpaceRenderNode } from '../../nodes/render-nodes/normal-object-space-render-node';
 import { NormalTangentSpaceRenderNode } from '../../nodes/render-nodes/normal-tangent-space-render-node';
 import { DiffuseRenderNode } from '../../nodes/render-nodes/diffuse-render-node';
@@ -10,6 +10,7 @@ import { ILandscape } from './landscape';
 import { WaterComputeNode } from '../../nodes/compute-nodes/water-compute-node';
 import { Ocean } from '../ocean';
 import { IServiceProvider } from '../../services/service-provider';
+import { IDisplacementDefinition } from '../displacement-definition';
 
 export class ColoringLandscape extends Group implements ILandscape {
 
@@ -27,7 +28,7 @@ export class ColoringLandscape extends Group implements ILandscape {
 
     constructor(
         private readonly _serviceProvider: IServiceProvider,
-        displacementMap: DataTexture) {
+        displacement: IDisplacementDefinition) {
         super();
 
         this._running = false;
@@ -58,8 +59,8 @@ export class ColoringLandscape extends Group implements ILandscape {
             false,
             this._normalTangentSpaceRenderNode,
             this._diffuseRenderNode,
-            _serviceProvider.textures.displacementErosion.settings,
-            displacementMap);
+            undefined,
+            displacement);
         this.add(this._terrain);
     }
 
