@@ -1,13 +1,13 @@
 import ComputeShader from '../../../shaders/compute/rubble.wgsl';
-import { Vector2 } from 'three';
+import { Vector2, Vector3 } from 'three';
 import { IDisposable } from '../../disposable';
-import { ExportableComputeNodeBase } from './exportable-compute-node-base';
 import { Rubble } from '../../objects-3d/rubble';
 import { MixedColorSettings } from '../../settings/mixed-color-settings';
 import { ITextureSettings } from '../../settings/texture-settings';
 import { IServiceProvider } from '../../services/service-provider';
+import { ExportableFloatComputeNodeBase } from './exportable-float-compute-node-base';
 
-export class RubbleComputeNode extends ExportableComputeNodeBase implements IDisposable {
+export class RubbleComputeNode extends ExportableFloatComputeNodeBase implements IDisposable {
 
     private static readonly WORKGROUP_SIZE = 64;
 
@@ -23,8 +23,8 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
         inputTextureSettings: ITextureSettings) {
         super('Rubble',
             serviceProvider,
-            Math.ceil(inputTextureSettings.size / RubbleComputeNode.WORKGROUP_SIZE),
-            inputTextureSettings);
+            new Vector3(Math.ceil(inputTextureSettings.size / RubbleComputeNode.WORKGROUP_SIZE), 1, 1),
+            [inputTextureSettings]);
 
         // uniform buffer
         this._uniformConfigArray = new ArrayBuffer(MixedColorSettings.BYTE_LENGTH
@@ -96,17 +96,17 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
                     binding: 4,
                     resource:
                     {
-                        buffer: this.outputBuffer,
-                        size: Rubble.MATRIX_LENGTH * this.textureSettings.size * Float32Array.BYTES_PER_ELEMENT
+                        buffer: this.outputBuffers[0],
+                        size: Rubble.MATRIX_LENGTH * inputTextureSettings.size * Float32Array.BYTES_PER_ELEMENT
                     },
                 },
                 {
                     binding: 5,
                     resource:
                     {
-                        buffer: this.outputBuffer,
-                        offset: Rubble.MATRIX_LENGTH * this.textureSettings.size * Float32Array.BYTES_PER_ELEMENT,
-                        size: Rubble.RGBA_LENGTH * this.textureSettings.size * Float32Array.BYTES_PER_ELEMENT
+                        buffer: this.outputBuffers[0],
+                        offset: Rubble.MATRIX_LENGTH * inputTextureSettings.size * Float32Array.BYTES_PER_ELEMENT,
+                        size: Rubble.RGBA_LENGTH * inputTextureSettings.size * Float32Array.BYTES_PER_ELEMENT
                     },
                 }
             ]
@@ -130,9 +130,9 @@ export class RubbleComputeNode extends ExportableComputeNodeBase implements IDis
         uniformConfigView.setFloat32(offset, this._uvRange.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
 
-        uniformConfigView.setFloat32(offset, this.textureSettings.width, constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this.textureSettings[0].width, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this.textureSettings.height, constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this.textureSettings[0].height, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, constants.meshSize.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT

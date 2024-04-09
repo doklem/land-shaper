@@ -63,10 +63,7 @@ fn compose(position: vec3f, quaternion: vec4f, scale: vec3f) -> mat4x4f {
 }
 
 @compute @workgroup_size(64)
-fn main(
-    @builtin(global_invocation_id)
-    global_invocation_id : vec3<u32>
-) {
+fn main(@builtin(global_invocation_id) global_invocation_id : vec3<u32>) {
     if (global_invocation_id.x >= arrayLength(&matrices)) {
         return;
     }

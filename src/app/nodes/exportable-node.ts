@@ -1,3 +1,3 @@
-export interface IExportableNode<T extends Float32Array | Uint8Array> {
+export interface IExportableNode<T extends RelativeIndexable<number>> {
     readOutputBuffer(output: T): Promise<void>;
 }

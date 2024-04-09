@@ -1,6 +1,6 @@
 import ComputeShader from '../../../shaders/compute/water.wgsl';
 import { TextureService } from '../../services/texture-service';
-import { Vector2 } from 'three';
+import { Vector2, Vector3 } from 'three';
 import { QuadTree } from './quad-tree';
 import { ComputeNodeBase } from './compute-node-base';
 import { IServiceProvider } from '../../services/service-provider';
@@ -25,8 +25,8 @@ export class WaterComputeNode extends ComputeNodeBase {
         super(
             WaterComputeNode.NAME,
             serviceProvider,
-            WaterComputeNode.getWorkgroupCount(serviceProvider.device, serviceProvider.textures),
-            serviceProvider.textures.water.settings);
+            new Vector3(WaterComputeNode.getWorkgroupCount(serviceProvider.device, serviceProvider.textures), 1, 1),
+            [serviceProvider.textures.water.settings]);
 
         this._workgroupSize = serviceProvider.settings.constants.erosion.dropletsSize.x * serviceProvider.settings.constants.erosion.dropletsSize.y;
 
@@ -131,7 +131,7 @@ export class WaterComputeNode extends ComputeNodeBase {
                 },
                 {
                     binding: 6,
-                    resource: { buffer: this.outputBuffer },
+                    resource: { buffer: this.outputBuffers[0] },
                 },
             ]
         );
@@ -141,7 +141,7 @@ export class WaterComputeNode extends ComputeNodeBase {
     }
 
     public override appendComputePass(commandEncoder: GPUCommandEncoder): void {
-        commandEncoder.clearBuffer(this.outputBuffer);
+        commandEncoder.clearBuffer(this.outputBuffers[0]);
         super.appendComputePass(commandEncoder);
     }
 
@@ -182,7 +182,7 @@ export class WaterComputeNode extends ComputeNodeBase {
     }
 
     protected override appendToCommandEncoder(commandEncoder: GPUCommandEncoder): void {
-        this.appendCopyOutputToTexture(commandEncoder, this._serviceProvider.textures.water);
+        this.appendCopyOutputToTexture(commandEncoder, [this._serviceProvider.textures.water]);
     }
 
     private createDropletOrigins(): Uint32Array {

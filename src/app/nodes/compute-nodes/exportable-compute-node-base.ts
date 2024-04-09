@@ -1,38 +1,48 @@
-import { BufferService } from '../../services/buffer-service';
-import { IExportableNode } from '../exportable-node';
 import { ITextureSettings } from '../../settings/texture-settings';
 import { ComputeNodeBase } from './compute-node-base';
 import { IServiceProvider } from '../../services/service-provider';
+import { BufferService } from '../../services/buffer-service';
+import { IMultiExportableNode } from '../multi-exportable-node';
+import { Vector3 } from 'three';
 
-export abstract class ExportableComputeNodeBase extends ComputeNodeBase implements IExportableNode<Float32Array> {
+export abstract class ExportableComputeNodeBase<T extends Float32Array | Uint8Array | Int32Array> extends ComputeNodeBase implements IMultiExportableNode<T> {
 
-    protected readonly _stagingBuffer: GPUBuffer;
+    protected readonly _stagingBuffers: GPUBuffer[];
 
     constructor(
         name: string,
         serviceProvider: IServiceProvider,
-        workgroupCount: number,
-        textureSettings: ITextureSettings) {
-        super(name, serviceProvider, workgroupCount, textureSettings);
+        workgroupCount: Vector3,
+        textureSettings: ITextureSettings[],
+        outputBuffer?: GPUBuffer[]) {
+        super(name, serviceProvider, workgroupCount, textureSettings, outputBuffer);
 
         // output buffers
-        this._stagingBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Staging Buffer`,
-            size: this.outputBuffer.size,
+        this._stagingBuffers = this.outputBuffers.map((outputBuffer: GPUBuffer, index: number) => serviceProvider.device.createBuffer({
+            label: `${this._name} Staging Buffer ${index}`,
+            size: outputBuffer.size,
             usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
-        });
-    }
-
-    public async readOutputBuffer(output: Float32Array): Promise<void> {
-        output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
+        }));
     }
 
     public override dispose(): void {
         super.dispose();
-        this._stagingBuffer.destroy();
+        this._stagingBuffers.forEach(buffer => buffer.destroy());
+    }
+
+    public async readOutputBuffer(outputs: T[]): Promise<void> {
+        if (outputs.length !== this._stagingBuffers.length) {
+            throw new Error('The number of provided outputs does not match the number of staging buffers');
+        }
+        await Promise.all(
+            outputs.map(async (output: T, index: number) => output.set(this.createOutput(await BufferService.readGPUBuffer(this._stagingBuffers[index]))))
+        );
     }
 
     protected override appendToCommandEncoder(commandEncoder: GPUCommandEncoder): void {
-        commandEncoder.copyBufferToBuffer(this.outputBuffer, 0, this._stagingBuffer, 0, this.outputBuffer.size);
+        this.outputBuffers.forEach(
+            (outputBuffer: GPUBuffer, index: number) => commandEncoder.copyBufferToBuffer(outputBuffer, 0, this._stagingBuffers[index], 0, outputBuffer.size));
     }
+
+    protected abstract createOutput(data: ArrayBuffer): T;
 }
