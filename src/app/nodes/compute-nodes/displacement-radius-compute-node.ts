@@ -1,14 +1,17 @@
 import ComputeShader from '../../../shaders/compute/displacement-radius.wgsl';
 import { Vector2, Vector3 } from 'three';
-import { IDisposable } from '../../disposable';
-import { ExportableIntComputeNodeBase } from './exportable-int-compute-node-base';
 import { IServiceProvider } from '../../services/service-provider';
 import { TextureWrapper } from '../../services/texture-wrapper';
+import { ComputeNodeBase } from './compute-node-base';
+import { IExportableNode } from '../exportable-node';
+import { BufferService } from '../../services/buffer-service';
 
-export class DisplacementRadiusComputeNode extends ExportableIntComputeNodeBase implements IDisposable {
+export class DisplacementRadiusComputeNode extends ComputeNodeBase implements IExportableNode<Int32Array> {
 
     private static readonly WORKGROUP_SIZE = new Vector2(8, 8);
 
+    private readonly _outputBuffer: GPUBuffer;
+    private readonly _stagingBuffer: GPUBuffer;
     private readonly _uniformConfigBuffer: GPUBuffer;
 
     protected override readonly _bindGroup: GPUBindGroup;
@@ -24,15 +27,13 @@ export class DisplacementRadiusComputeNode extends ExportableIntComputeNodeBase 
             serviceProvider,
             new Vector3(Math.ceil(displacementTexture.settings.width / DisplacementRadiusComputeNode.WORKGROUP_SIZE.x),
                 Math.ceil(displacementTexture.settings.height / DisplacementRadiusComputeNode.WORKGROUP_SIZE.y),
-                1),
-            [serviceProvider.textures.displacementRadius]);
+                1));
 
         // buffers
-        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Uniform Config Buffer`,
-            size: Float32Array.BYTES_PER_ELEMENT * 4,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-        });
+        const buffers = this.createExportableBuffer('Output', Int32Array.BYTES_PER_ELEMENT);
+        this._outputBuffer = buffers.buffer;
+        this._stagingBuffer = buffers.staging;
+        this._uniformConfigBuffer = this.createUniformBuffer(Float32Array.BYTES_PER_ELEMENT * 4);
         serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, new Float32Array([meshSize.x, meshSize.y]))
 
         // bind group layout
@@ -108,7 +109,7 @@ export class DisplacementRadiusComputeNode extends ExportableIntComputeNodeBase 
                     binding: 5,
                     resource:
                     {
-                        buffer: this.outputBuffers[0]
+                        buffer: this._outputBuffer
                     },
                 }
             ]
@@ -119,13 +120,13 @@ export class DisplacementRadiusComputeNode extends ExportableIntComputeNodeBase 
     }
 
     public appendComputePass(commandEncoder: GPUCommandEncoder): void {
-        commandEncoder.clearBuffer(this.outputBuffers[0]);
+        commandEncoder.clearBuffer(this._outputBuffer);
         super.appendComputePass(commandEncoder);
+        commandEncoder.copyBufferToBuffer(this._outputBuffer, 0, this._stagingBuffer, 0, this._outputBuffer.size);
     }
 
-    public override dispose(): void {
-        super.dispose();
-        this._uniformConfigBuffer.destroy();
+    public async readOutputBuffer(output: Int32Array): Promise<void> {
+        output.set(new Int32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
     }
 };
 

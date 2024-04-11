@@ -29,12 +29,12 @@ export class Rubble extends LOD implements IDisposable {
         meshLodDistance: number,
         private readonly _rubbleComputeNode: RubbleComputeNode) {
         super();
-        this._rubbleOutput = new Float32Array(this._rubbleComputeNode.textureSettings[0].valuesLength);
+        this._rubbleOutput = new Float32Array(this._rubbleComputeNode.textureSettings.valuesLength);
 
-        this._matricesLength = this._rubbleComputeNode.textureSettings[0].size * Rubble.MATRIX_LENGTH;
+        this._matricesLength = this._rubbleComputeNode.textureSettings.size * Rubble.MATRIX_LENGTH;
         this._instanceMeshs = [];
 
-        this._colorAttribute = new InstancedBufferAttribute(new Float32Array(this._rubbleComputeNode.textureSettings[0].size * Rubble.RGBA_LENGTH), Rubble.RGBA_LENGTH);
+        this._colorAttribute = new InstancedBufferAttribute(new Float32Array(this._rubbleComputeNode.textureSettings.size * Rubble.RGBA_LENGTH), Rubble.RGBA_LENGTH);
         this._colorAttribute.setUsage(DynamicDrawUsage);
         this._colorAttribute.needsUpdate = true;
         
@@ -44,7 +44,7 @@ export class Rubble extends LOD implements IDisposable {
     }
 
     public async applyRunOutput(): Promise<void> {
-        await this._rubbleComputeNode.readOutputBuffer([this._rubbleOutput]);
+        await this._rubbleComputeNode.readOutputBuffer(this._rubbleOutput);
 
         this._colorAttribute.copyArray(this._rubbleOutput.subarray(this._matricesLength));
         this._colorAttribute.needsUpdate = true;
@@ -63,7 +63,7 @@ export class Rubble extends LOD implements IDisposable {
     }
 
     private addInstancedMesh(geometry: BufferGeometry, material: MeshStandardMaterial, distance: number): void {
-        const instancedMesh = new InstancedMesh<BufferGeometry<NormalBufferAttributes>, MeshStandardMaterial>(geometry, material, this._rubbleComputeNode.textureSettings[0].size);
+        const instancedMesh = new InstancedMesh<BufferGeometry<NormalBufferAttributes>, MeshStandardMaterial>(geometry, material, this._rubbleComputeNode.textureSettings.size);
         instancedMesh.instanceColor = this._colorAttribute;
         this._instanceMeshs.push(instancedMesh);
         this.addLevel(instancedMesh, distance);

@@ -1,18 +1,27 @@
 import ComputeShader from '../../../shaders/compute/displacement-range.wgsl';
 import { Vector2, Vector3 } from 'three';
-import { IDisposable } from '../../disposable';
-import { ExportableIntComputeNodeBase } from './exportable-int-compute-node-base';
 import { IServiceProvider } from '../../services/service-provider';
 import { TextureWrapper } from '../../services/texture-wrapper';
+import { IMultiExportableNode } from '../multi-exportable-node';
+import { ComputeNodeBase } from './compute-node-base';
+import { BufferService } from '../../services/buffer-service';
 
-export class DisplacementRangeComputeNode extends ExportableIntComputeNodeBase implements IDisposable {
+export class DisplacementRangeComputeNode extends ComputeNodeBase implements IMultiExportableNode<Int32Array> {
 
     private static readonly WORKGROUP_SIZE = new Vector2(8, 8);
+    private static readonly CLEAR_ARRAYS = [
+        new Int32Array([2147483647]),
+        new Int32Array([-2147483648])
+    ];
 
-    private readonly _clearArrays: Int32Array[];
+    private readonly _minStagingBuffer: GPUBuffer;
+    private readonly _maxStagingBuffer: GPUBuffer;
 
     protected override readonly _bindGroup: GPUBindGroup;
     protected override readonly _pipeline: GPUComputePipeline;
+
+    public readonly minBuffer: GPUBuffer;
+    public readonly maxBuffer: GPUBuffer;
 
     constructor(
         serviceProvider: IServiceProvider,
@@ -21,13 +30,16 @@ export class DisplacementRangeComputeNode extends ExportableIntComputeNodeBase i
             serviceProvider,
             new Vector3(Math.ceil(displacementTexture.settings.width / DisplacementRangeComputeNode.WORKGROUP_SIZE.x),
                 Math.ceil(displacementTexture.settings.height / DisplacementRangeComputeNode.WORKGROUP_SIZE.y),
-                1),
-            [serviceProvider.textures.displacementRange, serviceProvider.textures.displacementRange]);
+                1));
 
-        this._clearArrays = [
-            new Int32Array([2147483647]),
-            new Int32Array([-2147483648])
-        ];
+        // buffers
+        let buffers = this.createExportableBuffer('Min Output', Int32Array.BYTES_PER_ELEMENT);
+        this.minBuffer = buffers.buffer;
+        this._minStagingBuffer = buffers.staging;
+        
+        buffers = this.createExportableBuffer('Max Output', Int32Array.BYTES_PER_ELEMENT);
+        this.maxBuffer = buffers.buffer;
+        this._maxStagingBuffer = buffers.staging;
 
         // bind group layout
         const bindGroupLayout = this.createBindGroupLayout(
@@ -71,14 +83,14 @@ export class DisplacementRangeComputeNode extends ExportableIntComputeNodeBase i
                     binding: 2,
                     resource:
                     {
-                        buffer: this.outputBuffers[0]
+                        buffer: this.minBuffer
                     },
                 },
                 {
                     binding: 3,
                     resource:
                     {
-                        buffer: this.outputBuffers[1]
+                        buffer: this.maxBuffer
                     },
                 }
             ]
@@ -89,8 +101,24 @@ export class DisplacementRangeComputeNode extends ExportableIntComputeNodeBase i
     }
 
     public configureRun(): void {
-        this.outputBuffers.forEach(
-            (outputBuffer: GPUBuffer, index: number) => this._serviceProvider.device.queue.writeBuffer(outputBuffer, 0, this._clearArrays[index]));
+        this._serviceProvider.device.queue.writeBuffer(this.minBuffer, 0, DisplacementRangeComputeNode.CLEAR_ARRAYS[0]);
+        this._serviceProvider.device.queue.writeBuffer(this.maxBuffer, 0, DisplacementRangeComputeNode.CLEAR_ARRAYS[1]);
+    }
+
+    public appendComputePass(commandEncoder: GPUCommandEncoder): void {
+        super.appendComputePass(commandEncoder);
+        commandEncoder.copyBufferToBuffer(this.minBuffer, 0, this._minStagingBuffer, 0, this.minBuffer.size);
+        commandEncoder.copyBufferToBuffer(this.maxBuffer, 0, this._maxStagingBuffer, 0, this.maxBuffer.size);
+    }
+
+    public async readOutputBuffer(outputs: Int32Array[]): Promise<void> {
+        if (outputs.length < 2) {
+            throw new Error('The number of provided outputs does not match the number of staging buffers');
+        }
+        await Promise.all([
+            outputs[0].set(new Int32Array(await BufferService.readGPUBuffer(this._minStagingBuffer))),
+            outputs[1].set(new Int32Array(await BufferService.readGPUBuffer(this._maxStagingBuffer)))
+        ]);
     }
 };
 

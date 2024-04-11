@@ -23,7 +23,7 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
     private readonly _diffuseOutput?: Uint8Array;
     private readonly _displacementMap: DataTexture;
     private readonly _displacementOutput?: Float32Array;
-    private readonly _displacementRadius: Int32Array[];
+    private readonly _displacementRadius: Int32Array;
     private readonly _displacementRange: Int32Array[];
     private readonly _material: MeshStandardMaterial;
     private readonly _meshs: Mesh[];
@@ -33,7 +33,7 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
         return this._displacementMap;
     }
 
-    public get displacementRadius(): Int32Array[] {
+    public get displacementRadius(): Int32Array {
         return this._displacementRadius;
     }
 
@@ -57,13 +57,8 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
         if (displacementTexture) {
             this._displacementOutput = new Float32Array(displacementTexture.valuesLength);
             this._displacementMap = TextureService.createDataTexture(this._displacementOutput, displacementTexture);
-            this._displacementRadius = [
-                new Int32Array(_serviceProvider.textures.displacementRadius.size)
-            ];
-            this._displacementRange = [
-                new Int32Array(_serviceProvider.textures.displacementRange.size),
-                new Int32Array(_serviceProvider.textures.displacementRange.size)
-            ];
+            this._displacementRadius = new Int32Array(1);
+            this._displacementRange = [new Int32Array(1), new Int32Array(1)];
         } else if (displacement) {
             this._displacementMap = displacement.displacementMap;
             this._displacementRadius = displacement.displacementRadius;
@@ -127,7 +122,7 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
         displacementProviders?: {
             displacement: IExportableNode<Float32Array>,
             range: IMultiExportableNode<Int32Array>,
-            radius: IMultiExportableNode<Int32Array>
+            radius: IExportableNode<Int32Array>
         }): Promise<void> {
         const promises: Promise<void>[] = [];
         if (displacementProviders && this._displacementOutput) {
@@ -185,7 +180,7 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
 
     private setBoundingShpere(mesh: Mesh, displacementAverage: Vector3): void {
         mesh.geometry.computeBoundingSphere();
-        mesh.geometry.boundingSphere!.radius = this._displacementRadius[0][0];
+        mesh.geometry.boundingSphere!.radius = this._displacementRadius[0];
         mesh.geometry.boundingSphere!.center.add(displacementAverage);
     }
 }

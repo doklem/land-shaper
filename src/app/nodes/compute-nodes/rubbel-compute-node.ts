@@ -1,18 +1,21 @@
 import ComputeShader from '../../../shaders/compute/rubble.wgsl';
 import { Vector2, Vector3 } from 'three';
-import { IDisposable } from '../../disposable';
 import { Rubble } from '../../objects-3d/rubble';
 import { MixedColorSettings } from '../../settings/mixed-color-settings';
 import { ITextureSettings } from '../../settings/texture-settings';
 import { IServiceProvider } from '../../services/service-provider';
-import { ExportableFloatComputeNodeBase } from './exportable-float-compute-node-base';
+import { BufferService } from '../../services/buffer-service';
+import { IExportableNode } from '../exportable-node';
+import { ComputeNodeBase } from './compute-node-base';
 
-export class RubbleComputeNode extends ExportableFloatComputeNodeBase implements IDisposable {
+export class RubbleComputeNode extends ComputeNodeBase implements IExportableNode<Float32Array> {
 
     private static readonly WORKGROUP_SIZE = 64;
 
+    private readonly _outputBuffer: GPUBuffer;
     private readonly _uniformConfigArray: ArrayBuffer;
     private readonly _uniformConfigBuffer: GPUBuffer;
+    private readonly _stagingBuffer: GPUBuffer;
 
     protected override readonly _bindGroup: GPUBindGroup;
     protected override readonly _pipeline: GPUComputePipeline;
@@ -20,21 +23,19 @@ export class RubbleComputeNode extends ExportableFloatComputeNodeBase implements
     constructor(
         serviceProvider: IServiceProvider,
         private readonly _uvRange: Vector2,
-        inputTextureSettings: ITextureSettings) {
+        public readonly textureSettings: ITextureSettings) {
         super('Rubble',
             serviceProvider,
-            new Vector3(Math.ceil(inputTextureSettings.size / RubbleComputeNode.WORKGROUP_SIZE), 1, 1),
-            [inputTextureSettings]);
+            new Vector3(Math.ceil(textureSettings.size / RubbleComputeNode.WORKGROUP_SIZE), 1, 1));
 
         // uniform buffer
+        const buffers = this.createExportableBuffer('Output', textureSettings.byteLength);
+        this._outputBuffer = buffers.buffer;
+        this._stagingBuffer = buffers.staging;
         this._uniformConfigArray = new ArrayBuffer(MixedColorSettings.BYTE_LENGTH
             + 12 * Float32Array.BYTES_PER_ELEMENT
             + Float32Array.BYTES_PER_ELEMENT); // Padding
-        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Uniform Buffer`,
-            size: this._uniformConfigArray.byteLength,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-        });
+        this._uniformConfigBuffer = this.createUniformBuffer(this._uniformConfigArray.byteLength);
 
         // bind group layout
         const bindGroupLayout = this.createBindGroupLayout(
@@ -96,17 +97,17 @@ export class RubbleComputeNode extends ExportableFloatComputeNodeBase implements
                     binding: 4,
                     resource:
                     {
-                        buffer: this.outputBuffers[0],
-                        size: Rubble.MATRIX_LENGTH * inputTextureSettings.size * Float32Array.BYTES_PER_ELEMENT
+                        buffer: this._outputBuffer, //TODO: Use two dedicated buffers.
+                        size: Rubble.MATRIX_LENGTH * textureSettings.size * Float32Array.BYTES_PER_ELEMENT
                     },
                 },
                 {
                     binding: 5,
                     resource:
                     {
-                        buffer: this.outputBuffers[0],
-                        offset: Rubble.MATRIX_LENGTH * inputTextureSettings.size * Float32Array.BYTES_PER_ELEMENT,
-                        size: Rubble.RGBA_LENGTH * inputTextureSettings.size * Float32Array.BYTES_PER_ELEMENT
+                        buffer: this._outputBuffer,
+                        offset: Rubble.MATRIX_LENGTH * textureSettings.size * Float32Array.BYTES_PER_ELEMENT,
+                        size: Rubble.RGBA_LENGTH * textureSettings.size * Float32Array.BYTES_PER_ELEMENT
                     },
                 }
             ]
@@ -116,7 +117,7 @@ export class RubbleComputeNode extends ExportableFloatComputeNodeBase implements
         this._pipeline = this.createPipeline(bindGroupLayout, ComputeShader);
     }
 
-    public configureRun(uvOffset?: Vector2): void {       
+    public configureRun(uvOffset?: Vector2): void {
         const constants = this._serviceProvider.settings.constants;
         const rubble = this._serviceProvider.settings.rubble;
         const uniformConfigView = new DataView(this._uniformConfigArray);
@@ -130,9 +131,9 @@ export class RubbleComputeNode extends ExportableFloatComputeNodeBase implements
         uniformConfigView.setFloat32(offset, this._uvRange.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
 
-        uniformConfigView.setFloat32(offset, this.textureSettings[0].width, constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this.textureSettings.width, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this.textureSettings[0].height, constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this.textureSettings.height, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, constants.meshSize.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT
@@ -152,9 +153,12 @@ export class RubbleComputeNode extends ExportableFloatComputeNodeBase implements
         this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
     }
 
-    public dispose(): void {
-        super.dispose();
-        this._uniformConfigBuffer.destroy();
+    public override appendComputePass(commandEncoder: GPUCommandEncoder): void {
+        super.appendComputePass(commandEncoder);
+        commandEncoder.copyBufferToBuffer(this._outputBuffer, 0, this._stagingBuffer, 0, this._outputBuffer.size);
+    }
+
+    public async readOutputBuffer(output: Float32Array): Promise<void> {
+        output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
     }
 };
-

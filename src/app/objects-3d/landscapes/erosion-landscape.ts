@@ -43,8 +43,8 @@ export class ErosionLandscape extends Group implements ILandscape {
             _serviceProvider,
             _serviceProvider.textures.displacementErosion,
             _serviceProvider.settings.constants.meshSize,
-            this._displacementRangeComputeNode.outputBuffers[0],
-            this._displacementRangeComputeNode.outputBuffers[1]);
+            this._displacementRangeComputeNode.minBuffer,
+            this._displacementRangeComputeNode.maxBuffer);
 
         this._terrain = new Terrain(
             _serviceProvider,

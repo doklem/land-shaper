@@ -55,8 +55,8 @@ export class SectionedLandscape extends Group implements ILandscape {
             _serviceProvider,
             _serviceProvider.textures.displacementSection,
             meshSizeSection,
-            this._displacementRangeComputeNode.outputBuffers[0],
-            this._displacementRangeComputeNode.outputBuffers[1]
+            this._displacementRangeComputeNode.minBuffer,
+            this._displacementRangeComputeNode.maxBuffer
         );
         this._normalObjectSpaceRenderNode = new NormalObjectSpaceRenderNode(
             _serviceProvider,

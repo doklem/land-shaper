@@ -11,6 +11,7 @@ export class WaterComputeNode extends ComputeNodeBase {
 
     public static readonly NAME = 'Water';
 
+    private readonly _outputBuffer: GPUBuffer;
     private readonly _workgroupSize: number;
     private readonly _uniformConfigBuffer: GPUBuffer;
     private readonly _uniformConfigArray: ArrayBuffer;
@@ -25,40 +26,36 @@ export class WaterComputeNode extends ComputeNodeBase {
         super(
             WaterComputeNode.NAME,
             serviceProvider,
-            new Vector3(WaterComputeNode.getWorkgroupCount(serviceProvider.device, serviceProvider.textures), 1, 1),
-            [serviceProvider.textures.water.settings]);
+            new Vector3(WaterComputeNode.getWorkgroupCount(serviceProvider.device, serviceProvider.textures), 1, 1));
 
         this._workgroupSize = serviceProvider.settings.constants.erosion.dropletsSize.x * serviceProvider.settings.constants.erosion.dropletsSize.y;
 
         // buffers
+        this._outputBuffer = this.createBuffer(
+            'Output',
+            serviceProvider.textures.water.settings.byteLength,
+            GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE);
         this._uniformConfigArray = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT * 3 + Float32Array.BYTES_PER_ELEMENT * 5);
-        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Uniform Config Buffer`,
-            size: this._uniformConfigArray.byteLength,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-        });
+        this._uniformConfigBuffer = this.createUniformBuffer(this._uniformConfigArray.byteLength);
 
         const dropletOriginsArray = this.createDropletOrigins();
-        this._dropletOriginsBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Droplet Origins Buffer`,
-            size: dropletOriginsArray.byteLength,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
-        });
+        this._dropletOriginsBuffer = this.createBuffer(
+            'Droplet Origins',
+            dropletOriginsArray.byteLength,
+            GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE);
         serviceProvider.device.queue.writeBuffer(this._dropletOriginsBuffer, 0, dropletOriginsArray);
 
-        const dropletOffsetsArray = this.createDropletOffsets(serviceProvider.settings.constants.erosion.dropletOffsetsMinSize)
-        this._dropletOffsetsBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Droplet Offsets Buffer`,
-            size: dropletOffsetsArray.byteLength,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
-        });
+        const dropletOffsetsArray = this.createDropletOffsets(serviceProvider.settings.constants.erosion.dropletOffsetsMinSize);
+        this._dropletOffsetsBuffer = this.createBuffer(
+            'Droplet Offsets',
+            dropletOffsetsArray.byteLength,
+            GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE);
         serviceProvider.device.queue.writeBuffer(this._dropletOffsetsBuffer, 0, dropletOffsetsArray);
 
-        this._dropletIterationsBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Droplet Iterations Buffer`,
-            size: this._workgroupSize * Uint32Array.BYTES_PER_ELEMENT,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
-        });
+        this._dropletIterationsBuffer = this.createBuffer(
+            'Droplet Iterations',
+            this._workgroupSize * Uint32Array.BYTES_PER_ELEMENT,
+            GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE);
 
         // bind group layout
         const bindGroupLayout = this.createBindGroupLayout(
@@ -131,7 +128,7 @@ export class WaterComputeNode extends ComputeNodeBase {
                 },
                 {
                     binding: 6,
-                    resource: { buffer: this.outputBuffers[0] },
+                    resource: { buffer: this._outputBuffer },
                 },
             ]
         );
@@ -141,8 +138,16 @@ export class WaterComputeNode extends ComputeNodeBase {
     }
 
     public override appendComputePass(commandEncoder: GPUCommandEncoder): void {
-        commandEncoder.clearBuffer(this.outputBuffers[0]);
+        commandEncoder.clearBuffer(this._outputBuffer);
         super.appendComputePass(commandEncoder);
+        commandEncoder.copyBufferToTexture(
+            {
+                buffer: this._outputBuffer,
+                bytesPerRow: this._serviceProvider.textures.water.bytesPerRow,
+            },
+            this._serviceProvider.textures.water,
+            this._serviceProvider.textures.water
+        );
     }
 
     public configureRun(): void {
@@ -174,15 +179,6 @@ export class WaterComputeNode extends ComputeNodeBase {
             offset += 4;
         }
         this._serviceProvider.device.queue.writeBuffer(this._dropletIterationsBuffer, 0, dropletIterationsArray);
-    }
-
-    public override dispose(): void {
-        super.dispose();
-        this._uniformConfigBuffer.destroy();
-    }
-
-    protected override appendToCommandEncoder(commandEncoder: GPUCommandEncoder): void {
-        this.appendCopyOutputToTexture(commandEncoder, [this._serviceProvider.textures.water]);
     }
 
     private createDropletOrigins(): Uint32Array {

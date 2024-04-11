@@ -43,8 +43,6 @@ export class TextureService implements IDisposable {
     public readonly displacementErosionBlur: TextureWrapper;
     public readonly displacementErosionDifference: TextureWrapper;
     public readonly displacementErosionUntouched: TextureWrapper;
-    public readonly displacementRadius: ITextureSettings;
-    public readonly displacementRange: ITextureSettings;
     public readonly displacementSection: TextureWrapper;
     public readonly displacementTopology: TextureWrapper;
     public readonly diffuse: TextureWrapper;
@@ -71,8 +69,6 @@ export class TextureService implements IDisposable {
     public readonly water: TextureWrapper;
 
     constructor(settings: SettingsService, device: GPUDevice) {
-        this.displacementRadius = TextureService.createTextureSettings(new Vector2(1, 1), 'r32float');
-        this.displacementRange = TextureService.createTextureSettings(new Vector2(1, 1), 'r32float');
         this.rFloatTextureColors = TextureService.createTextureSettings(settings.constants.textureSizeColors, 'r32float');
         this.rFloatTextureTopology = TextureService.createTextureSettings(settings.constants.textureSizeTopology, 'r32float');
         this.rFloatTextureTerrain = TextureService.createTextureSettings(settings.constants.textureSizeTerrain, 'r32float');
