@@ -1,5 +1,5 @@
-import { MeshService } from './app/classes/services/mesh-service';
-import { LandEditor } from './app/classes/land-editor';
+import { MeshService } from './app/services/mesh-service';
+import { LandEditor } from './app/land-editor';
 
 export class Program {
 
