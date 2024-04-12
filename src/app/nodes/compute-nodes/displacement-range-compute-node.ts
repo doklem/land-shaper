@@ -2,17 +2,14 @@ import ComputeShader from '../../../shaders/compute/displacement-range.wgsl';
 import { Vector2, Vector3 } from 'three';
 import { IServiceProvider } from '../../services/service-provider';
 import { TextureWrapper } from '../../services/texture-wrapper';
-import { IMultiExportableNode } from '../multi-exportable-node';
 import { ComputeNodeBase } from './compute-node-base';
 import { BufferService } from '../../services/buffer-service';
 
-export class DisplacementRangeComputeNode extends ComputeNodeBase implements IMultiExportableNode<Int32Array> {
+export class DisplacementRangeComputeNode extends ComputeNodeBase {
 
     private static readonly WORKGROUP_SIZE = new Vector2(8, 8);
-    private static readonly CLEAR_ARRAYS = [
-        new Int32Array([2147483647]),
-        new Int32Array([-2147483648])
-    ];
+    private static readonly MIN_INT32_ARRAY = new Int32Array([-2147483648]);
+    private static readonly MAX_INT32_ARRAY = new Int32Array([2147483648]);
 
     private readonly _minStagingBuffer: GPUBuffer;
     private readonly _maxStagingBuffer: GPUBuffer;
@@ -101,8 +98,8 @@ export class DisplacementRangeComputeNode extends ComputeNodeBase implements IMu
     }
 
     public configureRun(): void {
-        this._serviceProvider.device.queue.writeBuffer(this.minBuffer, 0, DisplacementRangeComputeNode.CLEAR_ARRAYS[0]);
-        this._serviceProvider.device.queue.writeBuffer(this.maxBuffer, 0, DisplacementRangeComputeNode.CLEAR_ARRAYS[1]);
+        this._serviceProvider.device.queue.writeBuffer(this.minBuffer, 0, DisplacementRangeComputeNode.MAX_INT32_ARRAY);
+        this._serviceProvider.device.queue.writeBuffer(this.maxBuffer, 0, DisplacementRangeComputeNode.MIN_INT32_ARRAY);
     }
 
     public appendComputePass(commandEncoder: GPUCommandEncoder): void {
@@ -111,13 +108,10 @@ export class DisplacementRangeComputeNode extends ComputeNodeBase implements IMu
         commandEncoder.copyBufferToBuffer(this.maxBuffer, 0, this._maxStagingBuffer, 0, this.maxBuffer.size);
     }
 
-    public async readOutputBuffer(outputs: Int32Array[]): Promise<void> {
-        if (outputs.length < 2) {
-            throw new Error('The number of provided outputs does not match the number of staging buffers');
-        }
+    public async readOutputBuffer(minOutput: Int32Array, maxOutput: Int32Array): Promise<void> {
         await Promise.all([
-            outputs[0].set(new Int32Array(await BufferService.readGPUBuffer(this._minStagingBuffer))),
-            outputs[1].set(new Int32Array(await BufferService.readGPUBuffer(this._maxStagingBuffer)))
+            minOutput.set(new Int32Array(await BufferService.readGPUBuffer(this._minStagingBuffer))),
+            maxOutput.set(new Int32Array(await BufferService.readGPUBuffer(this._maxStagingBuffer)))
         ]);
     }
 };

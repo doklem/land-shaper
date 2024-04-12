@@ -38,7 +38,7 @@ export class ColoringLandscape extends Group implements ILandscape {
         this._normalObjectSpaceRenderNode = new NormalObjectSpaceRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.displacementErosion, _serviceProvider.textures.normalObjectSpace);
         this._normalTangentSpaceRenderNode = new NormalTangentSpaceRenderNode(_serviceProvider, _serviceProvider.textures.normalObjectSpace, _serviceProvider.textures.normalTangentSpace);
         this._diffuseRenderNode = new DiffuseRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.surface, _serviceProvider.textures.displacementErosion, _serviceProvider.textures.diffuse);
-        this._rubbleComputeNode = new RubbleComputeNode(_serviceProvider, uvRange, _serviceProvider.textures.rubbleTexture);
+        this._rubbleComputeNode = new RubbleComputeNode(_serviceProvider, uvRange, _serviceProvider.settings.constants.rubble.dimensions);
         this._surfaceRenderNode = new SurfaceRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.normalObjectSpace, _serviceProvider.textures.displacementErosion, _serviceProvider.textures.water, _serviceProvider.textures.surface);
         this._waterComputeNode = new WaterComputeNode(_serviceProvider);
 

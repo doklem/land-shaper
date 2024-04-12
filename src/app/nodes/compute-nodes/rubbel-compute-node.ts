@@ -1,37 +1,43 @@
 import ComputeShader from '../../../shaders/compute/rubble.wgsl';
 import { Vector2, Vector3 } from 'three';
-import { Rubble } from '../../objects-3d/rubble';
 import { MixedColorSettings } from '../../settings/mixed-color-settings';
-import { ITextureSettings } from '../../settings/texture-settings';
 import { IServiceProvider } from '../../services/service-provider';
 import { BufferService } from '../../services/buffer-service';
-import { IExportableNode } from '../exportable-node';
 import { ComputeNodeBase } from './compute-node-base';
+import { TextureService } from '../../services/texture-service';
 
-export class RubbleComputeNode extends ComputeNodeBase implements IExportableNode<Float32Array> {
+export class RubbleComputeNode extends ComputeNodeBase {
 
     private static readonly WORKGROUP_SIZE = 64;
 
-    private readonly _outputBuffer: GPUBuffer;
+    private readonly _colorsOutputBuffer: GPUBuffer;
+    private readonly _colorsStagingBuffer: GPUBuffer;
+    private readonly _matricesOutputBuffer: GPUBuffer;
+    private readonly _matricesStagingBuffer: GPUBuffer;
     private readonly _uniformConfigArray: ArrayBuffer;
     private readonly _uniformConfigBuffer: GPUBuffer;
-    private readonly _stagingBuffer: GPUBuffer;
 
     protected override readonly _bindGroup: GPUBindGroup;
     protected override readonly _pipeline: GPUComputePipeline;
 
+    public readonly size: number;
+
     constructor(
         serviceProvider: IServiceProvider,
         private readonly _uvRange: Vector2,
-        public readonly textureSettings: ITextureSettings) {
+        private readonly _dimensions: Vector2) {
         super('Rubble',
             serviceProvider,
-            new Vector3(Math.ceil(textureSettings.size / RubbleComputeNode.WORKGROUP_SIZE), 1, 1));
+            new Vector3(Math.ceil((_dimensions.x * _dimensions.y) / RubbleComputeNode.WORKGROUP_SIZE), 1, 1));
+        this.size = _dimensions.x * _dimensions.y;
 
-        // uniform buffer
-        const buffers = this.createExportableBuffer('Output', textureSettings.byteLength);
-        this._outputBuffer = buffers.buffer;
-        this._stagingBuffer = buffers.staging;
+        // buffers
+        let buffers = this.createExportableBuffer('Matrices Output', this.size * Float32Array.BYTES_PER_ELEMENT * TextureService.MATRIX_4X4_LENGTH);
+        this._matricesOutputBuffer = buffers.buffer;
+        this._matricesStagingBuffer = buffers.staging;
+        buffers = this.createExportableBuffer('Colors Output', this.size * Float32Array.BYTES_PER_ELEMENT * TextureService.RGBA_PIXEL_LENGTH);
+        this._colorsOutputBuffer = buffers.buffer;
+        this._colorsStagingBuffer = buffers.staging;
         this._uniformConfigArray = new ArrayBuffer(MixedColorSettings.BYTE_LENGTH
             + 12 * Float32Array.BYTES_PER_ELEMENT
             + Float32Array.BYTES_PER_ELEMENT); // Padding
@@ -97,17 +103,14 @@ export class RubbleComputeNode extends ComputeNodeBase implements IExportableNod
                     binding: 4,
                     resource:
                     {
-                        buffer: this._outputBuffer, //TODO: Use two dedicated buffers.
-                        size: Rubble.MATRIX_LENGTH * textureSettings.size * Float32Array.BYTES_PER_ELEMENT
+                        buffer: this._matricesOutputBuffer
                     },
                 },
                 {
                     binding: 5,
                     resource:
                     {
-                        buffer: this._outputBuffer,
-                        offset: Rubble.MATRIX_LENGTH * textureSettings.size * Float32Array.BYTES_PER_ELEMENT,
-                        size: Rubble.RGBA_LENGTH * textureSettings.size * Float32Array.BYTES_PER_ELEMENT
+                        buffer: this._colorsOutputBuffer
                     },
                 }
             ]
@@ -131,9 +134,9 @@ export class RubbleComputeNode extends ComputeNodeBase implements IExportableNod
         uniformConfigView.setFloat32(offset, this._uvRange.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
 
-        uniformConfigView.setFloat32(offset, this.textureSettings.width, constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this._dimensions.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        uniformConfigView.setFloat32(offset, this.textureSettings.height, constants.littleEndian);
+        uniformConfigView.setFloat32(offset, this._dimensions.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, constants.meshSize.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT
@@ -155,10 +158,14 @@ export class RubbleComputeNode extends ComputeNodeBase implements IExportableNod
 
     public override appendComputePass(commandEncoder: GPUCommandEncoder): void {
         super.appendComputePass(commandEncoder);
-        commandEncoder.copyBufferToBuffer(this._outputBuffer, 0, this._stagingBuffer, 0, this._outputBuffer.size);
+        commandEncoder.copyBufferToBuffer(this._colorsOutputBuffer, 0, this._colorsStagingBuffer, 0, this._colorsOutputBuffer.size);
+        commandEncoder.copyBufferToBuffer(this._matricesOutputBuffer, 0, this._matricesStagingBuffer, 0, this._matricesOutputBuffer.size);
     }
 
-    public async readOutputBuffer(output: Float32Array): Promise<void> {
-        output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
+    public async readOutputBuffer(colorsOutput: Float32Array, matricesOutput: Float32Array): Promise<void> {
+        await Promise.all([
+            colorsOutput.set(new Float32Array(await BufferService.readGPUBuffer(this._colorsStagingBuffer))),
+            matricesOutput.set(new Float32Array(await BufferService.readGPUBuffer(this._matricesStagingBuffer)))
+        ]);
     }
 };

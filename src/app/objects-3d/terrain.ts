@@ -15,8 +15,8 @@ import { IExportableNode } from '../nodes/exportable-node';
 import { ITextureSettings } from '../settings/texture-settings';
 import { IServiceProvider } from '../services/service-provider';
 import { ExportableByteRenderNodeBase } from '../nodes/render-nodes/exportable-byte-render-node-base';
-import { IMultiExportableNode } from '../nodes/multi-exportable-node';
 import { IDisplacementDefinition } from './displacement-definition';
+import { DisplacementRangeComputeNode } from '../nodes/compute-nodes/displacement-range-compute-node';
 
 export class Terrain extends LOD implements IDisposable, IDisplacementDefinition {
 
@@ -24,7 +24,8 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
     private readonly _displacementMap: DataTexture;
     private readonly _displacementOutput?: Float32Array;
     private readonly _displacementRadius: Int32Array;
-    private readonly _displacementRange: Int32Array[];
+    private readonly _displacementMin: Int32Array;
+    private readonly _displacementMax: Int32Array;
     private readonly _material: MeshStandardMaterial;
     private readonly _meshs: Mesh[];
     private readonly _normalOutput?: Float32Array;
@@ -37,8 +38,12 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
         return this._displacementRadius;
     }
 
-    public get displacementRange(): Int32Array[] {
-        return this._displacementRange;
+    public get displacementMin(): Int32Array {
+        return this._displacementMin;
+    }
+
+    public get displacementMax(): Int32Array {
+        return this._displacementMax;
     }
 
     constructor(
@@ -58,15 +63,17 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
             this._displacementOutput = new Float32Array(displacementTexture.valuesLength);
             this._displacementMap = TextureService.createDataTexture(this._displacementOutput, displacementTexture);
             this._displacementRadius = new Int32Array(1);
-            this._displacementRange = [new Int32Array(1), new Int32Array(1)];
+            this._displacementMin = new Int32Array(1);
+            this._displacementMax = new Int32Array(1);
         } else if (displacement) {
             this._displacementMap = displacement.displacementMap;
             this._displacementRadius = displacement.displacementRadius;
-            this._displacementRange = displacement.displacementRange;
+            this._displacementMin = displacement.displacementMin;
+            this._displacementMax = displacement.displacementMax;
         } else {
             throw new Error('No displacement source was provided')
         }
-        const displacementAverage = new Vector3(0, 0, (this._displacementRange[0][0] + this._displacementRange[1][0]) * 0.5);
+        const displacementAverage = new Vector3(0, 0, (this._displacementMin[0] + this._displacementMax[0]) * 0.5);
 
         if (_normalTangentSpaceRenderNode) {
             this._normalOutput = new Float32Array(_normalTangentSpaceRenderNode.textureSettings.valuesLength);
@@ -121,13 +128,13 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
     public async applyRunOutput(
         displacementProviders?: {
             displacement: IExportableNode<Float32Array>,
-            range: IMultiExportableNode<Int32Array>,
+            range: DisplacementRangeComputeNode,
             radius: IExportableNode<Int32Array>
         }): Promise<void> {
         const promises: Promise<void>[] = [];
         if (displacementProviders && this._displacementOutput) {
             promises.push(displacementProviders.displacement.readOutputBuffer(this._displacementOutput));
-            promises.push(displacementProviders.range.readOutputBuffer(this._displacementRange));
+            promises.push(displacementProviders.range.readOutputBuffer(this._displacementMin, this._displacementMax));
             promises.push(displacementProviders.radius.readOutputBuffer(this._displacementRadius));
         }
         if (this._normalTangentSpaceRenderNode && this._normalOutput) {
@@ -152,7 +159,7 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
         this._material.needsUpdate = true;
 
         if (displacementProviders) {
-            const displacementAverage = new Vector3(0, 0, (this._displacementRange[0][0] + this._displacementRange[1][0]) * 0.5);
+            const displacementAverage = new Vector3(0, 0, (this._displacementMin[0] + this._displacementMax[0]) * 0.5);
             this._meshs.forEach(mesh => this.setBoundingShpere(mesh, displacementAverage));
         }
     }

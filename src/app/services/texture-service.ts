@@ -4,6 +4,7 @@ import {
     FloatType,
     LinearFilter,
     LinearMipmapLinearFilter,
+    Matrix4,
     MeshStandardMaterial,
     PixelFormat,
     RedFormat,
@@ -22,7 +23,6 @@ import { NormalObjectSpaceRenderNode } from '../nodes/render-nodes/normal-object
 import { DiffuseRenderNode } from '../nodes/render-nodes/diffuse-render-node';
 import { DisplacementRenderNode } from '../nodes/render-nodes/displacement-render-node';
 import { WaterComputeNode } from '../nodes/compute-nodes/water-compute-node';
-import { Rubble } from '../objects-3d/rubble';
 import { SurfaceRenderNode } from '../nodes/render-nodes/surface-render-node';
 import { SettingsService } from './settings-service';
 import { ErosionDifferenceRenderNode } from '../nodes/render-nodes/erosion-difference-render-node';
@@ -32,6 +32,7 @@ export class TextureService implements IDisposable {
     public static readonly R_PIXEL_LENGTH = 1;
     public static readonly RG_PIXEL_LENGTH = 2;
     public static readonly RGBA_PIXEL_LENGTH = 4;
+    public static readonly MATRIX_4X4_LENGTH = Matrix4.length;
 
     private static readonly R_FLOAT_PIXEL_BYTE_LENGTH = TextureService.R_PIXEL_LENGTH * Float32Array.BYTES_PER_ELEMENT;
     private static readonly RG_FLOAT_PIXEL_BYTE_LENGTH = TextureService.RG_PIXEL_LENGTH * Float32Array.BYTES_PER_ELEMENT;
@@ -61,8 +62,6 @@ export class TextureService implements IDisposable {
     public readonly rgbaFloatTextureColorsSection: ITextureSettings;
     public readonly rgbaByteTextureColors: ITextureSettings;
     public readonly rgbaByteTextureColorsSection: ITextureSettings;
-    public readonly rubbleTexture: ITextureSettings;
-    public readonly rubbleTextureSection: ITextureSettings;
     public readonly samplerLinearClamping: GPUSampler;
     public readonly surface: TextureWrapper;
     public readonly surfaceSection: TextureWrapper;
@@ -79,8 +78,6 @@ export class TextureService implements IDisposable {
         this.rgbaFloatTextureColorsSection = TextureService.createTextureSettings(settings.constants.sections.textureSizeColors, 'rgba32float');
         this.rgbaByteTextureColors = TextureService.createTextureSettings(settings.constants.textureSizeColors, 'rgba8unorm');
         this.rgbaByteTextureColorsSection = TextureService.createTextureSettings(settings.constants.sections.textureSizeColors, 'rgba8unorm');
-        this.rubbleTexture = TextureService.createTextureSettings(settings.constants.rubble.dimensions, 'rgba32float', Rubble.ITEM_LENGTH, Rubble.ITEM_BYTE_LENGTH);
-        this.rubbleTextureSection = TextureService.createTextureSettings(settings.constants.rubble.dimensionsSection, 'rgba32float', Rubble.ITEM_LENGTH, Rubble.ITEM_BYTE_LENGTH);
 
         this.samplerLinearClamping = device.createSampler({
             label: 'Sampler Linear Clamping',

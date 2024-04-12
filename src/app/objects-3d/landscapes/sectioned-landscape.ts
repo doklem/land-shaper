@@ -83,7 +83,7 @@ export class SectionedLandscape extends Group implements ILandscape {
         this._rubbleComputeNode = new RubbleComputeNode(
             _serviceProvider,
             _serviceProvider.settings.constants.sections.uvRange,
-            _serviceProvider.textures.rubbleTextureSection);
+            _serviceProvider.settings.constants.rubble.dimensionsSection);
 
         this._terrains = new Map<string, Terrain>();
         const meshSectionOffsetTerrain = meshSizeSection.clone().multiplyScalar(0.5);
