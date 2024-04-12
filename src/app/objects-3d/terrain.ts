@@ -11,12 +11,13 @@ import {
 import { TextureService } from '../services/texture-service';
 import { IDisposable } from '../disposable';
 import { NormalTangentSpaceRenderNode } from '../nodes/render-nodes/normal-tangent-space-render-node';
-import { IExportableNode } from '../nodes/exportable-node';
+import { IDisplacementNode } from '../nodes/displacement-node';
 import { ITextureSettings } from '../settings/texture-settings';
 import { IServiceProvider } from '../services/service-provider';
 import { ExportableByteRenderNodeBase } from '../nodes/render-nodes/exportable-byte-render-node-base';
 import { IDisplacementDefinition } from './displacement-definition';
 import { DisplacementRangeComputeNode } from '../nodes/compute-nodes/displacement-range-compute-node';
+import { DisplacementRadiusComputeNode } from '../nodes/compute-nodes/displacement-radius-compute-node';
 
 export class Terrain extends LOD implements IDisposable, IDisplacementDefinition {
 
@@ -127,9 +128,9 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
 
     public async applyRunOutput(
         displacementProviders?: {
-            displacement: IExportableNode<Float32Array>,
+            displacement: IDisplacementNode,
             range: DisplacementRangeComputeNode,
-            radius: IExportableNode<Int32Array>
+            radius: DisplacementRadiusComputeNode
         }): Promise<void> {
         const promises: Promise<void>[] = [];
         if (displacementProviders && this._displacementOutput) {

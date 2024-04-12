@@ -29,49 +29,41 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
         this._uniformConfigArray = new ArrayBuffer(
             Float32Array.BYTES_PER_ELEMENT * 4
             + MixedColorSettings.BYTE_LENGTH * 3);
-        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Uniform Config Buffer`,
-            size: this._uniformConfigArray.byteLength,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-        });
+        this._uniformConfigBuffer = this.createUniformBuffer(this._uniformConfigArray.byteLength);
 
         // bind group layout
-        const bindGroupLayout = serviceProvider.device.createBindGroupLayout({
-            label: `${this._name} Bind Group Layout`,
-            entries: [
-                {
-                    binding: 0,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: surfaceTexture.bindingLayout,
-                },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: displacementTexture.bindingLayout,
-                },
-                {
-                    binding: 2,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    sampler: { type: surfaceTexture.settings.samplerBinding },
-                },
-                {
-                    binding: 3,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    buffer: {}
-                },
-                /*{
-                    binding: 4,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: textures.debug.bindingLayout,
-                },*/
-            ]
-        });
+        const bindGroupLayout = this.createBindGroupLayout([
+            {
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: surfaceTexture.bindingLayout,
+            },
+            {
+                binding: 1,
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: displacementTexture.bindingLayout,
+            },
+            {
+                binding: 2,
+                visibility: GPUShaderStage.FRAGMENT,
+                sampler: { type: surfaceTexture.settings.samplerBinding },
+            },
+            {
+                binding: 3,
+                visibility: GPUShaderStage.FRAGMENT,
+                buffer: {}
+            },
+            /*{
+                binding: 4,
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: textures.debug.bindingLayout,
+            },*/
+        ]);
 
         // bind group
-        this._bindGroup = serviceProvider.device.createBindGroup({
-            label: `${this._name} Bind Group`,
-            layout: bindGroupLayout,
-            entries: [
+        this._bindGroup = this.createBindGroup(
+            bindGroupLayout,
+            [
                 {
                     binding: 0,
                     resource: surfaceTexture.view,
@@ -93,7 +85,7 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
                     resource: serviceProvider.textures.debug.view,
                 },*/
             ]
-        });
+        );
 
         // pipeline
         this._pipeline = this.createPipeline(bindGroupLayout, FragmentShader);
@@ -119,10 +111,5 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
         offset = diffuse.bedrock.serialize(uniformConfigView, offset, constants.littleEndian);
         offset = diffuse.gravel.serialize(uniformConfigView, offset, constants.littleEndian);
         this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
-    }
-
-    public override dispose(): void {
-        super.dispose();
-        this._uniformConfigBuffer.destroy();
     }
 }

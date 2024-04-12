@@ -34,39 +34,31 @@ export class NormalObjectSpaceRenderNode extends RenderNodeBase {
             12 * Float32Array.BYTES_PER_ELEMENT
             + Int32Array.BYTES_PER_ELEMENT
             + 3 * Float32Array.BYTES_PER_ELEMENT); // Padding
-        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Uniform Config Buffer`,
-            size: this._uniformConfigArray.byteLength,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-        });
+        this._uniformConfigBuffer = this.createUniformBuffer(this._uniformConfigArray.byteLength);
 
         // bind group layout
-        const bindGroupLayout = serviceProvider.device.createBindGroupLayout({
-            label: `${this._name} Bind Group Layout`,
-            entries: [
-                {
-                    binding: 0, // displacement texture
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: displacementTexture.bindingLayout,
-                },
-                {
-                    binding: 1, // sampler
-                    visibility: GPUShaderStage.FRAGMENT,
-                    sampler: { type: displacementTexture.settings.samplerBinding },
-                },
-                {
-                    binding: 2, // config uniform
-                    visibility: GPUShaderStage.FRAGMENT,
-                    buffer: {}
-                },
-            ]
-        });
+        const bindGroupLayout = this.createBindGroupLayout([
+            {
+                binding: 0, // displacement texture
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: displacementTexture.bindingLayout,
+            },
+            {
+                binding: 1, // sampler
+                visibility: GPUShaderStage.FRAGMENT,
+                sampler: { type: displacementTexture.settings.samplerBinding },
+            },
+            {
+                binding: 2, // config uniform
+                visibility: GPUShaderStage.FRAGMENT,
+                buffer: {}
+            },
+        ]);
 
         // bind group
-        this._bindGroup = serviceProvider.device.createBindGroup({
-            label: `${this._name} Bind Group`,
-            layout: bindGroupLayout,
-            entries: [
+        this._bindGroup = this.createBindGroup(
+            bindGroupLayout,
+            [
                 {
                     binding: 0,
                     resource: displacementTexture.view,
@@ -80,7 +72,7 @@ export class NormalObjectSpaceRenderNode extends RenderNodeBase {
                     resource: { buffer: this._uniformConfigBuffer },
                 },
             ]
-        });
+        );
 
         // pipeline
         this._pipeline = this.createPipeline(bindGroupLayout, FragmentShader);

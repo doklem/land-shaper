@@ -2,8 +2,9 @@ import FragmentShader from '../../../shaders/fragment/displacement.wgsl';
 import { IServiceProvider } from '../../services/service-provider';
 import { MathUtils } from 'three';
 import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';
+import { IDisplacementNode } from '../displacement-node';
 
-export class DisplacementRenderNode extends ExportableFloatRenderNodeBase {
+export class DisplacementRenderNode extends ExportableFloatRenderNodeBase implements IDisplacementNode {
 
     private static readonly NAME = 'Displacement';
 
@@ -32,35 +33,27 @@ export class DisplacementRenderNode extends ExportableFloatRenderNodeBase {
             + Int32Array.BYTES_PER_ELEMENT
             + Float32Array.BYTES_PER_ELEMENT // Padding
         );
-        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Uniform Config Buffer`,
-            size: this._uniformConfigArray.byteLength,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-        });
+        this._uniformConfigBuffer = this.createUniformBuffer(this._uniformConfigArray.byteLength);
 
         // bind group layout
-        const bindGroupLayout = serviceProvider.device.createBindGroupLayout({
-            label: `${this._name} Bind Group Layout`,
-            entries: [
-                {
-                    binding: 0, // config uniform
-                    visibility: GPUShaderStage.FRAGMENT,
-                    buffer: {}
-                },
-            ]
-        });
+        const bindGroupLayout = this.createBindGroupLayout([
+            {
+                binding: 0, // config uniform
+                visibility: GPUShaderStage.FRAGMENT,
+                buffer: {}
+            },
+        ]);
 
         // bind group
-        this._bindGroup = serviceProvider.device.createBindGroup({
-            label: `${this._name} Bind Group`,
-            layout: bindGroupLayout,
-            entries: [
+        this._bindGroup = this.createBindGroup(
+            bindGroupLayout,
+            [
                 {
                     binding: 0,
                     resource: { buffer: this._uniformConfigBuffer },
                 },
             ]
-        });
+        );
 
         // pipeline
         this._pipeline = this.createPipeline(bindGroupLayout, FragmentShader);
@@ -100,7 +93,7 @@ export class DisplacementRenderNode extends ExportableFloatRenderNodeBase {
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, constants.meshSize.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        
+
         const angle = MathUtils.degToRad(topology.rotationAngle);
         const angleCos = Math.cos(angle);
         const angleSin = Math.sin(angle);
@@ -119,11 +112,6 @@ export class DisplacementRenderNode extends ExportableFloatRenderNodeBase {
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, topology.ridgeThreshold, constants.littleEndian);
         this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
-    }
-
-    public override dispose(): void {
-        super.dispose();
-        this._uniformConfigBuffer.destroy();
     }
 
     public override appendRenderPass(commandEncoder: GPUCommandEncoder): void {

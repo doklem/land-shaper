@@ -1,8 +1,9 @@
 import FragmentShader from '../../../shaders/fragment/blur.wgsl';
 import { IServiceProvider } from '../../services/service-provider';
+import { IDisplacementNode } from '../displacement-node';
 import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';
 
-export class BlurRenderNode extends ExportableFloatRenderNodeBase {
+export class BlurRenderNode extends ExportableFloatRenderNodeBase implements IDisplacementNode {
 
     public static readonly NAME = 'Blur';
 
@@ -18,39 +19,31 @@ export class BlurRenderNode extends ExportableFloatRenderNodeBase {
 
         // buffers
         this._uniformConfigArray = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2 + Float32Array.BYTES_PER_ELEMENT * 2);
-        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Uniform Config Buffer`,
-            size: this._uniformConfigArray.byteLength,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-        });
+        this._uniformConfigBuffer = this.createUniformBuffer(this._uniformConfigArray.byteLength);
 
         // bind group layout
-        const bindGroupLayout = serviceProvider.device.createBindGroupLayout({
-            label: `${this._name} Bind Group Layout`,
-            entries: [
-                {
-                    binding: 0, // displacement texture
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: serviceProvider.textures.displacementErosion.bindingLayout,
-                },
-                {
-                    binding: 1, // sampler
-                    visibility: GPUShaderStage.FRAGMENT,
-                    sampler: { type: serviceProvider.textures.displacementErosion.settings.samplerBinding },
-                },
-                {
-                    binding: 2, // config uniform
-                    visibility: GPUShaderStage.FRAGMENT,
-                    buffer: {}
-                },
-            ]
-        });
+        const bindGroupLayout = this.createBindGroupLayout([
+            {
+                binding: 0, // displacement texture
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: serviceProvider.textures.displacementErosion.bindingLayout,
+            },
+            {
+                binding: 1, // sampler
+                visibility: GPUShaderStage.FRAGMENT,
+                sampler: { type: serviceProvider.textures.displacementErosion.settings.samplerBinding },
+            },
+            {
+                binding: 2, // config uniform
+                visibility: GPUShaderStage.FRAGMENT,
+                buffer: {}
+            },
+        ]);
 
         // bind group
-        this._bindGroup = serviceProvider.device.createBindGroup({
-            label: `${this._name} Bind Group`,
-            layout: bindGroupLayout,
-            entries: [
+        this._bindGroup = this.createBindGroup(
+            bindGroupLayout,
+            [
                 {
                     binding: 0,
                     resource: serviceProvider.textures.displacementErosion.view,
@@ -64,8 +57,8 @@ export class BlurRenderNode extends ExportableFloatRenderNodeBase {
                     resource: { buffer: this._uniformConfigBuffer },
                 },
             ]
-        });
-
+        );
+        
         // pipeline
         this._pipeline = this.createPipeline(bindGroupLayout, FragmentShader);
 
@@ -89,10 +82,5 @@ export class BlurRenderNode extends ExportableFloatRenderNodeBase {
         offset += Int32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, blur.strength, constants.littleEndian);
         this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
-    }
-
-    public override dispose(): void {
-        super.dispose();
-        this._uniformConfigBuffer.destroy();
     }
 }

@@ -1,10 +1,9 @@
-import { IDisposable } from '../../disposable';
-import { ShaderUtils } from '../shader-utils';
 import { TextureWrapper } from '../../services/texture-wrapper';
 import { IServiceProvider } from '../../services/service-provider';
 import { ITextureSettings } from '../../settings/texture-settings';
+import { NodeBase } from '../node-base';
 
-export abstract class RenderNodeBase implements IDisposable {
+export abstract class RenderNodeBase extends NodeBase {
 
     protected abstract readonly _pipeline: GPURenderPipeline;
     protected abstract readonly _renderBundle: GPURenderBundle;
@@ -15,9 +14,10 @@ export abstract class RenderNodeBase implements IDisposable {
     }
 
     public constructor(
-        protected readonly _name: string,
-        protected readonly _serviceProvider: IServiceProvider,
+        name: string,
+        serviceProvider: IServiceProvider,
         protected readonly _texture: TextureWrapper) {
+        super(name, serviceProvider)
         this._renderPassDescriptor = {
             label: `${this._name} Render Pass`,
             colorAttachments: [
@@ -36,8 +36,6 @@ export abstract class RenderNodeBase implements IDisposable {
         renderPassEncoder.end();
     }
 
-    public dispose(): void { }
-
     protected createPipeline(
         bindGroupLayout: GPUBindGroupLayout,
         fragmentShader: string,
@@ -52,7 +50,7 @@ export abstract class RenderNodeBase implements IDisposable {
             fragment: {
                 module: this._serviceProvider.device.createShaderModule({
                     label: `${this._name} Fragment Shader Module`,
-                    code: ShaderUtils.applyIncludes(fragmentShader)
+                    code: RenderNodeBase.applyIncludes(fragmentShader)
                 }),
                 entryPoint: entryPointFragment ?? 'main',
                 targets: [{ format: this._texture.texture.format }]

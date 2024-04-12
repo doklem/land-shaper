@@ -2,11 +2,11 @@ import ComputeShader from '../../../shaders/compute/erosion.wgsl';
 import { BufferService } from '../../services/buffer-service';
 import { Vector2, Vector3 } from 'three';
 import { QuadTree } from './quad-tree';
-import { IExportableNode } from '../exportable-node';
+import { IDisplacementNode } from '../displacement-node';
 import { IServiceProvider } from '../../services/service-provider';
 import { ComputeNodeBase } from './compute-node-base';
 
-export class ErosionComputeNode extends ComputeNodeBase implements IExportableNode<Float32Array> {
+export class ErosionComputeNode extends ComputeNodeBase implements IDisplacementNode {
 
     private static readonly NAME = 'Erosion';
 

@@ -3,10 +3,9 @@ import { Vector2, Vector3 } from 'three';
 import { IServiceProvider } from '../../services/service-provider';
 import { TextureWrapper } from '../../services/texture-wrapper';
 import { ComputeNodeBase } from './compute-node-base';
-import { IExportableNode } from '../exportable-node';
 import { BufferService } from '../../services/buffer-service';
 
-export class DisplacementRadiusComputeNode extends ComputeNodeBase implements IExportableNode<Int32Array> {
+export class DisplacementRadiusComputeNode extends ComputeNodeBase {
 
     private static readonly WORKGROUP_SIZE = new Vector2(8, 8);
 

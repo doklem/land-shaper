@@ -1,9 +1,8 @@
 import { TextureWrapper } from '../../services/texture-wrapper';
 import { IServiceProvider } from '../../services/service-provider';
-import { IExportableNode } from '../exportable-node';
 import { RenderNodeBase } from './render-node-base';
 
-export abstract class ExportableRenderNodeBase<T extends Float32Array | Uint8Array> extends RenderNodeBase implements IExportableNode<T> {
+export abstract class ExportableRenderNodeBase<T extends Float32Array | Uint8Array> extends RenderNodeBase {
 
     protected readonly _stagingBuffer: GPUBuffer;
 
@@ -15,16 +14,7 @@ export abstract class ExportableRenderNodeBase<T extends Float32Array | Uint8Arr
         super(name, serviceProvider, texture);
 
         // buffers
-        this._stagingBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Staging Buffer`,
-            size: this._texture.byteLength,
-            usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
-        });
-    }
-
-    public override dispose(): void {
-        super.dispose();
-        this._stagingBuffer.destroy();
+        this._stagingBuffer = this.createStagingBuffer(texture.byteLength);
     }
 
     public abstract readOutputBuffer(output: T): Promise<void>;

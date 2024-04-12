@@ -24,39 +24,31 @@ export class ExportableDivideRenderNode extends ExportableFloatRenderNodeBase {
 
         // uniform buffers
         this._uniformConfigArray = new Float32Array(4);
-        this._uniformConfigBuffer = serviceProvider.device.createBuffer({
-            label: `${this._name} Uniform Config Buffer`,
-            size: this._uniformConfigArray.byteLength,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-        });
+        this._uniformConfigBuffer = this.createUniformBuffer(this._uniformConfigArray.byteLength);
 
         // bind group layout
-        const bindGroupLayout = serviceProvider.device.createBindGroupLayout({
-            label: `${this._name} Bind Group Layout`,
-            entries: [
-                {
-                    binding: 0,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: inputTexture.bindingLayout,
-                },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    sampler: { type: inputTexture.settings.samplerBinding },
-                },
-                {
-                    binding: 2, // config uniform
-                    visibility: GPUShaderStage.FRAGMENT,
-                    buffer: {}
-                },
-            ]
-        });
+        const bindGroupLayout = this.createBindGroupLayout([
+            {
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: inputTexture.bindingLayout,
+            },
+            {
+                binding: 1,
+                visibility: GPUShaderStage.FRAGMENT,
+                sampler: { type: inputTexture.settings.samplerBinding },
+            },
+            {
+                binding: 2, // config uniform
+                visibility: GPUShaderStage.FRAGMENT,
+                buffer: {}
+            },
+        ]);
 
         // bind group
-        this._bindGroup = serviceProvider.device.createBindGroup({
-            label: `${this._name} Bind Group`,
-            layout: bindGroupLayout,
-            entries: [
+        this._bindGroup = this.createBindGroup(
+            bindGroupLayout,
+            [
                 {
                     binding: 0,
                     resource: inputTexture.view,
@@ -70,7 +62,7 @@ export class ExportableDivideRenderNode extends ExportableFloatRenderNodeBase {
                     resource: { buffer: this._uniformConfigBuffer },
                 },
             ]
-        });
+        );
 
         // pipeline
         this._pipeline = this.createPipeline(bindGroupLayout, FragmentShader);
