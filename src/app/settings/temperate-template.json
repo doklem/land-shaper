@@ -50,7 +50,7 @@
             }
         }
     },
-    "erosion": {
+    "dropletErosion": {
         "iterations": 1000,
         "maxLifetime": 50,
         "inertia": 0.05,

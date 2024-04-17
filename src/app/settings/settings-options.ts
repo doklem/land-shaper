@@ -21,7 +21,7 @@ export interface ISettingsOptions {
         gravel: IMixedColorOptions;
     };
 
-    readonly erosion: {
+    readonly dropletErosion: {
         iterations: number;
         maxLifetime: number;
         inertia: number;

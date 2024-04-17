@@ -28,7 +28,7 @@ export class WaterComputeNode extends ComputeNodeBase {
             serviceProvider,
             new Vector3(WaterComputeNode.getWorkgroupCount(serviceProvider.device, serviceProvider.textures), 1, 1));
 
-        this._workgroupSize = serviceProvider.settings.constants.erosion.dropletsSize.x * serviceProvider.settings.constants.erosion.dropletsSize.y;
+        this._workgroupSize = serviceProvider.settings.constants.dropletErosion.dropletsSize.x * serviceProvider.settings.constants.dropletErosion.dropletsSize.y;
 
         // buffers
         this._outputBuffer = this.createBuffer(
@@ -45,7 +45,7 @@ export class WaterComputeNode extends ComputeNodeBase {
             GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE);
         serviceProvider.device.queue.writeBuffer(this._dropletOriginsBuffer, 0, dropletOriginsArray);
 
-        const dropletOffsetsArray = this.createDropletOffsets(serviceProvider.settings.constants.erosion.dropletOffsetsMinSize);
+        const dropletOffsetsArray = this.createDropletOffsets(serviceProvider.settings.constants.dropletErosion.dropletOffsetsMinSize);
         this._dropletOffsetsBuffer = this.createBuffer(
             'Droplet Offsets',
             dropletOffsetsArray.byteLength,
@@ -152,7 +152,7 @@ export class WaterComputeNode extends ComputeNodeBase {
 
     public configureRun(): void {
         const constants = this._serviceProvider.settings.constants;
-        const erosion = this._serviceProvider.settings.erosion;
+        const erosion = this._serviceProvider.settings.dropletErosion;
         const view = new DataView(this._uniformConfigArray);
         let offset = 0;
         view.setUint32(offset, this._serviceProvider.textures.displacementErosion.width, constants.littleEndian);
@@ -183,13 +183,13 @@ export class WaterComputeNode extends ComputeNodeBase {
 
     private createDropletOrigins(): Uint32Array {
         const dropletOriginArea = new Vector2(
-            this._serviceProvider.textures.displacementErosion.width / this._serviceProvider.settings.constants.erosion.dropletsSize.x,
-            this._serviceProvider.textures.displacementErosion.height / this._serviceProvider.settings.constants.erosion.dropletsSize.y);
+            this._serviceProvider.textures.displacementErosion.width / this._serviceProvider.settings.constants.dropletErosion.dropletsSize.x,
+            this._serviceProvider.textures.displacementErosion.height / this._serviceProvider.settings.constants.dropletErosion.dropletsSize.y);
 
         const originIndices: number[] = [];
         let coordinate = new Vector2();
-        for (let y = 0; y < this._serviceProvider.settings.constants.erosion.dropletsSize.y; y++) {
-            for (let x = 0; x < this._serviceProvider.settings.constants.erosion.dropletsSize.x; x++) {
+        for (let y = 0; y < this._serviceProvider.settings.constants.dropletErosion.dropletsSize.y; y++) {
+            for (let x = 0; x < this._serviceProvider.settings.constants.dropletErosion.dropletsSize.x; x++) {
                 originIndices.push(coordinate.y * this._serviceProvider.textures.displacementErosion.width + coordinate.x);
                 coordinate.setX(coordinate.x + dropletOriginArea.x);
             }
@@ -201,8 +201,8 @@ export class WaterComputeNode extends ComputeNodeBase {
 
     private createDropletOffsets(minSize: number): Float32Array {
         const dropletOriginArea = new Vector2(
-            this._serviceProvider.textures.displacementErosion.width / this._serviceProvider.settings.constants.erosion.dropletsSize.x,
-            this._serviceProvider.textures.displacementErosion.height / this._serviceProvider.settings.constants.erosion.dropletsSize.y);
+            this._serviceProvider.textures.displacementErosion.width / this._serviceProvider.settings.constants.dropletErosion.dropletsSize.x,
+            this._serviceProvider.textures.displacementErosion.height / this._serviceProvider.settings.constants.dropletErosion.dropletsSize.y);
         const quadTree = new QuadTree(new Vector2(), dropletOriginArea, minSize);
         const offsets: number[] = [];
         const totalOffsets = dropletOriginArea.x * dropletOriginArea.y;

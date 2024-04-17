@@ -55,7 +55,7 @@ export abstract class EditStageBase<T extends ILandscape> implements IEditStage 
         this._visible = false;
         this._folders.forEach(uiElement => uiElement.hide());
         this._sceneElements.forEach(sceneElement => this._serviceProvider.scene.remove(sceneElement));
-        this.onStateChange(false);
+        this.onVisibilityChange(false);
     }
 
     public show(): void {
@@ -65,15 +65,15 @@ export abstract class EditStageBase<T extends ILandscape> implements IEditStage 
         this._visible = true;
         this._folders.forEach(uiElement => uiElement.show());
         this._sceneElements.forEach(sceneElement => this._serviceProvider.scene.add(sceneElement));
-        this.onStateChange(true);
+        this.onVisibilityChange(true);
     }
 
     public async updateLandscape(): Promise<void> {
         await this._landscape.runLandscape();
     }
 
-    protected onStateChange(state: boolean): void {
-        if (state) {
+    protected onVisibilityChange(visibility: boolean): void {
+        if (visibility) {
             this.changed = false;
         }
     }
