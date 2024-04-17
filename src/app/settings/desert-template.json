@@ -109,6 +109,19 @@
         "turbidity": 0.1,
         "rayleigh": 0.1
     },
+    "thermalErosion": {
+        "amplitude": 0.01,
+        "borderMin": {
+            "x": 1,
+            "y": 1
+        },
+        "borderRange": {
+            "x": 1,
+            "y": 1
+        },
+        "iterations": 10,
+        "tanThreshold": 0
+    },
     "topology": {
         "octaves": 3,
         "offset": {

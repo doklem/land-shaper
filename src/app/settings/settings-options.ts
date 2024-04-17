@@ -63,6 +63,14 @@ export interface ISettingsOptions {
         rayleigh: number;
     };
 
+    readonly thermalErosion: {
+        amplitude: number;
+        borderMin: Vector2Like,
+        borderRange: Vector2Like,
+        iterations: number;
+        tanThreshold: number;
+    };
+
     readonly topology: {
         octaves: number;
         offset: Vector3Like;

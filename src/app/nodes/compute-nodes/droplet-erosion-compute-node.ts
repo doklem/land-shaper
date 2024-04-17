@@ -69,7 +69,7 @@ export class DropletErosionComputeNode extends ComputeNodeBase implements IDispl
         this._displacementBuffer = buffers.buffer;
         this._stagingBuffer = buffers.staging;
 
-        this.setDisplacement();
+        this.initialize();
 
         // bind group layout
         const bindGroupLayout = _serviceProvider.device.createBindGroupLayout({
@@ -221,7 +221,7 @@ export class DropletErosionComputeNode extends ComputeNodeBase implements IDispl
         output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
     }
 
-    public setDisplacement(): void {
+    public initialize(): void {
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         commandEncoder.copyTextureToBuffer(
             this._serviceProvider.textures.displacementErosion,

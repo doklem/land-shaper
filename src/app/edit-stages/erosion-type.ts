@@ -1,4 +1,5 @@
 export enum ErosionType {
     none,
-    droplet
+    droplet,
+    thermal
 }

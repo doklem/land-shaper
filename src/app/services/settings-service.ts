@@ -104,6 +104,14 @@ export class SettingsService implements ISettingsOptions {
         rayleigh: 0,
     };
 
+    public readonly thermalErosion = {
+        amplitude: 0,
+        borderMin: new Vector2(),
+        borderRange: new Vector2(),
+        iterations: 0,
+        tanThreshold: 0,
+    };
+
     public readonly topology = {
         octaves: 0,
         offset: new Vector3(),
@@ -166,6 +174,7 @@ export class SettingsService implements ISettingsOptions {
             ocean: this.ocean,
             rubble: this.rubble,
             sky: this.sky,
+            thermalErosion: this.thermalErosion,
             topology: this.topology
         };
     }
@@ -217,6 +226,12 @@ export class SettingsService implements ISettingsOptions {
 
         this.sky.rayleigh = options.sky.rayleigh;
         this.sky.turbidity = options.sky.turbidity;
+
+        this.thermalErosion.amplitude = options.thermalErosion.amplitude;
+        this.thermalErosion.borderMin.set(options.thermalErosion.borderMin.x, options.thermalErosion.borderMin.y);
+        this.thermalErosion.borderRange.set(options.thermalErosion.borderRange.x, options.thermalErosion.borderRange.y);
+        this.thermalErosion.iterations = options.thermalErosion.iterations;
+        this.thermalErosion.tanThreshold = options.thermalErosion.tanThreshold;
 
         this.topology.octaves = options.topology.octaves;
         this.topology.offset.set(options.topology.offset.x, options.topology.offset.y, options.topology.offset.z);

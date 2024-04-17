@@ -10,6 +10,7 @@ import { ErosionDifferenceRenderNode } from '../../nodes/render-nodes/erosion-di
 import { DisplacementRangeComputeNode } from '../../nodes/compute-nodes/displacement-range-compute-node';
 import { IDisplacementDefinition } from '../displacement-definition';
 import { DisplacementRadiusComputeNode } from '../../nodes/compute-nodes/displacement-radius-compute-node';
+import { ThermalErosionComputeNode } from '../../nodes/compute-nodes/thermal-erosion-compute-node';
 
 export class ErosionLandscape extends Group implements ILandscape {
 
@@ -21,6 +22,7 @@ export class ErosionLandscape extends Group implements ILandscape {
     private readonly _erosionDifferenceRenderNode: ErosionDifferenceRenderNode;
     private readonly _ocean: SimpleOcean;
     private readonly _terrain: Terrain;
+    private readonly _thermalErosionComputeNode: ThermalErosionComputeNode;
 
     private _running: boolean;
 
@@ -45,6 +47,7 @@ export class ErosionLandscape extends Group implements ILandscape {
             _serviceProvider.settings.constants.meshSize,
             this._displacementRangeComputeNode.minBuffer,
             this._displacementRangeComputeNode.maxBuffer);
+        this._thermalErosionComputeNode = new ThermalErosionComputeNode(_serviceProvider);
 
         this._terrain = new Terrain(
             _serviceProvider,
@@ -78,29 +81,31 @@ export class ErosionLandscape extends Group implements ILandscape {
         this._displacementRenderNode.dispose();
         this._dropletErosionComputeNode.dispose();
         this._erosionDifferenceRenderNode.dispose();
+        this._thermalErosionComputeNode.dispose();
         this._ocean.dispose();
         this._terrain.dispose();
     }
 
-    public async runLandscape(): Promise<void> {
+    public async runBlur(): Promise<void> {
         if (this._running) {
             return;
         }
         this._running = true;
 
-        this._displacementRenderNode.configureRun();
+        this._blurRenderNode.configureRun();
         this._displacementRangeComputeNode.configureRun();
 
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
-        this._displacementRenderNode.appendRenderPass(commandEncoder);
+        this._blurRenderNode.appendRenderPass(commandEncoder);
         this._displacementRangeComputeNode.appendComputePass(commandEncoder);
         this._displacementRadiusComputeNode.appendComputePass(commandEncoder);
         this._erosionDifferenceRenderNode.appendRenderPass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
-        this._dropletErosionComputeNode.setDisplacement();
+        this._dropletErosionComputeNode.initialize();
+        this._thermalErosionComputeNode.initialize();
 
         await this._terrain.applyRunOutput({
-            displacement: this._displacementRenderNode,
+            displacement: this._blurRenderNode,
             range: this._displacementRangeComputeNode,
             radius: this._displacementRadiusComputeNode
         });
@@ -123,6 +128,7 @@ export class ErosionLandscape extends Group implements ILandscape {
         this._displacementRadiusComputeNode.appendComputePass(commandEncoder);
         this._erosionDifferenceRenderNode.appendRenderPass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
+        this._thermalErosionComputeNode.initialize();
 
         await this._terrain.applyRunOutput({
             displacement: this._dropletErosionComputeNode,
@@ -132,25 +138,52 @@ export class ErosionLandscape extends Group implements ILandscape {
         this._running = false;
     }
 
-    public async runBlur(): Promise<void> {
+    public async runLandscape(): Promise<void> {
         if (this._running) {
             return;
         }
         this._running = true;
 
-        this._blurRenderNode.configureRun();
+        this._displacementRenderNode.configureRun();
         this._displacementRangeComputeNode.configureRun();
 
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
-        this._blurRenderNode.appendRenderPass(commandEncoder);
+        this._displacementRenderNode.appendRenderPass(commandEncoder);
         this._displacementRangeComputeNode.appendComputePass(commandEncoder);
         this._displacementRadiusComputeNode.appendComputePass(commandEncoder);
         this._erosionDifferenceRenderNode.appendRenderPass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
-        this._dropletErosionComputeNode.setDisplacement();
+        this._dropletErosionComputeNode.initialize();
+        this._thermalErosionComputeNode.initialize();
 
         await this._terrain.applyRunOutput({
-            displacement: this._blurRenderNode,
+            displacement: this._displacementRenderNode,
+            range: this._displacementRangeComputeNode,
+            radius: this._displacementRadiusComputeNode
+        });
+        this._running = false;
+    }
+
+    public async runThermalErosion(): Promise<void> {
+        if (this._running) {
+            return;
+        }
+        this._running = true;
+
+        this._thermalErosionComputeNode.configureRun();
+        this._displacementRangeComputeNode.configureRun();
+
+        const commandEncoder = this._serviceProvider.device.createCommandEncoder();
+        this._thermalErosionComputeNode.appendComputePass(commandEncoder);
+        //this._erosionDifferenceRenderNode.appendDebugRenderPass(commandEncoder);
+        this._displacementRangeComputeNode.appendComputePass(commandEncoder);
+        this._displacementRadiusComputeNode.appendComputePass(commandEncoder);
+        this._erosionDifferenceRenderNode.appendRenderPass(commandEncoder);
+        this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
+        this._dropletErosionComputeNode.initialize();
+
+        await this._terrain.applyRunOutput({
+            displacement: this._thermalErosionComputeNode,
             range: this._displacementRangeComputeNode,
             radius: this._displacementRadiusComputeNode
         });
