@@ -9,7 +9,7 @@ export class DisplacementRangeComputeNode extends ComputeNodeBase {
 
     private static readonly WORKGROUP_SIZE = new Vector2(8, 8);
     private static readonly MIN_INT32_ARRAY = new Int32Array([-2147483648]);
-    private static readonly MAX_INT32_ARRAY = new Int32Array([2147483648]);
+    private static readonly MAX_INT32_ARRAY = new Int32Array([2147483647]);
 
     private readonly _bindGroup: GPUBindGroup;
     private readonly _minStagingBuffer: GPUBuffer;

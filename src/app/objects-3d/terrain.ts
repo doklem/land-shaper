@@ -159,10 +159,8 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
         }
         this._material.needsUpdate = true;
 
-        if (displacementProviders) {
-            const displacementAverage = new Vector3(0, 0, (this._displacementMin[0] + this._displacementMax[0]) * 0.5);
-            this._meshs.forEach(mesh => this.setBoundingShpere(mesh, displacementAverage));
-        }
+        const displacementAverage = new Vector3(0, 0, (this._displacementMin[0] + this._displacementMax[0]) * 0.5);
+        this._meshs.forEach(mesh => this.setBoundingShpere(mesh, displacementAverage));
     }
 
     public applyDebugSettings(): void {
