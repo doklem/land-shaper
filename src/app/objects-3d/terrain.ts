@@ -94,7 +94,7 @@ export class Terrain extends LOD implements IDisposable, IDisplacementDefinition
             wireframe: _serviceProvider.settings.debug.wireframe
         };
         if (_diffuseRenderNode) {
-            materialParameters.map = TextureService.createDataTexture(this._diffuseOutput!, _diffuseRenderNode.textureSettings, _serviceProvider.settings.constants.anisotropy);
+            materialParameters.map = TextureService.createDataTexture(this._diffuseOutput!, _diffuseRenderNode.textureSettings, true, _serviceProvider.settings.constants.anisotropy);
         }
         if (_normalTangentSpaceRenderNode) {
             materialParameters.normalMap = TextureService.createDataTexture(this._normalOutput!, _normalTangentSpaceRenderNode.textureSettings);
