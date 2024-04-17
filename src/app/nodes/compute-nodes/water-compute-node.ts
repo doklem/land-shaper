@@ -11,6 +11,7 @@ export class WaterComputeNode extends ComputeNodeBase {
 
     public static readonly NAME = 'Water';
 
+    private readonly _bindGroup: GPUBindGroup;
     private readonly _outputBuffer: GPUBuffer;
     private readonly _workgroupSize: number;
     private readonly _uniformConfigBuffer: GPUBuffer;
@@ -19,7 +20,6 @@ export class WaterComputeNode extends ComputeNodeBase {
     private readonly _dropletOffsetsBuffer: GPUBuffer;
     private readonly _dropletOriginsBuffer: GPUBuffer;
 
-    protected override readonly _bindGroup: GPUBindGroup;
     protected override readonly _pipeline: GPUComputePipeline;
 
     public constructor(serviceProvider: IServiceProvider) {
@@ -139,7 +139,7 @@ export class WaterComputeNode extends ComputeNodeBase {
 
     public override appendComputePass(commandEncoder: GPUCommandEncoder): void {
         commandEncoder.clearBuffer(this._outputBuffer);
-        super.appendComputePass(commandEncoder);
+        this.appendDefaultComputePass(commandEncoder, this._bindGroup);
         commandEncoder.copyBufferToTexture(
             {
                 buffer: this._outputBuffer,

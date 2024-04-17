@@ -10,20 +10,20 @@ export class ErosionComputeNode extends ComputeNodeBase implements IDisplacement
 
     private static readonly NAME = 'Erosion';
 
-    private readonly _workgroupSize: number;
-    private readonly _uniformConfigBuffer: GPUBuffer;
-    private readonly _uniformConfigArray: ArrayBuffer;
+    private readonly _bindGroup: GPUBindGroup;
     private readonly _brushBuffer: GPUBuffer;
     private readonly _dropletIterationsBuffer: GPUBuffer;
     private readonly _dropletOffsetsBuffer: GPUBuffer;
     private readonly _dropletOriginsBuffer: GPUBuffer;
     private readonly _displacementBuffer: GPUBuffer;
     private readonly _stagingBuffer: GPUBuffer;
+    private readonly _workgroupSize: number;
+    private readonly _uniformConfigBuffer: GPUBuffer;
+    private readonly _uniformConfigArray: ArrayBuffer;
 
     //private readonly _debugClearBuffer: GPUBuffer;
 
-    protected readonly _bindGroup: GPUBindGroup;
-    protected readonly _pipeline: GPUComputePipeline;
+    protected override readonly _pipeline: GPUComputePipeline;
 
     private _iterations: number;
 
@@ -157,7 +157,7 @@ export class ErosionComputeNode extends ComputeNodeBase implements IDisplacement
                     resource: _serviceProvider.textures.displacementErosionDifference.view,
                 },*/
             ]
-        })
+        });
 
         // pipeline
         this._pipeline = this.createPipeline(bindGroupLayout, ComputeShader);
