@@ -7,15 +7,15 @@
         "strength": 0.5
     },
     "diffuse": {
-        "slopStart": 0.99,
+        "slopStart": 0.767,
         "slopRange": 0.05,
         "riverStart": 20,
         "riverRange": 30,
         "shoreStart": 25,
         "shoreRange": 5,
         "vegetation": {
-            "colorA": 11701314,
-            "colorB": 16311877,
+            "colorA": 16501640,
+            "colorB": 11506012,
             "seed": 0,
             "octaves": 2,
             "start": -1,
@@ -55,7 +55,7 @@
         "maxLifetime": 50,
         "inertia": 0.05,
         "sedimentCapacityFactor": 4,
-        "minSedimentCapacity": 0.1,
+        "minSedimentCapacity": 0.05,
         "depositSpeed": 0.2,
         "erodeSpeed": 0.2,
         "evaporateSpeed": 0.1,
@@ -123,27 +123,27 @@
         "tanThreshold": 0
     },
     "topology": {
-        "octaves": 3,
+        "octaves": 5,
         "offset": {
             "x": 205.99,
             "y": 0.86,
-            "z": -32
+            "z": -90
         },
-        "ridgeThreshold": 0.62,
+        "ridgeThreshold": 0.32,
         "rotationAngle": 0,
         "rotationOffset": {
             "x": 0,
             "y": 0
         },
         "scale": {
-            "x": 0.0025,
-            "y": 0.0025,
-            "z": 59.9
+            "x": 0.0012,
+            "y": 0.0012,
+            "z": 105.3
         },
         "seed": 0,
         "turbulence": {
-            "x": 0.7,
-            "y": 0.7
+            "x": 0.3,
+            "y": 0.3
         }
     }
 }
