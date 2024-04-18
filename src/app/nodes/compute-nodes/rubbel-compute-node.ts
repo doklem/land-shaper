@@ -10,6 +10,7 @@ export class RubbleComputeNode extends ComputeNodeBase {
 
     private static readonly WORKGROUP_SIZE = 64;
 
+    private readonly _bindGroup: GPUBindGroup;
     private readonly _colorsOutputBuffer: GPUBuffer;
     private readonly _colorsStagingBuffer: GPUBuffer;
     private readonly _matricesOutputBuffer: GPUBuffer;
@@ -17,7 +18,6 @@ export class RubbleComputeNode extends ComputeNodeBase {
     private readonly _uniformConfigArray: ArrayBuffer;
     private readonly _uniformConfigBuffer: GPUBuffer;
 
-    protected override readonly _bindGroup: GPUBindGroup;
     protected override readonly _pipeline: GPUComputePipeline;
 
     public readonly size: number;
@@ -157,7 +157,7 @@ export class RubbleComputeNode extends ComputeNodeBase {
     }
 
     public override appendComputePass(commandEncoder: GPUCommandEncoder): void {
-        super.appendComputePass(commandEncoder);
+        this.appendDefaultComputePass(commandEncoder, this._bindGroup);
         commandEncoder.copyBufferToBuffer(this._colorsOutputBuffer, 0, this._colorsStagingBuffer, 0, this._colorsOutputBuffer.size);
         commandEncoder.copyBufferToBuffer(this._matricesOutputBuffer, 0, this._matricesStagingBuffer, 0, this._matricesOutputBuffer.size);
     }

@@ -3,7 +3,7 @@ import { MixedColorSettings } from '../settings/mixed-color-settings';
 import { ColoringLandscape } from '../objects-3d/landscapes/coloring-landscape';
 import { IServiceProvider } from '../services/service-provider';
 import { GUI } from 'lil-gui';
-import { IDisplacementDefinition } from '../objects-3d/displacement-definition';
+import { IDisplacementSource } from '../objects-3d/terrains/displacement-source';
 export class ColoringStage extends EditStageBase<ColoringLandscape> {
 
     protected readonly _landscape: ColoringLandscape;
@@ -12,7 +12,7 @@ export class ColoringStage extends EditStageBase<ColoringLandscape> {
 
     constructor(
         serviceProvider: IServiceProvider,
-        displacement: IDisplacementDefinition) {
+        displacement: IDisplacementSource) {
         super(serviceProvider);
         
         this._landscape = new ColoringLandscape(serviceProvider, displacement);

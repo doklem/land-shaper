@@ -1,4 +1,4 @@
-import ComputeShader from '../../../shaders/compute/erosion.wgsl';
+import ComputeShader from '../../../shaders/compute/droplet-erosion.wgsl';
 import { BufferService } from '../../services/buffer-service';
 import { Vector2, Vector3 } from 'three';
 import { QuadTree } from './quad-tree';
@@ -6,31 +6,26 @@ import { IDisplacementNode } from '../displacement-node';
 import { IServiceProvider } from '../../services/service-provider';
 import { ComputeNodeBase } from './compute-node-base';
 
-export class ErosionComputeNode extends ComputeNodeBase implements IDisplacementNode {
+export class DropletErosionComputeNode extends ComputeNodeBase implements IDisplacementNode {
 
-    private static readonly NAME = 'Erosion';
+    private static readonly NAME = 'Droplet Erosion';
 
-    private readonly _workgroupSize: number;
-    private readonly _uniformConfigBuffer: GPUBuffer;
-    private readonly _uniformConfigArray: ArrayBuffer;
+    private readonly _bindGroup: GPUBindGroup;
     private readonly _brushBuffer: GPUBuffer;
     private readonly _dropletIterationsBuffer: GPUBuffer;
     private readonly _dropletOffsetsBuffer: GPUBuffer;
     private readonly _dropletOriginsBuffer: GPUBuffer;
     private readonly _displacementBuffer: GPUBuffer;
     private readonly _stagingBuffer: GPUBuffer;
+    private readonly _uniformConfigBuffer: GPUBuffer;
+    private readonly _uniformConfigArray: ArrayBuffer;
 
     //private readonly _debugClearBuffer: GPUBuffer;
 
-    protected readonly _bindGroup: GPUBindGroup;
-    protected readonly _pipeline: GPUComputePipeline;
-
-    private _iterations: number;
+    protected override readonly _pipeline: GPUComputePipeline;
 
     public constructor(_serviceProvider: IServiceProvider) {
-        super(ErosionComputeNode.NAME, _serviceProvider, new Vector3())
-        this._iterations = 0;
-        this._workgroupSize = _serviceProvider.settings.constants.erosion.dropletsSize.x * _serviceProvider.settings.constants.erosion.dropletsSize.y;
+        super(DropletErosionComputeNode.NAME, _serviceProvider, new Vector3());
 
         /*this._debugClearBuffer = _serviceProvider.device.createBuffer({
             label: `${this._name} Debug Clear Buffer`,
@@ -60,10 +55,10 @@ export class ErosionComputeNode extends ComputeNodeBase implements IDisplacement
 
         this._dropletIterationsBuffer = this.createBuffer(
             'Droplet Iterations',
-            this._workgroupSize * Uint32Array.BYTES_PER_ELEMENT,
+            _serviceProvider.settings.constants.dropletErosion.dropletsSize.x * _serviceProvider.settings.constants.dropletErosion.dropletsSize.y * Uint32Array.BYTES_PER_ELEMENT,
             GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE);
 
-        const brush = ErosionComputeNode.createBrush(_serviceProvider.settings.constants.erosion.brushRadius);
+        const brush = DropletErosionComputeNode.createBrush(_serviceProvider.settings.constants.dropletErosion.brushRadius);
         this._brushBuffer = this.createBuffer(
             'Brush',
             brush.byteLength,
@@ -74,7 +69,7 @@ export class ErosionComputeNode extends ComputeNodeBase implements IDisplacement
         this._displacementBuffer = buffers.buffer;
         this._stagingBuffer = buffers.staging;
 
-        this.setDisplacement();
+        this.initialize();
 
         // bind group layout
         const bindGroupLayout = _serviceProvider.device.createBindGroupLayout({
@@ -157,7 +152,7 @@ export class ErosionComputeNode extends ComputeNodeBase implements IDisplacement
                     resource: _serviceProvider.textures.displacementErosionDifference.view,
                 },*/
             ]
-        })
+        });
 
         // pipeline
         this._pipeline = this.createPipeline(bindGroupLayout, ComputeShader);
@@ -175,8 +170,8 @@ export class ErosionComputeNode extends ComputeNodeBase implements IDisplacement
         const computePassEncoder = commandEncoder.beginComputePass();
         computePassEncoder.setPipeline(this._pipeline);
         computePassEncoder.setBindGroup(0, this._bindGroup);
-        for (let i = 0; i < this._iterations; i++) {
-            computePassEncoder.dispatchWorkgroups(this._serviceProvider.settings.constants.erosion.dropletsWorkgroupCount);
+        for (let i = 0; i < this._serviceProvider.settings.dropletErosion.iterations; i++) {
+            computePassEncoder.dispatchWorkgroups(this._serviceProvider.settings.constants.dropletErosion.dropletsWorkgroupCount);
         }
         computePassEncoder.end();
         commandEncoder.copyBufferToTexture(
@@ -191,15 +186,14 @@ export class ErosionComputeNode extends ComputeNodeBase implements IDisplacement
 
     public configureRun(): void {
         const constants = this._serviceProvider.settings.constants;
-        const erosion = this._serviceProvider.settings.erosion;
-        this._iterations = erosion.iterations;
+        const erosion = this._serviceProvider.settings.dropletErosion;
         const view = new DataView(this._uniformConfigArray);
         let offset = 0;
         view.setUint32(offset, this._serviceProvider.textures.displacementErosion.width, constants.littleEndian);
         offset += Uint32Array.BYTES_PER_ELEMENT;
         view.setUint32(offset, this._serviceProvider.textures.displacementErosion.height, constants.littleEndian);
         offset += Uint32Array.BYTES_PER_ELEMENT;
-        view.setInt32(offset, constants.erosion.brushRadius, constants.littleEndian);
+        view.setInt32(offset, constants.dropletErosion.brushRadius, constants.littleEndian);
         offset += Int32Array.BYTES_PER_ELEMENT;
         view.setUint32(offset, erosion.maxLifetime, constants.littleEndian);
         offset += Uint32Array.BYTES_PER_ELEMENT;
@@ -227,7 +221,7 @@ export class ErosionComputeNode extends ComputeNodeBase implements IDisplacement
         output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
     }
 
-    public setDisplacement(): void {
+    public initialize(): void {
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         commandEncoder.copyTextureToBuffer(
             this._serviceProvider.textures.displacementErosion,
@@ -269,13 +263,13 @@ export class ErosionComputeNode extends ComputeNodeBase implements IDisplacement
 
     private createDropletOrigins(): Uint32Array {
         const dropletOriginArea = new Vector2(
-            this._serviceProvider.textures.displacementErosion.width / this._serviceProvider.settings.constants.erosion.dropletsSize.x,
-            this._serviceProvider.textures.displacementErosion.height / this._serviceProvider.settings.constants.erosion.dropletsSize.y);
+            this._serviceProvider.textures.displacementErosion.width / this._serviceProvider.settings.constants.dropletErosion.dropletsSize.x,
+            this._serviceProvider.textures.displacementErosion.height / this._serviceProvider.settings.constants.dropletErosion.dropletsSize.y);
 
         const originIndices: number[] = [];
         let coordinate = new Vector2();
-        for (let y = 0; y < this._serviceProvider.settings.constants.erosion.dropletsSize.y; y++) {
-            for (let x = 0; x < this._serviceProvider.settings.constants.erosion.dropletsSize.x; x++) {
+        for (let y = 0; y < this._serviceProvider.settings.constants.dropletErosion.dropletsSize.y; y++) {
+            for (let x = 0; x < this._serviceProvider.settings.constants.dropletErosion.dropletsSize.x; x++) {
                 originIndices.push(coordinate.y * this._serviceProvider.textures.displacementErosion.width + coordinate.x);
                 coordinate.setX(coordinate.x + dropletOriginArea.x);
             }
@@ -287,9 +281,9 @@ export class ErosionComputeNode extends ComputeNodeBase implements IDisplacement
 
     private createDropletOffsets(): Float32Array {
         const dropletOriginArea = new Vector2(
-            this._serviceProvider.textures.displacementErosion.width / this._serviceProvider.settings.constants.erosion.dropletsSize.x,
-            this._serviceProvider.textures.displacementErosion.height / this._serviceProvider.settings.constants.erosion.dropletsSize.y);
-        const quadTree = new QuadTree(new Vector2(), dropletOriginArea, this._serviceProvider.settings.constants.erosion.dropletOffsetsMinSize);
+            this._serviceProvider.textures.displacementErosion.width / this._serviceProvider.settings.constants.dropletErosion.dropletsSize.x,
+            this._serviceProvider.textures.displacementErosion.height / this._serviceProvider.settings.constants.dropletErosion.dropletsSize.y);
+        const quadTree = new QuadTree(new Vector2(), dropletOriginArea, this._serviceProvider.settings.constants.dropletErosion.dropletOffsetsMinSize);
         const offsets: number[] = [];
         const totalOffsets = dropletOriginArea.x * dropletOriginArea.y;
         let coordinate: Vector2;

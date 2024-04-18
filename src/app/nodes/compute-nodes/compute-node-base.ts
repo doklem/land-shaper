@@ -5,7 +5,6 @@ import { NodeBase } from '../node-base';
 
 export abstract class ComputeNodeBase extends NodeBase implements IDisposable {
 
-    protected readonly abstract _bindGroup: GPUBindGroup;
     protected readonly abstract _pipeline: GPUComputePipeline;
 
     constructor(
@@ -15,13 +14,7 @@ export abstract class ComputeNodeBase extends NodeBase implements IDisposable {
         super(name, serviceProvider)
     }
 
-    public appendComputePass(commandEncoder: GPUCommandEncoder): void {
-        const computePassEncoder = commandEncoder.beginComputePass();
-        computePassEncoder.setPipeline(this._pipeline);
-        computePassEncoder.setBindGroup(0, this._bindGroup);
-        computePassEncoder.dispatchWorkgroups(this._workgroupCount.x, this._workgroupCount.y, this._workgroupCount.z);
-        computePassEncoder.end();
-    }
+    public abstract appendComputePass(commandEncoder: GPUCommandEncoder): void;
 
     protected createPipeline(bindGroupLayout: GPUBindGroupLayout, shader: string, name?: string, entryPoint?: string): GPUComputePipeline {
         return this._serviceProvider.device.createComputePipeline({
@@ -38,5 +31,13 @@ export abstract class ComputeNodeBase extends NodeBase implements IDisposable {
                 entryPoint: entryPoint ?? 'main',
             },
         });
+    }
+
+    protected appendDefaultComputePass(commandEncoder: GPUCommandEncoder, bindGroup: GPUBindGroup): void {
+        const computePassEncoder = commandEncoder.beginComputePass();
+        computePassEncoder.setPipeline(this._pipeline);
+        computePassEncoder.setBindGroup(0, bindGroup);
+        computePassEncoder.dispatchWorkgroups(this._workgroupCount.x, this._workgroupCount.y, this._workgroupCount.z);
+        computePassEncoder.end();
     }
 }

@@ -5,12 +5,12 @@ import { DiffuseRenderNode } from '../../nodes/render-nodes/diffuse-render-node'
 import { RubbleComputeNode } from '../../nodes/compute-nodes/rubbel-compute-node';
 import { Rubble } from '../rubble';
 import { SurfaceRenderNode } from '../../nodes/render-nodes/surface-render-node';
-import { Terrain } from '../terrain';
 import { ILandscape } from './landscape';
 import { WaterComputeNode } from '../../nodes/compute-nodes/water-compute-node';
 import { Ocean } from '../ocean';
 import { IServiceProvider } from '../../services/service-provider';
-import { IDisplacementDefinition } from '../displacement-definition';
+import { IDisplacementSource } from '../terrains/displacement-source';
+import { DisplacementDestinationTerrain } from '../terrains/displacement-destination-terrain';
 
 export class ColoringLandscape extends Group implements ILandscape {
 
@@ -21,14 +21,14 @@ export class ColoringLandscape extends Group implements ILandscape {
     private readonly _rubbleComputeNode: RubbleComputeNode;
     private readonly _ocean: Ocean;
     private readonly _surfaceRenderNode: SurfaceRenderNode;
-    private readonly _terrain: Terrain;
+    private readonly _terrain: DisplacementDestinationTerrain;
     private readonly _waterComputeNode: WaterComputeNode;
 
     private _running: boolean;
 
     constructor(
         private readonly _serviceProvider: IServiceProvider,
-        displacement: IDisplacementDefinition) {
+        displacement: IDisplacementSource) {
         super();
 
         this._running = false;
@@ -50,7 +50,7 @@ export class ColoringLandscape extends Group implements ILandscape {
         this._ocean = new Ocean(_serviceProvider);
         this.add(this._ocean);
 
-        this._terrain = new Terrain(
+        this._terrain = new DisplacementDestinationTerrain(
             _serviceProvider,
             _serviceProvider.settings.constants.meshSize,
             _serviceProvider.settings.constants.vertexSizeFinalMaximum,
@@ -59,7 +59,6 @@ export class ColoringLandscape extends Group implements ILandscape {
             false,
             this._normalTangentSpaceRenderNode,
             this._diffuseRenderNode,
-            undefined,
             displacement);
         this.add(this._terrain);
     }

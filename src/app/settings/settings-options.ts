@@ -21,7 +21,7 @@ export interface ISettingsOptions {
         gravel: IMixedColorOptions;
     };
 
-    readonly erosion: {
+    readonly dropletErosion: {
         iterations: number;
         maxLifetime: number;
         inertia: number;
@@ -61,6 +61,14 @@ export interface ISettingsOptions {
     readonly sky: {
         turbidity: number;
         rayleigh: number;
+    };
+
+    readonly thermalErosion: {
+        amplitude: number;
+        borderMin: Vector2Like,
+        borderRange: Vector2Like,
+        iterations: number;
+        tanThreshold: number;
     };
 
     readonly topology: {

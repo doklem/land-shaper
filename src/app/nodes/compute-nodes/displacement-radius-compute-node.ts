@@ -9,11 +9,11 @@ export class DisplacementRadiusComputeNode extends ComputeNodeBase {
 
     private static readonly WORKGROUP_SIZE = new Vector2(8, 8);
 
+    private readonly _bindGroup: GPUBindGroup;
     private readonly _outputBuffer: GPUBuffer;
     private readonly _stagingBuffer: GPUBuffer;
     private readonly _uniformConfigBuffer: GPUBuffer;
 
-    protected override readonly _bindGroup: GPUBindGroup;
     protected override readonly _pipeline: GPUComputePipeline;
 
     constructor(
@@ -120,7 +120,7 @@ export class DisplacementRadiusComputeNode extends ComputeNodeBase {
 
     public appendComputePass(commandEncoder: GPUCommandEncoder): void {
         commandEncoder.clearBuffer(this._outputBuffer);
-        super.appendComputePass(commandEncoder);
+        this.appendDefaultComputePass(commandEncoder, this._bindGroup);
         commandEncoder.copyBufferToBuffer(this._outputBuffer, 0, this._stagingBuffer, 0, this._outputBuffer.size);
     }
 

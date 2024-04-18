@@ -50,12 +50,12 @@
             }
         }
     },
-    "erosion": {
+    "dropletErosion": {
         "iterations": 1000,
         "maxLifetime": 50,
         "inertia": 0.05,
         "sedimentCapacityFactor": 4,
-        "minSedimentCapacity": 0.1,
+        "minSedimentCapacity": 0.05,
         "depositSpeed": 0.2,
         "erodeSpeed": 0.2,
         "evaporateSpeed": 0.1,
@@ -108,6 +108,19 @@
     "sky": {
         "turbidity": 0.1,
         "rayleigh": 0.1
+    },
+    "thermalErosion": {
+        "amplitude": 0.01,
+        "borderMin": {
+            "x": 1,
+            "y": 1
+        },
+        "borderRange": {
+            "x": 1,
+            "y": 1
+        },
+        "iterations": 10,
+        "tanThreshold": 0
     },
     "topology": {
         "octaves": 9,

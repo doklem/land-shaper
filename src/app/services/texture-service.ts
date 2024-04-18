@@ -272,7 +272,7 @@ export class TextureService implements IDisposable {
         };
     }
 
-    public static createDataTexture(array: Float32Array | Uint8Array, settings: ITextureSettings, anisotropy?: number): DataTexture {
+    public static createDataTexture(array: Float32Array | Uint8Array, settings: ITextureSettings, midmaps?: boolean, anisotropy?: number): DataTexture {
         if (array.length != settings.valuesLength) {
             throw new Error(`The given array's size is ${array.length}, but it has to be ${settings.valuesLength} to match the given texture settings`);
         }
@@ -304,13 +304,13 @@ export class TextureService implements IDisposable {
             settings.height,
             format,
             type,
-            UVMapping,
-            ClampToEdgeWrapping,
-            ClampToEdgeWrapping,
-            LinearFilter,
-            LinearMipmapLinearFilter,
+            midmaps ? UVMapping : undefined,
+            midmaps ? ClampToEdgeWrapping : undefined,
+            midmaps ? ClampToEdgeWrapping : undefined,
+            midmaps ? LinearFilter : undefined,
+            midmaps ? LinearMipmapLinearFilter : undefined,
             anisotropy);
-        texture.generateMipmaps = true;
+        texture.generateMipmaps = midmaps === true;
         return texture;
     }
 }

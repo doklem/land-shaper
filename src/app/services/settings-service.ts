@@ -30,7 +30,7 @@ export class SettingsService implements ISettingsOptions {
             readonly vertexSizeMaximum: Vector2;
             readonly uvRange: Vector2;
         };
-        readonly erosion: {
+        readonly dropletErosion: {
             readonly dropletsSize: Vector2;
             readonly dropletOffsetsMinSize: number;
             readonly dropletsWorkgroupCount: number;
@@ -62,7 +62,7 @@ export class SettingsService implements ISettingsOptions {
         gravel: new MixedColorSettings(),
     };
 
-    public readonly erosion = {
+    public readonly dropletErosion = {
         iterations: 0,
         maxLifetime: 0,
         inertia: 0,
@@ -104,6 +104,14 @@ export class SettingsService implements ISettingsOptions {
         rayleigh: 0,
     };
 
+    public readonly thermalErosion = {
+        amplitude: 0,
+        borderMin: new Vector2(),
+        borderRange: new Vector2(),
+        iterations: 0,
+        tanThreshold: 0,
+    };
+
     public readonly topology = {
         octaves: 0,
         offset: new Vector3(),
@@ -134,7 +142,7 @@ export class SettingsService implements ISettingsOptions {
                 vertexSizeMaximum: new Vector2(64, 64),
                 uvRange: new Vector2(0.0625, 0.0625),
             },
-            erosion: {
+            dropletErosion: {
                 dropletsSize: new Vector2(8, 8),
                 dropletOffsetsMinSize: 0.25,
                 dropletsWorkgroupCount: 1,
@@ -155,7 +163,7 @@ export class SettingsService implements ISettingsOptions {
         return {
             blur: this.blur,
             diffuse: this.diffuse,
-            erosion: this.erosion,
+            dropletErosion: this.dropletErosion,
             light: {
                 ambient: this.light.ambient,
                 azimuth: this.light.azimuth,
@@ -166,6 +174,7 @@ export class SettingsService implements ISettingsOptions {
             ocean: this.ocean,
             rubble: this.rubble,
             sky: this.sky,
+            thermalErosion: this.thermalErosion,
             topology: this.topology
         };
     }
@@ -186,17 +195,17 @@ export class SettingsService implements ISettingsOptions {
         this.diffuse.slopStart = options.diffuse.slopStart;
         this.diffuse.vegetation.set(options.diffuse.vegetation);
 
-        this.erosion.depositSpeed = options.erosion.depositSpeed;
-        this.erosion.erodeSpeed = options.erosion.erodeSpeed;
-        this.erosion.evaporateSpeed = options.erosion.evaporateSpeed;
-        this.erosion.gravity = options.erosion.gravity;
-        this.erosion.inertia = options.erosion.inertia;
-        this.erosion.iterations = options.erosion.iterations;
-        this.erosion.maxLifetime = options.erosion.maxLifetime;
-        this.erosion.minSedimentCapacity = options.erosion.minSedimentCapacity;
-        this.erosion.sedimentCapacityFactor = options.erosion.sedimentCapacityFactor;
-        this.erosion.startSpeed = options.erosion.startSpeed;
-        this.erosion.startWater = options.erosion.startWater;
+        this.dropletErosion.depositSpeed = options.dropletErosion.depositSpeed;
+        this.dropletErosion.erodeSpeed = options.dropletErosion.erodeSpeed;
+        this.dropletErosion.evaporateSpeed = options.dropletErosion.evaporateSpeed;
+        this.dropletErosion.gravity = options.dropletErosion.gravity;
+        this.dropletErosion.inertia = options.dropletErosion.inertia;
+        this.dropletErosion.iterations = options.dropletErosion.iterations;
+        this.dropletErosion.maxLifetime = options.dropletErosion.maxLifetime;
+        this.dropletErosion.minSedimentCapacity = options.dropletErosion.minSedimentCapacity;
+        this.dropletErosion.sedimentCapacityFactor = options.dropletErosion.sedimentCapacityFactor;
+        this.dropletErosion.startSpeed = options.dropletErosion.startSpeed;
+        this.dropletErosion.startWater = options.dropletErosion.startWater;
 
         this.light.set(options.light);
 
@@ -217,6 +226,12 @@ export class SettingsService implements ISettingsOptions {
 
         this.sky.rayleigh = options.sky.rayleigh;
         this.sky.turbidity = options.sky.turbidity;
+
+        this.thermalErosion.amplitude = options.thermalErosion.amplitude;
+        this.thermalErosion.borderMin.set(options.thermalErosion.borderMin.x, options.thermalErosion.borderMin.y);
+        this.thermalErosion.borderRange.set(options.thermalErosion.borderRange.x, options.thermalErosion.borderRange.y);
+        this.thermalErosion.iterations = options.thermalErosion.iterations;
+        this.thermalErosion.tanThreshold = options.thermalErosion.tanThreshold;
 
         this.topology.octaves = options.topology.octaves;
         this.topology.offset.set(options.topology.offset.x, options.topology.offset.y, options.topology.offset.z);

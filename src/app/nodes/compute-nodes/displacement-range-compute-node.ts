@@ -9,12 +9,12 @@ export class DisplacementRangeComputeNode extends ComputeNodeBase {
 
     private static readonly WORKGROUP_SIZE = new Vector2(8, 8);
     private static readonly MIN_INT32_ARRAY = new Int32Array([-2147483648]);
-    private static readonly MAX_INT32_ARRAY = new Int32Array([2147483648]);
+    private static readonly MAX_INT32_ARRAY = new Int32Array([2147483647]);
 
+    private readonly _bindGroup: GPUBindGroup;
     private readonly _minStagingBuffer: GPUBuffer;
     private readonly _maxStagingBuffer: GPUBuffer;
 
-    protected override readonly _bindGroup: GPUBindGroup;
     protected override readonly _pipeline: GPUComputePipeline;
 
     public readonly minBuffer: GPUBuffer;
@@ -103,7 +103,7 @@ export class DisplacementRangeComputeNode extends ComputeNodeBase {
     }
 
     public appendComputePass(commandEncoder: GPUCommandEncoder): void {
-        super.appendComputePass(commandEncoder);
+        this.appendDefaultComputePass(commandEncoder, this._bindGroup);
         commandEncoder.copyBufferToBuffer(this.minBuffer, 0, this._minStagingBuffer, 0, this.minBuffer.size);
         commandEncoder.copyBufferToBuffer(this.maxBuffer, 0, this._maxStagingBuffer, 0, this.maxBuffer.size);
     }
