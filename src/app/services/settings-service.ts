@@ -7,11 +7,6 @@ import { ISettingsOptions } from '../settings/settings-options';
 
 export class SettingsService implements ISettingsOptions {
 
-    public readonly blur = {
-        size: new Vector2(),
-        strength: 0,
-    };
-
     public readonly constants: {
         readonly anisotropy: number;
         readonly littleEndian: boolean;
@@ -161,7 +156,6 @@ export class SettingsService implements ISettingsOptions {
 
     public get(): ISettingsOptions {
         return {
-            blur: this.blur,
             diffuse: this.diffuse,
             dropletErosion: this.dropletErosion,
             light: {
@@ -180,9 +174,6 @@ export class SettingsService implements ISettingsOptions {
     }
 
     public set(options: ISettingsOptions): void {
-        this.blur.size.set(options.blur.size.x, options.blur.size.y);
-        this.blur.strength = options.blur.strength;
-
         this.diffuse.bedrock.set(options.diffuse.bedrock);
         this.diffuse.gravel.set(options.diffuse.gravel);
         this.diffuse.riverRange = options.diffuse.riverRange;

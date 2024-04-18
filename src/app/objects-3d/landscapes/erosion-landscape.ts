@@ -1,7 +1,6 @@
 import { Group } from 'three';
 import { DisplacementRenderNode } from '../../nodes/render-nodes/displacement-render-node';
 import { DropletErosionComputeNode } from '../../nodes/compute-nodes/droplet-erosion-compute-node';
-import { BlurRenderNode } from '../../nodes/render-nodes/blur-render-node';
 import { ILandscape } from './landscape';
 import { SimpleOcean } from '../simple-ocean';
 import { IServiceProvider } from '../../services/service-provider';
@@ -14,7 +13,6 @@ import { DisplacementSourceTerrain } from '../terrains/displacement-source-terra
 
 export class ErosionLandscape extends Group implements ILandscape {
 
-    private readonly _blurRenderNode: BlurRenderNode;
     private readonly _displacementRadiusComputeNode: DisplacementRadiusComputeNode;
     private readonly _displacementRangeComputeNode: DisplacementRangeComputeNode;
     private readonly _displacementRenderNode: DisplacementRenderNode;
@@ -39,7 +37,6 @@ export class ErosionLandscape extends Group implements ILandscape {
         this._displacementRenderNode = new DisplacementRenderNode(_serviceProvider, false);
         this._dropletErosionComputeNode = new DropletErosionComputeNode(_serviceProvider);
         this._erosionDifferenceRenderNode = new ErosionDifferenceRenderNode(_serviceProvider);
-        this._blurRenderNode = new BlurRenderNode(_serviceProvider);
         this._displacementRangeComputeNode = new DisplacementRangeComputeNode(_serviceProvider, _serviceProvider.textures.displacementErosion);
         this._displacementRadiusComputeNode = new DisplacementRadiusComputeNode(
             _serviceProvider,
@@ -74,7 +71,6 @@ export class ErosionLandscape extends Group implements ILandscape {
     }
 
     public dispose(): void {
-        this._blurRenderNode.dispose();
         this._displacementRadiusComputeNode.dispose();
         this._displacementRangeComputeNode.dispose();
         this._displacementRenderNode.dispose();
@@ -83,32 +79,6 @@ export class ErosionLandscape extends Group implements ILandscape {
         this._thermalErosionComputeNode.dispose();
         this._ocean.dispose();
         this._terrain.dispose();
-    }
-
-    public async runBlur(): Promise<void> {
-        if (this._running) {
-            return;
-        }
-        this._running = true;
-
-        this._blurRenderNode.configureRun();
-        this._displacementRangeComputeNode.configureRun();
-
-        const commandEncoder = this._serviceProvider.device.createCommandEncoder();
-        this._blurRenderNode.appendRenderPass(commandEncoder);
-        this._displacementRangeComputeNode.appendComputePass(commandEncoder);
-        this._displacementRadiusComputeNode.appendComputePass(commandEncoder);
-        this._erosionDifferenceRenderNode.appendRenderPass(commandEncoder);
-        this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
-        this._dropletErosionComputeNode.initialize();
-        this._thermalErosionComputeNode.initialize();
-
-        await this._terrain.applyRunOutput({
-            displacement: this._blurRenderNode,
-            range: this._displacementRangeComputeNode,
-            radius: this._displacementRadiusComputeNode
-        });
-        this._running = false;
     }
 
     public async runDropletErosion(): Promise<void> {

@@ -41,7 +41,6 @@ export class TextureService implements IDisposable {
     private static readonly FLOAT_TEXTURE_SAMPLE: GPUTextureSampleType = 'float';
 
     public readonly displacementErosion: TextureWrapper;
-    public readonly displacementErosionBlur: TextureWrapper;
     public readonly displacementErosionDifference: TextureWrapper;
     public readonly displacementErosionUntouched: TextureWrapper;
     public readonly displacementSection: TextureWrapper;
@@ -113,13 +112,6 @@ export class TextureService implements IDisposable {
             TextureService.FLOAT_TEXTURE_SAMPLE,
             GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
             DisplacementRenderNode.NAME_EROSION,
-            this.displacementErosionUntouched.settings
-        );
-        this.displacementErosionBlur = new TextureWrapper(
-            device,
-            TextureService.FLOAT_TEXTURE_SAMPLE,
-            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-            `${DisplacementRenderNode.NAME_EROSION} Copy`,
             this.displacementErosionUntouched.settings
         );
         this.displacementSection = new TextureWrapper(
@@ -201,7 +193,6 @@ export class TextureService implements IDisposable {
 
     public dispose(): void {
         this.displacementErosion.dispose();
-        this.displacementErosionBlur.dispose();
         this.displacementErosionDifference.dispose();
         this.displacementErosionUntouched.dispose();
         this.displacementTopology.dispose();

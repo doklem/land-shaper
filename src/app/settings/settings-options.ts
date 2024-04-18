@@ -4,11 +4,6 @@ import { ILightOptions } from './light-options';
 
 export interface ISettingsOptions {
 
-    readonly blur: {
-        size: Vector2Like;
-        strength: number;
-    };
-
     readonly diffuse: {
         slopStart: number;
         slopRange: number;

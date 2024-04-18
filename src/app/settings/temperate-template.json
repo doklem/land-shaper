@@ -1,11 +1,4 @@
 {
-    "blur": {
-        "size": {
-            "x": 2,
-            "y": 2
-        },
-        "strength": 0.5
-    },
     "diffuse": {
         "slopStart": 0.85,
         "slopRange": 0.05,
