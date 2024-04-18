@@ -2,10 +2,13 @@ import { EditStageBase } from './edit-stage-base';
 import { GUI, Controller } from 'lil-gui';
 import { ErosionLandscape } from '../objects-3d/landscapes/erosion-landscape';
 import { IServiceProvider } from '../services/service-provider';
-import { IDisplacementDefinition } from '../objects-3d/displacement-definition';
+import { IDisplacementSource } from '../objects-3d/terrains/displacement-source';
 import { ErosionType } from './erosion-type';
 
 export class ErosionStage extends EditStageBase<ErosionLandscape> {
+
+    private static readonly RUNNING_EROSION_LABEL = 'Stop';
+    private static readonly STOPPED_EROSION_LABEL = 'Start';
 
     private readonly _erosionAffectedControllers: Controller[];
     private readonly _settingsActions = {
@@ -22,7 +25,7 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
 
     public readonly helpPageName = 'Erosion-Stage';
 
-    public get displacement(): IDisplacementDefinition {
+    public get displacement(): IDisplacementSource {
         return this._landscape.displacement;
     }
 
@@ -45,7 +48,7 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion.borderMin, 'y', 1, 2000, 1).name('Border Y'));
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion.borderRange, 'x', 1, 2000, 1).name('Border X Range'));
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion.borderRange, 'y', 1, 2000, 1).name('Border Y Range'));
-        this._thermalErosionToggle = thremalErosionFolder.add(this._settingsActions, 'toggleThermalErosion').name('Start');
+        this._thermalErosionToggle = thremalErosionFolder.add(this._settingsActions, 'toggleThermalErosion').name(ErosionStage.STOPPED_EROSION_LABEL);
 
         const dropletErosion = this._serviceProvider.settings.dropletErosion;
         const dropletErosionFolder = parent.addFolder('Droplet Erosion').hide();
@@ -61,7 +64,7 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
         this._erosionAffectedControllers.push(dropletErosionFolder.add(dropletErosion, 'evaporateSpeed', 0, 1, 0.01).name('Evaporate Speed'));
         this._erosionAffectedControllers.push(dropletErosionFolder.add(dropletErosion, 'startSpeed', 0.01, 100, 0.01).name('Start Speed'));
         this._erosionAffectedControllers.push(dropletErosionFolder.add(dropletErosion, 'startWater', 0.01, 100, 0.01).name('Start Water'));
-        this._dropletErosionToggle = dropletErosionFolder.add(this._settingsActions, 'toggleDropletErosion').name('Start');
+        this._dropletErosionToggle = dropletErosionFolder.add(this._settingsActions, 'toggleDropletErosion').name(ErosionStage.STOPPED_EROSION_LABEL);
 
         const blur = this._serviceProvider.settings.blur;
         const blurFolder = parent.addFolder('Blur').hide();
@@ -76,7 +79,7 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
         super.onVisibilityChange(visibility);
         this.stopErosion();
         if (visibility) {
-            this.runErosion();
+            this.runErosionBackgroundWorker();
         }
     }
 
@@ -88,27 +91,27 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
         await this._landscape.runBlur();
     }
 
-    private runErosion(): void {
+    private runErosionBackgroundWorker(): void {
         if (!this._visible) {
             return;
         }
         switch (this._erosionType) {
             case ErosionType.droplet:
                 this.changed = true;
-                this._landscape.runDropletErosion().then(() => this.runErosion());
+                this._landscape.runDropletErosion().then(() => this.runErosionBackgroundWorker());
                 break;
             case ErosionType.thermal:
                 this.changed = true;
-                this._landscape.runThermalErosion().then(() => this.runErosion());
+                this._landscape.runThermalErosion().then(() => this.runErosionBackgroundWorker());
                 break;
             default:
-                setTimeout(() => this.runErosion(), 100);
+                setTimeout(() => this.runErosionBackgroundWorker(), 100);
         }
     }
 
     private stopDropletErosion(): void {
         this._erosionAffectedControllers.forEach(controller => controller.enable());
-        this._dropletErosionToggle?.name('Start');
+        this._dropletErosionToggle?.name(ErosionStage.STOPPED_EROSION_LABEL);
         this._thermalErosionToggle?.enable();
     }
 
@@ -126,7 +129,7 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
 
     private stopThermalErosion(): void {
         this._erosionAffectedControllers.forEach(controller => controller.enable());
-        this._thermalErosionToggle?.name('Start');
+        this._thermalErosionToggle?.name(ErosionStage.STOPPED_EROSION_LABEL);
         this._dropletErosionToggle?.enable();
     }
 
@@ -135,7 +138,7 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
             case ErosionType.droplet:
                 if (this._erosionType === ErosionType.none) {
                     this._erosionAffectedControllers.forEach(controller => controller.disable());
-                    this._dropletErosionToggle?.name('Stop');
+                    this._dropletErosionToggle?.name(ErosionStage.RUNNING_EROSION_LABEL);
                     this._thermalErosionToggle?.disable();
                     this._erosionType = ErosionType.droplet;
                     return;
@@ -149,7 +152,7 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
             case ErosionType.thermal:
                 if (this._erosionType === ErosionType.none) {
                     this._erosionAffectedControllers.forEach(controller => controller.disable());
-                    this._thermalErosionToggle?.name('Stop');
+                    this._thermalErosionToggle?.name(ErosionStage.RUNNING_EROSION_LABEL);
                     this._dropletErosionToggle?.disable();
                     this._erosionType = ErosionType.thermal;
                     return;

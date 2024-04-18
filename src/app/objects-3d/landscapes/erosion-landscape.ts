@@ -2,15 +2,15 @@ import { Group } from 'three';
 import { DisplacementRenderNode } from '../../nodes/render-nodes/displacement-render-node';
 import { DropletErosionComputeNode } from '../../nodes/compute-nodes/droplet-erosion-compute-node';
 import { BlurRenderNode } from '../../nodes/render-nodes/blur-render-node';
-import { Terrain } from '../terrain';
 import { ILandscape } from './landscape';
 import { SimpleOcean } from '../simple-ocean';
 import { IServiceProvider } from '../../services/service-provider';
 import { ErosionDifferenceRenderNode } from '../../nodes/render-nodes/erosion-difference-render-node';
 import { DisplacementRangeComputeNode } from '../../nodes/compute-nodes/displacement-range-compute-node';
-import { IDisplacementDefinition } from '../displacement-definition';
+import { IDisplacementSource } from '../terrains/displacement-source';
 import { DisplacementRadiusComputeNode } from '../../nodes/compute-nodes/displacement-radius-compute-node';
 import { ThermalErosionComputeNode } from '../../nodes/compute-nodes/thermal-erosion-compute-node';
+import { DisplacementSourceTerrain } from '../terrains/displacement-source-terrain';
 
 export class ErosionLandscape extends Group implements ILandscape {
 
@@ -21,12 +21,12 @@ export class ErosionLandscape extends Group implements ILandscape {
     private readonly _dropletErosionComputeNode: DropletErosionComputeNode;
     private readonly _erosionDifferenceRenderNode: ErosionDifferenceRenderNode;
     private readonly _ocean: SimpleOcean;
-    private readonly _terrain: Terrain;
+    private readonly _terrain: DisplacementSourceTerrain;
     private readonly _thermalErosionComputeNode: ThermalErosionComputeNode;
 
     private _running: boolean;
 
-    public get displacement(): IDisplacementDefinition {
+    public get displacement(): IDisplacementSource {
         return this._terrain;
     }
 
@@ -49,14 +49,13 @@ export class ErosionLandscape extends Group implements ILandscape {
             this._displacementRangeComputeNode.maxBuffer);
         this._thermalErosionComputeNode = new ThermalErosionComputeNode(_serviceProvider);
 
-        this._terrain = new Terrain(
+        this._terrain = new DisplacementSourceTerrain(
             _serviceProvider,
             _serviceProvider.settings.constants.meshSize,
             _serviceProvider.settings.constants.vertexSizeFinalMaximum,
             _serviceProvider.settings.constants.vertexSizeFinalMinimum,
             _serviceProvider.settings.constants.meshLodDistance,
             true,
-            undefined,
             this._erosionDifferenceRenderNode,
             this._displacementRenderNode.textureSettings);
         this.add(this._terrain);

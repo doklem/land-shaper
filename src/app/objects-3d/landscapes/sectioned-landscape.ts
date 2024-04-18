@@ -1,5 +1,4 @@
 import { Group, Object3D, Vector2 } from 'three';
-import { Terrain } from '../terrain';
 import { ILandscape } from './landscape';
 import { DiffuseRenderNode } from '../../nodes/render-nodes/diffuse-render-node';
 import { ExportableDivideRenderNode } from '../../nodes/render-nodes/exportable-divide-render-node';
@@ -12,6 +11,7 @@ import { Ocean } from '../ocean';
 import { IServiceProvider } from '../../services/service-provider';
 import { DisplacementRangeComputeNode } from '../../nodes/compute-nodes/displacement-range-compute-node';
 import { DisplacementRadiusComputeNode } from '../../nodes/compute-nodes/displacement-radius-compute-node';
+import { DisplacementSourceTerrain } from '../terrains/displacement-source-terrain';
 
 export class SectionedLandscape extends Group implements ILandscape {
 
@@ -25,7 +25,7 @@ export class SectionedLandscape extends Group implements ILandscape {
     private readonly _rubbles: Map<string, Rubble>;
     private readonly _ocean: Ocean;
     private readonly _surfaceRenderNode: SurfaceRenderNode;
-    private readonly _terrains: Map<string, Terrain>;
+    private readonly _terrains: Map<string, DisplacementSourceTerrain>;
 
     private _running: boolean;
 
@@ -85,7 +85,7 @@ export class SectionedLandscape extends Group implements ILandscape {
             _serviceProvider.settings.constants.sections.uvRange,
             _serviceProvider.settings.constants.rubble.dimensionsSection);
 
-        this._terrains = new Map<string, Terrain>();
+        this._terrains = new Map<string, DisplacementSourceTerrain>();
         const meshSectionOffsetTerrain = meshSizeSection.clone().multiplyScalar(0.5);
         const meshSectionOffsetRubble = new Vector2();
         for (let y = 0; y < 1; y += _serviceProvider.settings.constants.sections.uvRange.y) {
@@ -93,16 +93,16 @@ export class SectionedLandscape extends Group implements ILandscape {
                 const uvOffset = new Vector2(x, y);
                 const uvOffsetKey = SectionedLandscape.uvOffsetToKey(uvOffset);
 
-                const terrain = new Terrain(
+                const terrain = new DisplacementSourceTerrain(
                     _serviceProvider,
                     meshSizeSection,
                     _serviceProvider.settings.constants.sections.vertexSizeMaximum,
                     _serviceProvider.settings.constants.vertexSizeFinalMinimum,
                     _serviceProvider.settings.constants.meshLodDistance * 0.5,
                     false,
-                    this._normalTangentSpaceRenderNode,
                     this._diffuseRenderNode,
-                    this._displacementRenderNode.textureSettings);
+                    this._displacementRenderNode.textureSettings,
+                    this._normalTangentSpaceRenderNode);
                 SectionedLandscape.translateSection(_serviceProvider.settings.constants.meshSize, terrain, uvOffset, meshSectionOffsetTerrain);
                 this._terrains.set(uvOffsetKey, terrain);
                 this.add(terrain);
