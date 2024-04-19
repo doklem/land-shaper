@@ -63,9 +63,15 @@ export interface ISettingsOptions {
 
     readonly rubble: {
         scale: Vector3Like;
-        slopStart: number;
-        slopRange: number;
         color: IMixedColorOptions;
+        sedimentStart: number;
+        sedimentRange: number;
+        slopeStart: number;
+        slopeRange: number;
+        riverStart: number;
+        riverRange: number;
+        lakeStart: number;
+        lakeRange: number;
     };
 
     readonly sky: {

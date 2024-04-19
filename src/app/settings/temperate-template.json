@@ -241,8 +241,6 @@
             "y": 0.5,
             "z": 0.5
         },
-        "slopStart": 0.7,
-        "slopRange": 0.1,
         "color": {
             "colorA": 12632256,
             "colorB": 15658734,
@@ -254,7 +252,15 @@
                 "x": 10,
                 "y": 10
             }
-        }
+        },
+        "sedimentStart": 0.142,
+        "sedimentRange": 1,
+        "slopeStart": 0,
+        "slopeRange": 0,
+        "riverStart": 0,
+        "riverRange": 0,
+        "lakeStart": 0.7,
+        "lakeRange": 1
     },
     "sky": {
         "turbidity": 0.1,

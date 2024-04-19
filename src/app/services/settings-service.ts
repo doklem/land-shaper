@@ -104,9 +104,15 @@ export class SettingsService implements ISettingsOptions {
 
     public readonly rubble = {
         scale: new Vector3(),
-        slopStart: 0,
-        slopRange: 0,
         color: new MixedColorSettings(),
+        sedimentStart: 0,
+        sedimentRange: 0,
+        slopeStart: 0,
+        slopeRange: 0,
+        riverStart: 0,
+        riverRange: 0,
+        lakeStart: 0,
+        lakeRange: 0
     };
 
     public readonly sky = {
@@ -242,8 +248,14 @@ export class SettingsService implements ISettingsOptions {
 
         this.rubble.color.set(options.rubble.color);
         this.rubble.scale.set(options.rubble.scale.x, options.rubble.scale.y, options.rubble.scale.z);
-        this.rubble.slopRange = options.rubble.slopRange;
-        this.rubble.slopStart = options.rubble.slopStart;
+        this.rubble.sedimentRange = options.rubble.sedimentRange;
+        this.rubble.sedimentStart = options.rubble.sedimentStart;
+        this.rubble.slopeRange = options.rubble.slopeRange;
+        this.rubble.slopeStart = options.rubble.slopeStart;
+        this.rubble.riverRange = options.rubble.riverRange;
+        this.rubble.riverStart = options.rubble.riverStart;
+        this.rubble.lakeRange = options.rubble.lakeRange;
+        this.rubble.lakeStart = options.rubble.lakeStart;
 
         this.sky.rayleigh = options.sky.rayleigh;
         this.sky.turbidity = options.sky.turbidity;

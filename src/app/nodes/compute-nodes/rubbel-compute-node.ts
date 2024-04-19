@@ -39,7 +39,7 @@ export class RubbleComputeNode extends ComputeNodeBase {
         this._colorsOutputBuffer = buffers.buffer;
         this._colorsStagingBuffer = buffers.staging;
         this._uniformConfigArray = new ArrayBuffer(MixedColorSettings.BYTE_LENGTH
-            + 12 * Float32Array.BYTES_PER_ELEMENT
+            + 19 * Float32Array.BYTES_PER_ELEMENT
             + Float32Array.BYTES_PER_ELEMENT); // Padding
         this._uniformConfigBuffer = this.createUniformBuffer(this._uniformConfigArray.byteLength);
 
@@ -143,15 +143,31 @@ export class RubbleComputeNode extends ComputeNodeBase {
         uniformConfigView.setFloat32(offset, constants.meshSize.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
 
+        uniformConfigView.setFloat32(offset, rubble.sedimentStart, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, rubble.sedimentRange, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, rubble.slopeStart, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, rubble.slopeRange, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        
+        uniformConfigView.setFloat32(offset, rubble.riverStart, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, rubble.riverRange, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, rubble.lakeStart, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+        uniformConfigView.setFloat32(offset, rubble.lakeRange, constants.littleEndian);
+        offset += Float32Array.BYTES_PER_ELEMENT;
+
+        offset = rubble.color.serialize(uniformConfigView, offset, constants.littleEndian);        
+
         uniformConfigView.setFloat32(offset, rubble.scale.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, rubble.scale.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, rubble.scale.z, constants.littleEndian);
-        offset += Float32Array.BYTES_PER_ELEMENT;
-        offset += Float32Array.BYTES_PER_ELEMENT; // Padding
-
-        offset = rubble.color.serialize(uniformConfigView, offset, constants.littleEndian);
 
         this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
     }

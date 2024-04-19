@@ -75,11 +75,17 @@ export class ColoringStage extends EditStageBase<ColoringLandscape> {
 
         const rubbleFolder = parent.addFolder('Rubble').close().hide();
         this._folders.push(rubbleFolder);
-        rubbleFolder.add(rubble, 'slopStart', 0, 1, 0.001).name('Slop Angle').onFinishChange(() => this.runRubble());
-        rubbleFolder.add(rubble, 'slopRange', 0, 10, 0.01).name('Slop Gradient').onFinishChange(() => this.runRubble());
         rubbleFolder.add(rubble.scale, 'x', 0, 10, 0.1).name('Scale X').onFinishChange(() => this.runRubble());
         rubbleFolder.add(rubble.scale, 'y', 0, 10, 0.1).name('Scale Y').onFinishChange(() => this.runRubble());
         rubbleFolder.add(rubble.scale, 'z', 0, 10, 0.1).name('Scale Z').onFinishChange(() => this.runRubble());
+        rubbleFolder.add(rubble, 'sedimentStart', 0, 1, 0.001).name('Sediment Start').onFinishChange(() => this.runRubble());
+        rubbleFolder.add(rubble, 'sedimentRange', 0, 1, 0.001).name('Sediment Gradient').onFinishChange(() => this.runRubble());
+        rubbleFolder.add(rubble, 'slopeStart', 0, 1, 0.001).name('Slope Start').onFinishChange(() => this.runRubble());
+        rubbleFolder.add(rubble, 'slopeRange', 0, 1, 0.001).name('Slope Gradient').onFinishChange(() => this.runRubble());
+        rubbleFolder.add(rubble, 'riverStart', 0, 1, 0.001).name('River Start').onFinishChange(() => this.runRubble());
+        rubbleFolder.add(rubble, 'riverRange', 0, 1, 0.001).name('River Gradient').onFinishChange(() => this.runRubble());
+        rubbleFolder.add(rubble, 'lakeStart', 0, 1, 0.001).name('Lake Start').onFinishChange(() => this.runRubble());
+        rubbleFolder.add(rubble, 'lakeRange', 0, 1, 0.001).name('Lake Gradient').onFinishChange(() => this.runRubble());
         MixedColorSettings.createGUI(rubble.color, rubbleFolder, 'Color', () => this.runRubble(), true);
     }
 
