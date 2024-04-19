@@ -10,9 +10,11 @@ import { IDisplacementSource } from '../terrains/displacement-source';
 import { DisplacementRadiusComputeNode } from '../../nodes/compute-nodes/displacement-radius-compute-node';
 import { ThermalErosionComputeNode } from '../../nodes/compute-nodes/thermal-erosion-compute-node';
 import { DisplacementSourceTerrain } from '../terrains/displacement-source-terrain';
+import { AddRenderNode } from '../../nodes/render-nodes/add-render-node';
 
 export class ErosionLandscape extends Group implements ILandscape {
 
+    private readonly _displacementErosionRenderNode: AddRenderNode;
     private readonly _displacementRadiusComputeNode: DisplacementRadiusComputeNode;
     private readonly _displacementRangeComputeNode: DisplacementRangeComputeNode;
     private readonly _displacementRenderNode: DisplacementRenderNode;
@@ -45,6 +47,11 @@ export class ErosionLandscape extends Group implements ILandscape {
             this._displacementRangeComputeNode.minBuffer,
             this._displacementRangeComputeNode.maxBuffer);
         this._thermalErosionComputeNode = new ThermalErosionComputeNode(_serviceProvider);
+        this._displacementErosionRenderNode = new AddRenderNode(
+            _serviceProvider,
+            _serviceProvider.textures.displacementErosionBedrock,
+            _serviceProvider.textures.displacementErosionSediment,
+            _serviceProvider.textures.displacementErosion);
 
         this._terrain = new DisplacementSourceTerrain(
             _serviceProvider,
@@ -71,6 +78,7 @@ export class ErosionLandscape extends Group implements ILandscape {
     }
 
     public dispose(): void {
+        this._displacementErosionRenderNode.dispose();
         this._displacementRadiusComputeNode.dispose();
         this._displacementRangeComputeNode.dispose();
         this._displacementRenderNode.dispose();
@@ -87,20 +95,21 @@ export class ErosionLandscape extends Group implements ILandscape {
         }
         this._running = true;
 
+        this._dropletErosionComputeNode.initialize();
         this._dropletErosionComputeNode.configureRun();
         this._displacementRangeComputeNode.configureRun();
 
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         this._dropletErosionComputeNode.appendComputePass(commandEncoder);
-        //this._erosionDifferenceRenderNode.appendDebugRenderPass(commandEncoder);
+        this._displacementErosionRenderNode.appendRenderPass(commandEncoder);
         this._displacementRangeComputeNode.appendComputePass(commandEncoder);
         this._displacementRadiusComputeNode.appendComputePass(commandEncoder);
         this._erosionDifferenceRenderNode.appendRenderPass(commandEncoder);
+        //this._erosionDifferenceRenderNode.appendDebugRenderPass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
-        this._thermalErosionComputeNode.initialize();
 
         await this._terrain.applyRunOutput({
-            displacement: this._dropletErosionComputeNode,
+            displacement: this._displacementErosionRenderNode,
             range: this._displacementRangeComputeNode,
             radius: this._displacementRadiusComputeNode
         });
@@ -139,20 +148,21 @@ export class ErosionLandscape extends Group implements ILandscape {
         }
         this._running = true;
 
+        this._thermalErosionComputeNode.initialize();
         this._thermalErosionComputeNode.configureRun();
         this._displacementRangeComputeNode.configureRun();
 
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         this._thermalErosionComputeNode.appendComputePass(commandEncoder);
-        //this._erosionDifferenceRenderNode.appendDebugRenderPass(commandEncoder);
+        this._displacementErosionRenderNode.appendRenderPass(commandEncoder);
         this._displacementRangeComputeNode.appendComputePass(commandEncoder);
         this._displacementRadiusComputeNode.appendComputePass(commandEncoder);
         this._erosionDifferenceRenderNode.appendRenderPass(commandEncoder);
+        //this._erosionDifferenceRenderNode.appendDebugRenderPass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
-        this._dropletErosionComputeNode.initialize();
 
         await this._terrain.applyRunOutput({
-            displacement: this._thermalErosionComputeNode,
+            displacement: this._displacementRenderNode,
             range: this._displacementRangeComputeNode,
             radius: this._displacementRadiusComputeNode
         });

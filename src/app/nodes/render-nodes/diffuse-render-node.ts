@@ -13,22 +13,22 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
     private readonly _uniformConfigArray: ArrayBuffer;
     private readonly _uniformConfigBuffer: GPUBuffer;
 
-    protected readonly _renderBundle: GPURenderBundle;
-    protected readonly _pipeline: GPURenderPipeline;
+    protected override readonly _renderBundle: GPURenderBundle;
+    protected override readonly _pipeline: GPURenderPipeline;
 
     public constructor(
         serviceProvider: IServiceProvider,
         private readonly _uvRange: Vector2,
         surfaceTexture: TextureWrapper,
         displacementTexture: TextureWrapper,
-        outputTexture: TextureWrapper
+        outputTexture: TextureWrapper/*,debugTexture: TextureWrapper*/
     ) {
         super(DiffuseRenderNode.NAME, serviceProvider, outputTexture);
 
         // buffers
         this._uniformConfigArray = new ArrayBuffer(
             Float32Array.BYTES_PER_ELEMENT * 4
-            + MixedColorSettings.BYTE_LENGTH * 3);
+            + MixedColorSettings.BYTE_LENGTH * 16);
         this._uniformConfigBuffer = this.createUniformBuffer(this._uniformConfigArray.byteLength);
 
         // bind group layout
@@ -56,7 +56,7 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
             /*{
                 binding: 4,
                 visibility: GPUShaderStage.FRAGMENT,
-                texture: textures.debug.bindingLayout,
+                texture: debugTexture.bindingLayout,
             },*/
         ]);
 
@@ -82,7 +82,7 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
                 },
                 /*{
                     binding: 4,
-                    resource: serviceProvider.textures.debug.view,
+                    resource: debugTexture.view,
                 },*/
             ]
         );
@@ -107,9 +107,22 @@ export class DiffuseRenderNode extends ExportableByteRenderNodeBase {
         offset += Float32Array.BYTES_PER_ELEMENT;
         uniformConfigView.setFloat32(offset, this._uvRange.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        offset = diffuse.vegetation.serialize(uniformConfigView, offset, constants.littleEndian);
-        offset = diffuse.bedrock.serialize(uniformConfigView, offset, constants.littleEndian);
-        offset = diffuse.gravel.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.bedrockFlatNoRiverNoLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.bedrockFlatNoRiverLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.bedrockFlatRiverNoLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.bedrockFlatRiverLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.bedrockSlopeNoRiverNoLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.bedrockSlopeNoRiverLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.bedrockSlopeRiverNoLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.bedrockSlopeRiverLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.sedimentFlatNoRiverNoLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.sedimentFlatNoRiverLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.sedimentFlatRiverNoLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.sedimentFlatRiverLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.sedimentSlopeNoRiverNoLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.sedimentSlopeNoRiverLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.sedimentSlopeRiverNoLake.serialize(uniformConfigView, offset, constants.littleEndian);
+        offset = diffuse.sedimentSlopeRiverLake.serialize(uniformConfigView, offset, constants.littleEndian);
         this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
     }
 }

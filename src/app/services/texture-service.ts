@@ -26,6 +26,7 @@ import { WaterComputeNode } from '../nodes/compute-nodes/water-compute-node';
 import { SurfaceRenderNode } from '../nodes/render-nodes/surface-render-node';
 import { SettingsService } from './settings-service';
 import { ErosionDifferenceRenderNode } from '../nodes/render-nodes/erosion-difference-render-node';
+import { BumpsRenderNode } from '../nodes/render-nodes/bumps-render-node';
 
 export class TextureService implements IDisposable {
 
@@ -40,8 +41,12 @@ export class TextureService implements IDisposable {
     private static readonly RGBA_BYTE_PIXEL_BYTE_LENGTH = TextureService.RGBA_PIXEL_LENGTH * Uint8Array.BYTES_PER_ELEMENT;
     private static readonly FLOAT_TEXTURE_SAMPLE: GPUTextureSampleType = 'float';
 
+    public readonly bumps: TextureWrapper;
+    public readonly bumpsSection: TextureWrapper;
     public readonly displacementErosion: TextureWrapper;
+    public readonly displacementErosionBedrock: TextureWrapper;
     public readonly displacementErosionDifference: TextureWrapper;
+    public readonly displacementErosionSediment: TextureWrapper;
     public readonly displacementErosionUntouched: TextureWrapper;
     public readonly displacementSection: TextureWrapper;
     public readonly displacementTopology: TextureWrapper;
@@ -52,6 +57,7 @@ export class TextureService implements IDisposable {
     public readonly normalTangentSpace: TextureWrapper;
     public readonly normalTangentSpaceSection: TextureWrapper;
     public readonly rFloatTextureColors: ITextureSettings;
+    public readonly rFloatTextureColorsSection: ITextureSettings;
     public readonly rFloatTextureTopology: ITextureSettings;
     public readonly rFloatTextureTerrain: ITextureSettings;
     public readonly rFloatTextureTerrainSection: ITextureSettings;
@@ -68,6 +74,7 @@ export class TextureService implements IDisposable {
 
     constructor(settings: SettingsService, device: GPUDevice) {
         this.rFloatTextureColors = TextureService.createTextureSettings(settings.constants.textureSizeColors, 'r32float');
+        this.rFloatTextureColorsSection = TextureService.createTextureSettings(settings.constants.sections.textureSizeColors, 'r32float');
         this.rFloatTextureTopology = TextureService.createTextureSettings(settings.constants.textureSizeTopology, 'r32float');
         this.rFloatTextureTerrain = TextureService.createTextureSettings(settings.constants.textureSizeTerrain, 'r32float');
         this.rFloatTextureTerrainSection = TextureService.createTextureSettings(settings.constants.sections.textureSizeTerrain, 'r32float');
@@ -114,6 +121,20 @@ export class TextureService implements IDisposable {
             DisplacementRenderNode.NAME_EROSION,
             this.displacementErosionUntouched.settings
         );
+        this.displacementErosionBedrock = new TextureWrapper(
+            device,
+            TextureService.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
+            DisplacementRenderNode.NAME_EROSION_BEDROCK,
+            this.displacementErosionUntouched.settings
+        );
+        this.displacementErosionSediment = new TextureWrapper(
+            device,
+            TextureService.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
+            DisplacementRenderNode.NAME_EROSION_SEDIMENT,
+            this.displacementErosionUntouched.settings
+        );
         this.displacementSection = new TextureWrapper(
             device,
             TextureService.FLOAT_TEXTURE_SAMPLE,
@@ -135,14 +156,14 @@ export class TextureService implements IDisposable {
             TextureService.FLOAT_TEXTURE_SAMPLE,
             GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT,
             SurfaceRenderNode.NAME,
-            this.rgFloatTextureColors
+            this.rgbaFloatTextureColors
         );
         this.surfaceSection = new TextureWrapper(
             device,
             TextureService.FLOAT_TEXTURE_SAMPLE,
             GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT,
             `${SurfaceRenderNode.NAME} Section`,
-            this.rgFloatTextureColorsSection
+            this.rgbaFloatTextureColorsSection
         );
 
         this.diffuse = new TextureWrapper(
@@ -158,6 +179,21 @@ export class TextureService implements IDisposable {
             GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
             `${DiffuseRenderNode.NAME} Section`,
             this.rgbaByteTextureColorsSection
+        );
+
+        this.bumps = new TextureWrapper(
+            device,
+            TextureService.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT,
+            BumpsRenderNode.NAME,
+            this.rFloatTextureColors
+        );
+        this.bumpsSection = new TextureWrapper(
+            device,
+            TextureService.FLOAT_TEXTURE_SAMPLE,
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT,
+            `${BumpsRenderNode.NAME} Section`,
+            this.rFloatTextureColorsSection
         );
 
         this.normalObjectSpace = new TextureWrapper(
@@ -192,8 +228,12 @@ export class TextureService implements IDisposable {
     }
 
     public dispose(): void {
+        this.bumps.dispose();
+        this.bumpsSection.dispose();
         this.displacementErosion.dispose();
+        this.displacementErosionBedrock.dispose();
         this.displacementErosionDifference.dispose();
+        this.displacementErosionSediment.dispose();
         this.displacementErosionUntouched.dispose();
         this.displacementTopology.dispose();
         this.displacementSection.dispose();

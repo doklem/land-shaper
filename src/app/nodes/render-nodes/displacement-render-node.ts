@@ -11,13 +11,16 @@ export class DisplacementRenderNode extends ExportableFloatRenderNodeBase implem
     public static readonly NAME_EROSION = `Erosion ${DisplacementRenderNode.NAME}`;
     public static readonly NAME_EROSION_UNTOUCHED = `Erosion Untouched ${DisplacementRenderNode.NAME}`;
     public static readonly NAME_TOPOLOGY = `Topology ${DisplacementRenderNode.NAME}`;
+    public static readonly NAME_EROSION_BEDROCK = `Erosion Bedrock ${DisplacementRenderNode.NAME}`;
+    public static readonly NAME_EROSION_SEDIMENT = `Erosion Sediment ${DisplacementRenderNode.NAME}`;
 
     private readonly _bindGroup: GPUBindGroup;
     private readonly _uniformConfigBuffer: GPUBuffer;
     private readonly _uniformConfigArray: ArrayBuffer;
+    private readonly _sedimentBuffer?: GPUBuffer;
 
-    protected readonly _renderBundle: GPURenderBundle;
-    protected readonly _pipeline: GPURenderPipeline;
+    protected override readonly _renderBundle: GPURenderBundle;
+    protected override readonly _pipeline: GPURenderPipeline;
 
     public constructor(
         serviceProvider: IServiceProvider,
@@ -34,6 +37,10 @@ export class DisplacementRenderNode extends ExportableFloatRenderNodeBase implem
             + Float32Array.BYTES_PER_ELEMENT // Padding
         );
         this._uniformConfigBuffer = this.createUniformBuffer(this._uniformConfigArray.byteLength);
+
+        if (!_isTopology) {
+            this._sedimentBuffer = this.createBuffer('Sediment', serviceProvider.textures.displacementErosionSediment.byteLength, GPUBufferUsage.COPY_SRC);
+        }
 
         // bind group layout
         const bindGroupLayout = this.createBindGroupLayout([
@@ -120,6 +127,17 @@ export class DisplacementRenderNode extends ExportableFloatRenderNodeBase implem
             commandEncoder.copyTextureToTexture(
                 this._texture,
                 this._serviceProvider.textures.displacementErosion,
+                this._texture);
+            commandEncoder.copyTextureToTexture(
+                this._texture,
+                this._serviceProvider.textures.displacementErosionBedrock,
+                this._texture);
+            commandEncoder.copyBufferToTexture(
+                {
+                    buffer: this._sedimentBuffer!,
+                    bytesPerRow: this._serviceProvider.textures.displacementErosionSediment.bytesPerRow,
+                },
+                this._serviceProvider.textures.displacementErosionSediment,
                 this._texture);
         }
     }

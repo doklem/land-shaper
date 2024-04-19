@@ -1,22 +1,20 @@
 import ComputeShader from '../../../shaders/compute/droplet-erosion.wgsl';
-import { BufferService } from '../../services/buffer-service';
 import { Vector2, Vector3 } from 'three';
 import { QuadTree } from './quad-tree';
-import { IDisplacementNode } from '../displacement-node';
 import { IServiceProvider } from '../../services/service-provider';
 import { ComputeNodeBase } from './compute-node-base';
 
-export class DropletErosionComputeNode extends ComputeNodeBase implements IDisplacementNode {
+export class DropletErosionComputeNode extends ComputeNodeBase {
 
     private static readonly NAME = 'Droplet Erosion';
 
     private readonly _bindGroup: GPUBindGroup;
     private readonly _brushBuffer: GPUBuffer;
+    private readonly _displacementBedrockBuffer: GPUBuffer;
+    private readonly _displacementSedimentBuffer: GPUBuffer;
     private readonly _dropletIterationsBuffer: GPUBuffer;
     private readonly _dropletOffsetsBuffer: GPUBuffer;
     private readonly _dropletOriginsBuffer: GPUBuffer;
-    private readonly _displacementBuffer: GPUBuffer;
-    private readonly _stagingBuffer: GPUBuffer;
     private readonly _uniformConfigBuffer: GPUBuffer;
     private readonly _uniformConfigArray: ArrayBuffer;
 
@@ -65,9 +63,15 @@ export class DropletErosionComputeNode extends ComputeNodeBase implements IDispl
             GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE);
         _serviceProvider.device.queue.writeBuffer(this._brushBuffer, 0, brush);
 
-        const buffers = this.createExportableBuffer('Displacement', _serviceProvider.textures.displacementErosion.byteLength);
-        this._displacementBuffer = buffers.buffer;
-        this._stagingBuffer = buffers.staging;
+        this._displacementBedrockBuffer = this.createBuffer(
+            'Displacement Bedrock',
+            _serviceProvider.textures.displacementErosionBedrock.byteLength,
+            GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE);
+
+        this._displacementSedimentBuffer = this.createBuffer(
+            'Displacement Sediment',
+            _serviceProvider.textures.displacementErosionSediment.byteLength,
+            GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE);
 
         this.initialize();
 
@@ -101,12 +105,17 @@ export class DropletErosionComputeNode extends ComputeNodeBase implements IDispl
                     buffer: { type: 'storage' }
                 },
                 {
-                    binding: 5, // displacement
+                    binding: 5, // displacement bedrock
+                    visibility: GPUShaderStage.COMPUTE,
+                    buffer: { type: 'storage' }
+                },
+                {
+                    binding: 6, // displacement sediment
                     visibility: GPUShaderStage.COMPUTE,
                     buffer: { type: 'storage' }
                 },
                 /*{
-                    binding: 6,
+                    binding: 7,
                     visibility: GPUShaderStage.COMPUTE,
                     storageTexture:
                     {
@@ -145,10 +154,14 @@ export class DropletErosionComputeNode extends ComputeNodeBase implements IDispl
                 },
                 {
                     binding: 5,
-                    resource: { buffer: this._displacementBuffer },
+                    resource: { buffer: this._displacementBedrockBuffer },
+                },
+                {
+                    binding: 6,
+                    resource: { buffer: this._displacementSedimentBuffer },
                 },
                 /*{
-                    binding: 6,
+                    binding: 7,
                     resource: _serviceProvider.textures.displacementErosionDifference.view,
                 },*/
             ]
@@ -176,12 +189,18 @@ export class DropletErosionComputeNode extends ComputeNodeBase implements IDispl
         computePassEncoder.end();
         commandEncoder.copyBufferToTexture(
             {
-                buffer: this._displacementBuffer,
-                bytesPerRow: this._serviceProvider.textures.displacementErosion.bytesPerRow,
+                buffer: this._displacementBedrockBuffer,
+                bytesPerRow: this._serviceProvider.textures.displacementErosionBedrock.bytesPerRow,
             },
-            this._serviceProvider.textures.displacementErosion,
-            this._serviceProvider.textures.displacementErosion);
-        commandEncoder.copyBufferToBuffer(this._displacementBuffer, 0, this._stagingBuffer, 0, this._displacementBuffer.size);
+            this._serviceProvider.textures.displacementErosionBedrock,
+            this._serviceProvider.textures.displacementErosionBedrock);
+        commandEncoder.copyBufferToTexture(
+            {
+                buffer: this._displacementSedimentBuffer,
+                bytesPerRow: this._serviceProvider.textures.displacementErosionSediment.bytesPerRow,
+            },
+            this._serviceProvider.textures.displacementErosionSediment,
+            this._serviceProvider.textures.displacementErosionSediment);
     }
 
     public configureRun(): void {
@@ -217,19 +236,22 @@ export class DropletErosionComputeNode extends ComputeNodeBase implements IDispl
         this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);
     }
 
-    public async readOutputBuffer(output: Float32Array): Promise<void> {
-        output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
-    }
-
     public initialize(): void {
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         commandEncoder.copyTextureToBuffer(
-            this._serviceProvider.textures.displacementErosion,
+            this._serviceProvider.textures.displacementErosionBedrock,
             {
-                buffer: this._displacementBuffer,
-                bytesPerRow: this._serviceProvider.textures.displacementErosion.bytesPerRow
+                buffer: this._displacementBedrockBuffer,
+                bytesPerRow: this._serviceProvider.textures.displacementErosionBedrock.bytesPerRow
             },
-            this._serviceProvider.textures.displacementErosion);
+            this._serviceProvider.textures.displacementErosionBedrock);
+        commandEncoder.copyTextureToBuffer(
+            this._serviceProvider.textures.displacementErosionSediment,
+            {
+                buffer: this._displacementSedimentBuffer,
+                bytesPerRow: this._serviceProvider.textures.displacementErosionSediment.bytesPerRow
+            },
+            this._serviceProvider.textures.displacementErosionSediment);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
         const dropletIterationsArray = new Uint32Array(this._dropletIterationsBuffer.size / Uint32Array.BYTES_PER_ELEMENT);
         let offset = 0;

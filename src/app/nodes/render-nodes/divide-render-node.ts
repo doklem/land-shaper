@@ -4,23 +4,23 @@ import { TextureWrapper } from '../../services/texture-wrapper';
 import { IServiceProvider } from '../../services/service-provider';
 import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';
 
-export class ExportableDivideRenderNode extends ExportableFloatRenderNodeBase {
+export class DivideRenderNode extends ExportableFloatRenderNodeBase {
 
-    private static readonly NAME = 'Exportable Divide';
+    private static readonly NAME = 'Divide';
 
     private readonly _bindGroup: GPUBindGroup;
     private readonly _uniformConfigArray: Float32Array;
     private readonly _uniformConfigBuffer: GPUBuffer;
 
-    protected readonly _renderBundle: GPURenderBundle;
-    protected readonly _pipeline: GPURenderPipeline;
+    protected override readonly _renderBundle: GPURenderBundle;
+    protected override readonly _pipeline: GPURenderPipeline;
 
     constructor(
         serviceProvider: IServiceProvider,
         private readonly _uvRange: Vector2,
         inputTexture: TextureWrapper,
         outputTexture: TextureWrapper) {
-        super(ExportableDivideRenderNode.NAME, serviceProvider, outputTexture);
+        super(DivideRenderNode.NAME, serviceProvider, outputTexture);
 
         // uniform buffers
         this._uniformConfigArray = new Float32Array(4);

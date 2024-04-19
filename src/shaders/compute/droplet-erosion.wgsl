@@ -30,7 +30,10 @@ var<storage, read_write> iterations: array<u32>;
 
 //TODO: Use a read & write texture for this as soon as they are supported to allow bigger maps.
 @group(0) @binding(5)
-var<storage, read_write> map: array<f32>;
+var<storage, read_write> bedrockMap: array<f32>;
+
+@group(0) @binding(6)
+var<storage, read_write> sedimentMap: array<f32>;
 
 /*@group(0) @binding(6)
 var debugTexture: texture_storage_2d<rgba32float, write>;*/
@@ -45,10 +48,13 @@ fn calculateHeightAndGradient(pos: vec2f) -> vec3f {
 
     // Calculate heights of the four nodes of the droplet's cell
     let nodeIndexNW = coord.y * config.mapSize.x + coord.x;
-    let heightNW = map[nodeIndexNW];
-    let heightNE = map[nodeIndexNW + 1];
-    let heightSW = map[nodeIndexNW + config.mapSize.x];
-    let heightSE = map[nodeIndexNW + config.mapSize.x + 1];
+    let nodeIndexNE = nodeIndexNW + 1;
+    let nodeIndexSW = nodeIndexNW + config.mapSize.x;
+    let nodeIndexSE = nodeIndexSW + 1;
+    let heightNW = bedrockMap[nodeIndexNW] + sedimentMap[nodeIndexNW];
+    let heightNE = bedrockMap[nodeIndexNE] + sedimentMap[nodeIndexNE];
+    let heightSW = bedrockMap[nodeIndexSW] + sedimentMap[nodeIndexSW];
+    let heightSE = bedrockMap[nodeIndexSE] + sedimentMap[nodeIndexSE];
 
     // Calculate droplet's direction of flow with linear interpolation of height difference along the edges
     let gradientX = mix(heightNE - heightNW, heightSE - heightSW, y);
@@ -69,10 +75,10 @@ fn depositSediment(dropletIndex: u32, amountToDeposit: f32, cellOffsetX: f32, ce
     let dropletIndexSW = dropletIndex + config.mapSize.x;
     let dropletIndexSE = dropletIndexSW + 1;
 
-    map[dropletIndexNW] += amountToDeposit * (1. - cellOffsetX) * (1. - cellOffsetY);
-    map[dropletIndexNE] += amountToDeposit * cellOffsetX * (1. - cellOffsetY);
-    map[dropletIndexSW] += amountToDeposit * (1. - cellOffsetX) * cellOffsetY;
-    map[dropletIndexSE] += amountToDeposit * cellOffsetX * cellOffsetY;
+    sedimentMap[dropletIndexNW] += amountToDeposit * (1. - cellOffsetX) * (1. - cellOffsetY);
+    sedimentMap[dropletIndexNE] += amountToDeposit * cellOffsetX * (1. - cellOffsetY);
+    sedimentMap[dropletIndexSW] += amountToDeposit * (1. - cellOffsetX) * cellOffsetY;
+    sedimentMap[dropletIndexSE] += amountToDeposit * cellOffsetX * cellOffsetY;
 }
 
 fn getCoordinates(index: u32) -> vec2u {
@@ -93,7 +99,7 @@ fn main(@builtin(local_invocation_id) invocation_id: vec3u)
     var dir = vec2f();
     var speed = config.startSpeed;
     var water = config.startWater;
-    var sediment = 0.;
+    var suspendedSediment = 0.;
 
     for (var lifetime = u32(); lifetime < config.maxLifetime; lifetime++) {
 
@@ -132,21 +138,21 @@ fn main(@builtin(local_invocation_id) invocation_id: vec3u)
         let sedimentCapacity = max(-deltaHeight * speed * water * config.sedimentCapacityFactor, config.minSedimentCapacity);
         
         // If carrying more sediment than capacity, or if flowing uphill:
-        if (sediment > sedimentCapacity || deltaHeight > 0.) {
+        if (suspendedSediment > sedimentCapacity || deltaHeight > 0.) {
             // If moving uphill (deltaHeight > 0) try fill up to the current height, otherwise deposit a fraction of the excess sediment
             var amountToDeposit = f32();
             if (deltaHeight > 0.) {
-                amountToDeposit = min(deltaHeight, sediment);
+                amountToDeposit = min(deltaHeight, suspendedSediment);
             } else {
-                amountToDeposit = (sediment - sedimentCapacity) * config.depositSpeed;
+                amountToDeposit = (suspendedSediment - sedimentCapacity) * config.depositSpeed;
             }
 
-            sediment -= amountToDeposit;
+            suspendedSediment -= amountToDeposit;
             depositSediment(dropletIndex, amountToDeposit, cellOffsetX, cellOffsetY);
         } else {
             // Erode a fraction of the droplet's current carry capacity.
             // Clamp the erosion to the change in height so that it doesn't dig a hole in the terrain behind the droplet
-            let amountToErode = min((sedimentCapacity - sediment) * config.erodeSpeed, -deltaHeight);
+            let amountToErode = min((sedimentCapacity - suspendedSediment) * config.erodeSpeed, -deltaHeight);
 
             for (var y = -config.brushLength; y <= config.brushLength; y++) {
                 let erodeY = node.y + y;
@@ -154,9 +160,12 @@ fn main(@builtin(local_invocation_id) invocation_id: vec3u)
                     let erodeX = node.x + x;
                     let erodeIndex = erodeX + erodeY * mapSize.x;
                     let weight = brush[(x + config.brushLength) + (y + config.brushLength) * (config.brushLength * 2 + 1)];
-                    let weightedErodeAmount = amountToErode * weight;
-                    map[erodeIndex] -= weightedErodeAmount;
-                    sediment += weightedErodeAmount;
+                    var weightedErodeAmount = amountToErode * weight;
+                    let sediment = sedimentMap[erodeIndex];
+                    sedimentMap[erodeIndex] = max(0, sediment - weightedErodeAmount);
+                    weightedErodeAmount = max(0, weightedErodeAmount - sediment);
+                    bedrockMap[erodeIndex] -= weightedErodeAmount;
+                    suspendedSediment += weightedErodeAmount;
                     //textureStore(debugTexture, vec2u(vec2f(node + vec2i(x, y)) / debugTextureRatio), vec4f(0., smoothstep(0., 1., weight * 10.), 1., 1.));
                 }
             }

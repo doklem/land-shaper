@@ -1,7 +1,7 @@
 import { Group, Object3D, Vector2 } from 'three';
 import { ILandscape } from './landscape';
 import { DiffuseRenderNode } from '../../nodes/render-nodes/diffuse-render-node';
-import { ExportableDivideRenderNode } from '../../nodes/render-nodes/exportable-divide-render-node';
+import { DivideRenderNode } from '../../nodes/render-nodes/divide-render-node';
 import { NormalObjectSpaceRenderNode } from '../../nodes/render-nodes/normal-object-space-render-node';
 import { NormalTangentSpaceRenderNode } from '../../nodes/render-nodes/normal-tangent-space-render-node';
 import { SurfaceRenderNode } from '../../nodes/render-nodes/surface-render-node';
@@ -12,13 +12,15 @@ import { IServiceProvider } from '../../services/service-provider';
 import { DisplacementRangeComputeNode } from '../../nodes/compute-nodes/displacement-range-compute-node';
 import { DisplacementRadiusComputeNode } from '../../nodes/compute-nodes/displacement-radius-compute-node';
 import { DisplacementSourceTerrain } from '../terrains/displacement-source-terrain';
+import { BumpsRenderNode } from '../../nodes/render-nodes/bumps-render-node';
 
 export class SectionedLandscape extends Group implements ILandscape {
 
+    private readonly _bumpsRenderNode: BumpsRenderNode;
     private readonly _displacementRadiusComputeNode: DisplacementRadiusComputeNode;
     private readonly _displacementRangeComputeNode: DisplacementRangeComputeNode;
     private readonly _diffuseRenderNode: DiffuseRenderNode;
-    private readonly _displacementRenderNode: ExportableDivideRenderNode;
+    private readonly _displacementRenderNode: DivideRenderNode;
     private readonly _normalObjectSpaceRenderNode: NormalObjectSpaceRenderNode;
     private readonly _normalTangentSpaceRenderNode: NormalTangentSpaceRenderNode;
     private readonly _rubbleComputeNode: RubbleComputeNode;
@@ -42,7 +44,7 @@ export class SectionedLandscape extends Group implements ILandscape {
         const uvRangeInclusive = _serviceProvider.settings.constants.sections.uvRange.clone().add(singlePixelUvSize);
         const meshSizeSection = _serviceProvider.settings.constants.meshSize.clone().multiply(_serviceProvider.settings.constants.sections.uvRange);
 
-        this._displacementRenderNode = new ExportableDivideRenderNode(
+        this._displacementRenderNode = new DivideRenderNode(
             _serviceProvider,
             uvRangeInclusive,
             _serviceProvider.textures.displacementErosion,
@@ -58,10 +60,15 @@ export class SectionedLandscape extends Group implements ILandscape {
             this._displacementRangeComputeNode.minBuffer,
             this._displacementRangeComputeNode.maxBuffer
         );
+        this._bumpsRenderNode = new BumpsRenderNode(
+            _serviceProvider,
+            _serviceProvider.settings.constants.sections.uvRange,
+            _serviceProvider.textures.bumpsSection);
         this._normalObjectSpaceRenderNode = new NormalObjectSpaceRenderNode(
             _serviceProvider,
             _serviceProvider.settings.constants.sections.uvRange,
             _serviceProvider.textures.displacementErosion,
+            _serviceProvider.textures.bumpsSection,
             _serviceProvider.textures.normalObjectSpaceSection);
         this._normalTangentSpaceRenderNode = new NormalTangentSpaceRenderNode(
             _serviceProvider,
@@ -71,7 +78,8 @@ export class SectionedLandscape extends Group implements ILandscape {
             _serviceProvider,
             _serviceProvider.settings.constants.sections.uvRange,
             _serviceProvider.textures.normalObjectSpaceSection,
-            _serviceProvider.textures.displacementErosion,
+            _serviceProvider.textures.displacementErosionBedrock,
+            _serviceProvider.textures.displacementErosionSediment,
             _serviceProvider.textures.water,
             _serviceProvider.textures.surfaceSection);
         this._diffuseRenderNode = new DiffuseRenderNode(
@@ -134,6 +142,7 @@ export class SectionedLandscape extends Group implements ILandscape {
     public dispose(): void {
         this._terrains.forEach(terrain => terrain.dispose());
         this._rubbles.forEach(rubble => rubble.dispose());
+        this._bumpsRenderNode.dispose();
         this._displacementRadiusComputeNode.dispose();
         this._displacementRangeComputeNode.dispose();
         this._diffuseRenderNode.dispose();
@@ -164,6 +173,8 @@ export class SectionedLandscape extends Group implements ILandscape {
 
                 this._displacementRenderNode.configureRun(uvOffset);
                 this._displacementRangeComputeNode.configureRun();
+                this._bumpsRenderNode.configureRun(uvOffset);
+                this._normalObjectSpaceRenderNode.configureRun(uvOffset);
                 this._normalObjectSpaceRenderNode.configureRun(uvOffset);
                 this._surfaceRenderNode.configureRun(uvOffset);
                 this._diffuseRenderNode.configureRun(uvOffset);
@@ -173,6 +184,7 @@ export class SectionedLandscape extends Group implements ILandscape {
                 this._displacementRenderNode.appendRenderPass(commandEncoder);
                 this._displacementRangeComputeNode.appendComputePass(commandEncoder);
                 this._displacementRadiusComputeNode.appendComputePass(commandEncoder);
+                this._bumpsRenderNode.appendRenderPass(commandEncoder);
                 this._normalObjectSpaceRenderNode.appendRenderPass(commandEncoder);
                 this._normalTangentSpaceRenderNode.appendRenderPass(commandEncoder);
                 this._surfaceRenderNode.appendRenderPass(commandEncoder);

@@ -4,6 +4,13 @@ import { ILightOptions } from './light-options';
 
 export interface ISettingsOptions {
 
+    readonly bumps: {
+        seed: number;
+        octaves: number;
+        scale: Vector2Like;
+        amplitude: number;
+    };
+
     readonly diffuse: {
         slopStart: number;
         slopRange: number;
@@ -11,9 +18,24 @@ export interface ISettingsOptions {
         riverRange: number;
         shoreStart: number;
         shoreRange: number;
-        vegetation: IMixedColorOptions;
-        bedrock: IMixedColorOptions;
-        gravel: IMixedColorOptions;
+        sedimentStart: number;
+        sedimentRange: number;
+        bedrockFlatNoRiverNoLake: IMixedColorOptions;
+        bedrockFlatNoRiverLake: IMixedColorOptions;
+        bedrockFlatRiverNoLake: IMixedColorOptions;
+        bedrockFlatRiverLake: IMixedColorOptions;
+        bedrockSlopeNoRiverNoLake: IMixedColorOptions;
+        bedrockSlopeNoRiverLake: IMixedColorOptions;
+        bedrockSlopeRiverNoLake: IMixedColorOptions;
+        bedrockSlopeRiverLake: IMixedColorOptions;
+        sedimentFlatNoRiverNoLake: IMixedColorOptions;
+        sedimentFlatNoRiverLake: IMixedColorOptions;
+        sedimentFlatRiverNoLake: IMixedColorOptions;
+        sedimentFlatRiverLake: IMixedColorOptions;
+        sedimentSlopeNoRiverNoLake: IMixedColorOptions;
+        sedimentSlopeNoRiverLake: IMixedColorOptions;
+        sedimentSlopeRiverNoLake: IMixedColorOptions;
+        sedimentSlopeRiverLake: IMixedColorOptions;
     };
 
     readonly dropletErosion: {
@@ -31,13 +53,6 @@ export interface ISettingsOptions {
     };
 
     readonly light: ILightOptions;
-
-    readonly normals: {
-        seed: number;
-        octaves: number;
-        scale: Vector2Like;
-        amplitude: number;
-    };
 
     readonly ocean: {
         distortionScale: number;

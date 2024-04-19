@@ -77,8 +77,8 @@ fn main(@builtin(global_invocation_id) global_invocation_id : vec3<u32>) {
     let gridUv = gridPosition / config.itemsDimensions;
     let uv = config.uvSection.offset + gridUv * config.uvSection.range;
     
-    let vegetation = smoothstep(.8, .9, 1. - textureSampleLevel(surfaceTexture, samplerLinearClamp, uv, 0).y);
-    let scale = vegetation * (random3(vec3f(uv, 1.)) + 1.5) * config.scaleFactor;
+    let sediment = smoothstep(.8, .9, textureSampleLevel(surfaceTexture, samplerLinearClamp, uv, 0).x);
+    let scale = sediment * (random3(vec3f(uv, 1.)) + 1.5) * config.scaleFactor;
     let height = textureSampleLevel(displacementTexture, samplerLinearClamp, uv, 0).x;
     let rotation = random3(vec3f(uv, 2.));
     let position2d = config.meshSize * (uv - config.uvSection.offset);

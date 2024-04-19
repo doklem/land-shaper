@@ -1,34 +1,41 @@
-import FragmentShader from '../../../shaders/fragment/normal-tangent-space.wgsl';
+import FragmentShader from '../../../shaders/fragment/add.wgsl';
 import { TextureWrapper } from '../../services/texture-wrapper';
 import { IServiceProvider } from '../../services/service-provider';
 import { ExportableFloatRenderNodeBase } from './exportable-float-render-node-base';
+import { IDisplacementNode } from '../displacement-node';
 
-export class NormalTangentSpaceRenderNode extends ExportableFloatRenderNodeBase {
+export class AddRenderNode extends ExportableFloatRenderNodeBase implements IDisplacementNode {
 
-    public static readonly NAME = 'Normal Tangent Space';
+    private static readonly NAME = 'Add';
 
     private readonly _bindGroup: GPUBindGroup;
 
     protected override readonly _renderBundle: GPURenderBundle;
     protected override readonly _pipeline: GPURenderPipeline;
 
-    public constructor(
+    constructor(
         serviceProvider: IServiceProvider,
-        normalObjectSpaceTexture: TextureWrapper,
+        inputTextureA: TextureWrapper,
+        inputTextureB: TextureWrapper,
         outputTexture: TextureWrapper) {
-        super(NormalTangentSpaceRenderNode.NAME, serviceProvider, outputTexture);
-        
+        super(AddRenderNode.NAME, serviceProvider, outputTexture);
+
         // bind group layout
         const bindGroupLayout = this.createBindGroupLayout([
             {
-                binding: 0, // normal object space texture
+                binding: 0,
                 visibility: GPUShaderStage.FRAGMENT,
-                texture: normalObjectSpaceTexture.bindingLayout,
+                texture: inputTextureA.bindingLayout,
             },
             {
-                binding: 1, // sampler
+                binding: 1,
                 visibility: GPUShaderStage.FRAGMENT,
-                sampler: { type: normalObjectSpaceTexture.settings.samplerBinding },
+                texture: inputTextureB.bindingLayout,
+            },
+            {
+                binding: 2,
+                visibility: GPUShaderStage.FRAGMENT,
+                sampler: { type: inputTextureA.settings.samplerBinding },
             },
         ]);
 
@@ -38,10 +45,14 @@ export class NormalTangentSpaceRenderNode extends ExportableFloatRenderNodeBase 
             [
                 {
                     binding: 0,
-                    resource: normalObjectSpaceTexture.view,
+                    resource: inputTextureA.view,
                 },
                 {
                     binding: 1,
+                    resource: inputTextureB.view,
+                },
+                {
+                    binding: 2,
                     resource: serviceProvider.textures.samplerLinearClamping,
                 },
             ]
@@ -51,6 +62,6 @@ export class NormalTangentSpaceRenderNode extends ExportableFloatRenderNodeBase 
         this._pipeline = this.createPipeline(bindGroupLayout, FragmentShader);
 
         // render bundle
-        this._renderBundle = this.createRenderBundle(this._pipeline, this._bindGroup);
+        this._renderBundle = this.createRenderBundle(this._pipeline, this._bindGroup);  
     }
 }
