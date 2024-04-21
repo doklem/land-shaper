@@ -9,6 +9,6 @@ fn main(@location(0) uv: vec2f) -> @location(0) vec4f
 {    
     let normal = textureSample(normalTexture, samplerLinearClamp, uv);
     // Convert from object space to tangent space
-    let color = normalize((vec3f(-normal.x, -normal.z, normal.y) + 1.) * .5);
+    let color = .5 + vec3f(-normal.x, normal.z, normal.y) * .5;
     return vec4f(color, 1.);
 }
