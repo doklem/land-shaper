@@ -108,11 +108,10 @@ export class ErosionLandscape extends Group implements ILandscape {
         //this._erosionDifferenceRenderNode.appendDebugRenderPass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
 
-        await this._terrain.applyRunOutput({
-            displacement: this._displacementErosionRenderNode,
-            range: this._displacementRangeComputeNode,
-            radius: this._displacementRadiusComputeNode
-        });
+        await this._terrain.applyRunOutput(
+            this._displacementErosionRenderNode,
+            this._displacementRangeComputeNode,
+            this._displacementRadiusComputeNode);
         this._running = false;
     }
 
@@ -134,11 +133,10 @@ export class ErosionLandscape extends Group implements ILandscape {
         this._dropletErosionComputeNode.initialize();
         this._thermalErosionComputeNode.initialize();
 
-        await this._terrain.applyRunOutput({
-            displacement: this._displacementRenderNode,
-            range: this._displacementRangeComputeNode,
-            radius: this._displacementRadiusComputeNode
-        });
+        await this._terrain.applyRunOutput(
+            this._displacementRenderNode,
+            this._displacementRangeComputeNode,
+            this._displacementRadiusComputeNode);
         this._running = false;
     }
 
@@ -161,11 +159,10 @@ export class ErosionLandscape extends Group implements ILandscape {
         //this._erosionDifferenceRenderNode.appendDebugRenderPass(commandEncoder);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
 
-        await this._terrain.applyRunOutput({
-            displacement: this._displacementRenderNode,
-            range: this._displacementRangeComputeNode,
-            radius: this._displacementRadiusComputeNode
-        });
+        await this._terrain.applyRunOutput(
+            this._displacementErosionRenderNode,
+            this._displacementRangeComputeNode,
+            this._displacementRadiusComputeNode);
         this._running = false;
     }
 }

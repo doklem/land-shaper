@@ -15,8 +15,8 @@
         "riverRange": 1,
         "shoreStart": 1.5,
         "shoreRange": 0.4,
-        "sedimentStart": 0.1,
-        "sedimentRange": 0.3,
+        "sedimentStart": 0,
+        "sedimentRange": 0.1,
         "bedrockFlatNoRiverNoLake": {
             "colorA": 4546613,
             "colorB": 8361216,
@@ -215,10 +215,10 @@
         "maxLifetime": 50,
         "inertia": 0.05,
         "sedimentCapacityFactor": 4,
-        "minSedimentCapacity": 0.05,
-        "depositSpeed": 0.2,
-        "erodeSpeed": 0.2,
-        "evaporateSpeed": 0.1,
+        "minSedimentCapacity": 0.01,
+        "depositSpeed": 0.1,
+        "erodeSpeed": 0.1,
+        "evaporateSpeed": 0.05,
         "gravity": 9.807,
         "startSpeed": 1,
         "startWater": 1
@@ -276,8 +276,8 @@
             "x": 1,
             "y": 1
         },
-        "iterations": 10,
-        "tanThreshold": 0
+        "iterations": 100,
+        "tanThreshold": 0.4
     },
     "topology": {
         "octaves": 9,

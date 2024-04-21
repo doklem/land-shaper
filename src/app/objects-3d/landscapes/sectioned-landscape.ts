@@ -194,11 +194,11 @@ export class SectionedLandscape extends Group implements ILandscape {
 
                 const uvOffsetKey = SectionedLandscape.uvOffsetToKey(uvOffset);
                 const promises: Promise<void>[] = [
-                    this._terrains.get(uvOffsetKey)!.applyRunOutput({
-                        displacement: this._displacementRenderNode,
-                        range: this._displacementRangeComputeNode,
-                        radius: this._displacementRadiusComputeNode
-                    }),
+                    this._terrains.get(uvOffsetKey)!.applyRunOutput(
+                        this._displacementRenderNode,
+                        this._displacementRangeComputeNode,
+                        this._displacementRadiusComputeNode
+                    ),
                     this._rubbles.get(uvOffsetKey)!.applyRunOutput()
                 ];
                 await Promise.all(promises);

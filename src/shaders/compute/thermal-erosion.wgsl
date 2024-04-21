@@ -6,7 +6,6 @@ struct ShaderConfig {
     tanThreshold: f32, //ToDo: Use different thresholds for bedrock and sediment.
 }
 
-const NEIGHBOUR_COUNT: i32 = 8;
 const OFFSET_NW: vec2i = vec2i(-1, -1);
 const OFFSET_N: vec2i = vec2i(0, -1);
 const OFFSET_NE: vec2i = vec2i(1, -1);
@@ -31,8 +30,6 @@ var<storage, read_write> displacementBedrockOut: array<f32>;
 @group(0) @binding(4)
 var<storage, read_write> displacementSedimentOut: array<f32>;
 
-var<private> samples: array<f32,NEIGHBOUR_COUNT>;
-
 fn toIndex(position: vec2i) -> i32
 {
 	return position.x + position.y * config.mapSize.x;
@@ -40,8 +37,9 @@ fn toIndex(position: vec2i) -> i32
 
 fn getNeighbourDelta(position: vec2i, neighbourOffset: vec2i, height: f32) -> f32
 {
-	var neighbourId = toIndex(position + neighbourOffset);
-	return displacementBedrock[neighbourId] + displacementSediment[neighbourId] - height;
+	let neighbourId = toIndex(position + neighbourOffset);
+	let delta = displacementBedrock[neighbourId] + displacementSediment[neighbourId] - height;
+	return delta * step(config.tanThreshold, abs(delta)) * config.amplitude;
 }
 
 @compute @workgroup_size(8, 8, 1)
@@ -54,25 +52,16 @@ fn main(@builtin(global_invocation_id) global_invocation_id : vec3<u32>)
 	let heightSediment = displacementSediment[id];
 	let height = heightBedrock + heightSediment;
     
-	// Sample a 3x3 grid around the pixel
-	samples[0] = getNeighbourDelta(position, OFFSET_NW, height);
-	samples[1] = getNeighbourDelta(position, OFFSET_N, height);
-	samples[2] = getNeighbourDelta(position, OFFSET_NE, height);
-	samples[3] = getNeighbourDelta(position, OFFSET_W, height);
-	samples[4] = getNeighbourDelta(position, OFFSET_E, height);
-	samples[5] = getNeighbourDelta(position, OFFSET_SW, height);
-	samples[6] = getNeighbourDelta(position, OFFSET_S, height);
-	samples[7] = getNeighbourDelta(position, OFFSET_SE, height);
-		
-	// Check stability with all neighbours
+	// Sample a 3x3 grid around the pixel and check stability with each neighbour
 	var newHeightSediment = heightSediment;
-	for (var i = 0; i < NEIGHBOUR_COUNT; i++)
-	{
-		let neighbourDelta = samples[i];
-		if (abs(neighbourDelta) > config.tanThreshold) {
-			newHeightSediment += neighbourDelta * config.amplitude;
-		}
-	}
+	newHeightSediment += getNeighbourDelta(position, OFFSET_NW, height);
+	newHeightSediment += getNeighbourDelta(position, OFFSET_N, height);
+	newHeightSediment += getNeighbourDelta(position, OFFSET_NE, height);
+	newHeightSediment += getNeighbourDelta(position, OFFSET_W, height);
+	newHeightSediment += getNeighbourDelta(position, OFFSET_E, height);
+	newHeightSediment += getNeighbourDelta(position, OFFSET_SW, height);
+	newHeightSediment += getNeighbourDelta(position, OFFSET_S, height);
+	newHeightSediment += getNeighbourDelta(position, OFFSET_SE, height);
 
 	// Blend with border
 	let blend = min(smoothstep(
@@ -83,7 +72,7 @@ fn main(@builtin(global_invocation_id) global_invocation_id : vec3<u32>)
 			vec2f(config.mapSize) - config.borderMax,
 			vec2f(config.mapSize) - config.borderMin,
 			vec2f(global_invocation_id.xy)));
-	var border = min(blend.x, blend.y);
+	let border = min(blend.x, blend.y);
 
 	// Add/Remove matter if necessary
 	displacementSedimentOut[id] = mix(heightSediment, max(0, newHeightSediment), border);

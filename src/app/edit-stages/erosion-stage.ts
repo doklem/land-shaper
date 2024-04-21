@@ -42,7 +42,7 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
         this._folders.push(thremalErosionFolder);
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion, 'iterations', 1, 2000, 1).name('Iterations'));
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion, 'amplitude', 0, 0.1, 0.001).name('Amplitude'));
-        this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion, 'tanThreshold', 0, 1000, 0.01).name('Slope Threshold'));
+        this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion, 'tanThreshold', 0, 10, 0.01).name('Slope Threshold'));
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion.borderMin, 'x', 1, 2000, 1).name('Border X'));
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion.borderMin, 'y', 1, 2000, 1).name('Border Y'));
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion.borderRange, 'x', 1, 2000, 1).name('Border X Range'));

@@ -9,7 +9,7 @@
         "amplitude": 0.03
     },
     "diffuse": {
-        "slopStart": 0.767,
+        "slopStart": 0.8,
         "slopRange": 0.05,
         "riverStart": 20,
         "riverRange": 30,
@@ -276,8 +276,8 @@
             "x": 1,
             "y": 1
         },
-        "iterations": 10,
-        "tanThreshold": 0
+        "iterations": 100,
+        "tanThreshold": 0.1
     },
     "topology": {
         "octaves": 5,
