@@ -2,7 +2,6 @@ import ComputeShader from '../../../shaders/compute/thermal-erosion.wgsl';
 import { Vector3 } from 'three';
 import { IServiceProvider } from '../../services/service-provider';
 import { ComputeNodeBase } from './compute-node-base';
-import { BufferService } from '../../services/buffer-service';
 
 export class ThermalErosionComputeNode extends ComputeNodeBase {
 
@@ -10,8 +9,8 @@ export class ThermalErosionComputeNode extends ComputeNodeBase {
     private static readonly WORKGROUP_SIZE = new Vector3(8, 8, 1);
 
     private readonly _bindGroups: GPUBindGroup[];
-    private readonly _displacementBuffers: GPUBuffer[];
-    private readonly _stagingBuffer: GPUBuffer;
+    private readonly _displacementBedrockBuffers: GPUBuffer[];
+    private readonly _displacementSedimentBuffers: GPUBuffer[];
     private readonly _uniformConfigBuffer: GPUBuffer;
     private readonly _uniformConfigArray: ArrayBuffer;
 
@@ -33,18 +32,23 @@ export class ThermalErosionComputeNode extends ComputeNodeBase {
             + Float32Array.BYTES_PER_ELEMENT * 6);
         this._uniformConfigBuffer = this.createUniformBuffer(this._uniformConfigArray.byteLength);
 
-        this._displacementBuffers = [];
-        const buffers = this.createExportableBuffer(
-            'Displacement A',
-            _serviceProvider.textures.displacementErosion.byteLength);
-        this._displacementBuffers.push(buffers.buffer);
-        this._stagingBuffer = buffers.staging;
-        this._displacementBuffers.push(
-            this.createBuffer(
-                'Displacement B',
-                _serviceProvider.textures.displacementErosion.byteLength,
+        this._displacementBedrockBuffers = [
+            this.createBuffer('Displacement Bedrock A',
+                _serviceProvider.textures.displacementErosionBedrock.byteLength,
+                GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE),
+            this.createBuffer('Displacement Bedrock B',
+                _serviceProvider.textures.displacementErosionBedrock.byteLength,
                 GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE)
-        );
+        ];
+
+        this._displacementSedimentBuffers = [
+            this.createBuffer('Displacement Sediment A',
+                _serviceProvider.textures.displacementErosionSediment.byteLength,
+                GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE),
+            this.createBuffer('Displacement Sediment B',
+                _serviceProvider.textures.displacementErosionSediment.byteLength,
+                GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE)
+        ];
 
         // bind group layout
         const bindGroupLayout = _serviceProvider.device.createBindGroupLayout({
@@ -56,12 +60,22 @@ export class ThermalErosionComputeNode extends ComputeNodeBase {
                     buffer: { type: 'uniform' }
                 },
                 {
-                    binding: 1, // displacement input
+                    binding: 1, // displacement bedrock input
                     visibility: GPUShaderStage.COMPUTE,
                     buffer: { type: 'read-only-storage' }
                 },
                 {
-                    binding: 2, // displacement output
+                    binding: 2, // displacement sediment input
+                    visibility: GPUShaderStage.COMPUTE,
+                    buffer: { type: 'read-only-storage' }
+                },
+                {
+                    binding: 3, // displacement bedrock output
+                    visibility: GPUShaderStage.COMPUTE,
+                    buffer: { type: 'storage' }
+                },
+                {
+                    binding: 4, // displacement sediment output
                     visibility: GPUShaderStage.COMPUTE,
                     buffer: { type: 'storage' }
                 },
@@ -80,11 +94,19 @@ export class ThermalErosionComputeNode extends ComputeNodeBase {
                     },
                     {
                         binding: 1,
-                        resource: { buffer: this._displacementBuffers[0] },
+                        resource: { buffer: this._displacementBedrockBuffers[0] },
                     },
                     {
                         binding: 2,
-                        resource: { buffer: this._displacementBuffers[1] },
+                        resource: { buffer: this._displacementSedimentBuffers[0] },
+                    },
+                    {
+                        binding: 3,
+                        resource: { buffer: this._displacementBedrockBuffers[1] },
+                    },
+                    {
+                        binding: 4,
+                        resource: { buffer: this._displacementSedimentBuffers[1] },
                     },
                 ]
             }),
@@ -98,11 +120,19 @@ export class ThermalErosionComputeNode extends ComputeNodeBase {
                     },
                     {
                         binding: 1,
-                        resource: { buffer: this._displacementBuffers[1] },
+                        resource: { buffer: this._displacementBedrockBuffers[1] },
                     },
                     {
                         binding: 2,
-                        resource: { buffer: this._displacementBuffers[0] },
+                        resource: { buffer: this._displacementSedimentBuffers[1] },
+                    },
+                    {
+                        binding: 3,
+                        resource: { buffer: this._displacementBedrockBuffers[0] },
+                    },
+                    {
+                        binding: 4,
+                        resource: { buffer: this._displacementSedimentBuffers[0] },
                     },
                 ]
             })
@@ -124,12 +154,18 @@ export class ThermalErosionComputeNode extends ComputeNodeBase {
         computePassEncoder.end();
         commandEncoder.copyBufferToTexture(
             {
-                buffer: this._displacementBuffers[0],
-                bytesPerRow: this._serviceProvider.textures.displacementErosion.bytesPerRow,
+                buffer: this._displacementBedrockBuffers[0],
+                bytesPerRow: this._serviceProvider.textures.displacementErosionBedrock.bytesPerRow,
             },
-            this._serviceProvider.textures.displacementErosion,
-            this._serviceProvider.textures.displacementErosion);
-        commandEncoder.copyBufferToBuffer(this._displacementBuffers[0], 0, this._stagingBuffer, 0, this._displacementBuffers[0].size);
+            this._serviceProvider.textures.displacementErosionBedrock,
+            this._serviceProvider.textures.displacementErosionBedrock);
+        commandEncoder.copyBufferToTexture(
+            {
+                buffer: this._displacementSedimentBuffers[0],
+                bytesPerRow: this._serviceProvider.textures.displacementErosionSediment.bytesPerRow,
+            },
+            this._serviceProvider.textures.displacementErosionSediment,
+            this._serviceProvider.textures.displacementErosionSediment);
     }
 
     public configureRun(): void {
@@ -145,7 +181,7 @@ export class ThermalErosionComputeNode extends ComputeNodeBase {
         offset += Float32Array.BYTES_PER_ELEMENT;
         view.setFloat32(offset, erosion.borderMin.y, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
-        
+
         view.setFloat32(offset, erosion.borderMin.x + erosion.borderRange.x, constants.littleEndian);
         offset += Float32Array.BYTES_PER_ELEMENT;
         view.setFloat32(offset, erosion.borderMin.y + erosion.borderRange.y, constants.littleEndian);
@@ -159,16 +195,19 @@ export class ThermalErosionComputeNode extends ComputeNodeBase {
     public initialize(): void {
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         commandEncoder.copyTextureToBuffer(
-            this._serviceProvider.textures.displacementErosion,
+            this._serviceProvider.textures.displacementErosionBedrock,
             {
-                buffer: this._displacementBuffers[0],
-                bytesPerRow: this._serviceProvider.textures.displacementErosion.bytesPerRow
+                buffer: this._displacementBedrockBuffers[0],
+                bytesPerRow: this._serviceProvider.textures.displacementErosionBedrock.bytesPerRow
             },
-            this._serviceProvider.textures.displacementErosion);
+            this._serviceProvider.textures.displacementErosionBedrock);
+        commandEncoder.copyTextureToBuffer(
+            this._serviceProvider.textures.displacementErosionSediment,
+            {
+                buffer: this._displacementSedimentBuffers[0],
+                bytesPerRow: this._serviceProvider.textures.displacementErosionSediment.bytesPerRow
+            },
+            this._serviceProvider.textures.displacementErosionSediment);
         this._serviceProvider.device.queue.submit([commandEncoder.finish()]);
-    }
-
-    public async readOutputBuffer(output: Float32Array): Promise<void> {
-        output.set(new Float32Array(await BufferService.readGPUBuffer(this._stagingBuffer)));
     }
 }

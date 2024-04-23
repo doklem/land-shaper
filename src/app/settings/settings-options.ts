@@ -4,9 +4,11 @@ import { ILightOptions } from './light-options';
 
 export interface ISettingsOptions {
 
-    readonly blur: {
-        size: Vector2Like;
-        strength: number;
+    readonly bumps: {
+        seed: number;
+        octaves: number;
+        scale: Vector2Like;
+        amplitude: number;
     };
 
     readonly diffuse: {
@@ -16,9 +18,24 @@ export interface ISettingsOptions {
         riverRange: number;
         shoreStart: number;
         shoreRange: number;
-        vegetation: IMixedColorOptions;
-        bedrock: IMixedColorOptions;
-        gravel: IMixedColorOptions;
+        sedimentStart: number;
+        sedimentRange: number;
+        bedrockFlatNoRiverNoLake: IMixedColorOptions;
+        bedrockFlatNoRiverLake: IMixedColorOptions;
+        bedrockFlatRiverNoLake: IMixedColorOptions;
+        bedrockFlatRiverLake: IMixedColorOptions;
+        bedrockSlopeNoRiverNoLake: IMixedColorOptions;
+        bedrockSlopeNoRiverLake: IMixedColorOptions;
+        bedrockSlopeRiverNoLake: IMixedColorOptions;
+        bedrockSlopeRiverLake: IMixedColorOptions;
+        sedimentFlatNoRiverNoLake: IMixedColorOptions;
+        sedimentFlatNoRiverLake: IMixedColorOptions;
+        sedimentFlatRiverNoLake: IMixedColorOptions;
+        sedimentFlatRiverLake: IMixedColorOptions;
+        sedimentSlopeNoRiverNoLake: IMixedColorOptions;
+        sedimentSlopeNoRiverLake: IMixedColorOptions;
+        sedimentSlopeRiverNoLake: IMixedColorOptions;
+        sedimentSlopeRiverLake: IMixedColorOptions;
     };
 
     readonly dropletErosion: {
@@ -37,13 +54,6 @@ export interface ISettingsOptions {
 
     readonly light: ILightOptions;
 
-    readonly normals: {
-        seed: number;
-        octaves: number;
-        scale: Vector2Like;
-        amplitude: number;
-    };
-
     readonly ocean: {
         distortionScale: number;
         size: number;
@@ -53,9 +63,15 @@ export interface ISettingsOptions {
 
     readonly rubble: {
         scale: Vector3Like;
-        slopStart: number;
-        slopRange: number;
         color: IMixedColorOptions;
+        sedimentStart: number;
+        sedimentRange: number;
+        slopeStart: number;
+        slopeRange: number;
+        riverStart: number;
+        riverRange: number;
+        lakeStart: number;
+        lakeRange: number;
     };
 
     readonly sky: {

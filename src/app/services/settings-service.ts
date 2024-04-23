@@ -7,9 +7,11 @@ import { ISettingsOptions } from '../settings/settings-options';
 
 export class SettingsService implements ISettingsOptions {
 
-    public readonly blur = {
-        size: new Vector2(),
-        strength: 0,
+    public readonly bumps = {
+        seed: 0,
+        octaves: 0,
+        scale: new Vector2(),
+        amplitude: 0,
     };
 
     public readonly constants: {
@@ -57,9 +59,24 @@ export class SettingsService implements ISettingsOptions {
         riverRange: 0,
         shoreStart: 0,
         shoreRange: 0,
-        vegetation: new MixedColorSettings(),
-        bedrock: new MixedColorSettings(),
-        gravel: new MixedColorSettings(),
+        sedimentStart: 0,
+        sedimentRange: 0,
+        bedrockFlatNoRiverNoLake: new MixedColorSettings(),
+        bedrockFlatNoRiverLake: new MixedColorSettings(),
+        bedrockFlatRiverNoLake: new MixedColorSettings(),
+        bedrockFlatRiverLake: new MixedColorSettings(),
+        bedrockSlopeNoRiverNoLake: new MixedColorSettings(),
+        bedrockSlopeNoRiverLake: new MixedColorSettings(),
+        bedrockSlopeRiverNoLake: new MixedColorSettings(),
+        bedrockSlopeRiverLake: new MixedColorSettings(),
+        sedimentFlatNoRiverNoLake: new MixedColorSettings(),
+        sedimentFlatNoRiverLake: new MixedColorSettings(),
+        sedimentFlatRiverNoLake: new MixedColorSettings(),
+        sedimentFlatRiverLake: new MixedColorSettings(),
+        sedimentSlopeNoRiverNoLake: new MixedColorSettings(),
+        sedimentSlopeNoRiverLake: new MixedColorSettings(),
+        sedimentSlopeRiverNoLake: new MixedColorSettings(),
+        sedimentSlopeRiverLake: new MixedColorSettings(),
     };
 
     public readonly dropletErosion = {
@@ -78,13 +95,6 @@ export class SettingsService implements ISettingsOptions {
 
     public readonly light = new LightSettings();
 
-    public readonly normals = {
-        seed: 0,
-        octaves: 0,
-        scale: new Vector2(),
-        amplitude: 0,
-    };
-
     public readonly ocean = {
         distortionScale: 0,
         size: 0,
@@ -94,9 +104,15 @@ export class SettingsService implements ISettingsOptions {
 
     public readonly rubble = {
         scale: new Vector3(),
-        slopStart: 0,
-        slopRange: 0,
         color: new MixedColorSettings(),
+        sedimentStart: 0,
+        sedimentRange: 0,
+        slopeStart: 0,
+        slopeRange: 0,
+        riverStart: 0,
+        riverRange: 0,
+        lakeStart: 0,
+        lakeRange: 0
     };
 
     public readonly sky = {
@@ -161,7 +177,7 @@ export class SettingsService implements ISettingsOptions {
 
     public get(): ISettingsOptions {
         return {
-            blur: this.blur,
+            bumps: this.bumps,
             diffuse: this.diffuse,
             dropletErosion: this.dropletErosion,
             light: {
@@ -170,7 +186,6 @@ export class SettingsService implements ISettingsOptions {
                 directional: this.light.directional,
                 elevation: this.light.elevation
             },
-            normals: this.normals,
             ocean: this.ocean,
             rubble: this.rubble,
             sky: this.sky,
@@ -180,11 +195,11 @@ export class SettingsService implements ISettingsOptions {
     }
 
     public set(options: ISettingsOptions): void {
-        this.blur.size.set(options.blur.size.x, options.blur.size.y);
-        this.blur.strength = options.blur.strength;
+        this.bumps.amplitude = options.bumps.amplitude;
+        this.bumps.octaves = options.bumps.octaves;
+        this.bumps.scale.set(options.bumps.scale.x, options.bumps.scale.y);
+        this.bumps.seed = options.bumps.seed;
 
-        this.diffuse.bedrock.set(options.diffuse.bedrock);
-        this.diffuse.gravel.set(options.diffuse.gravel);
         this.diffuse.riverRange = options.diffuse.riverRange;
         this.diffuse.riverStart = options.diffuse.riverStart;
         this.diffuse.shoreRange = options.diffuse.shoreRange;
@@ -193,7 +208,24 @@ export class SettingsService implements ISettingsOptions {
         this.diffuse.shoreStart = options.diffuse.shoreStart;
         this.diffuse.slopRange = options.diffuse.slopRange;
         this.diffuse.slopStart = options.diffuse.slopStart;
-        this.diffuse.vegetation.set(options.diffuse.vegetation);
+        this.diffuse.sedimentRange = options.diffuse.sedimentRange;
+        this.diffuse.sedimentStart = options.diffuse.sedimentStart;
+        this.diffuse.bedrockFlatNoRiverNoLake.set(options.diffuse.bedrockFlatNoRiverNoLake);
+        this.diffuse.bedrockFlatNoRiverLake.set(options.diffuse.bedrockFlatNoRiverLake);
+        this.diffuse.bedrockFlatRiverNoLake.set(options.diffuse.bedrockFlatRiverNoLake);
+        this.diffuse.bedrockFlatRiverLake.set(options.diffuse.bedrockFlatRiverLake);
+        this.diffuse.bedrockSlopeNoRiverNoLake.set(options.diffuse.bedrockSlopeNoRiverNoLake);
+        this.diffuse.bedrockSlopeNoRiverLake.set(options.diffuse.bedrockSlopeNoRiverLake);
+        this.diffuse.bedrockSlopeRiverNoLake.set(options.diffuse.bedrockSlopeRiverNoLake);
+        this.diffuse.bedrockSlopeRiverLake.set(options.diffuse.bedrockSlopeRiverLake);
+        this.diffuse.sedimentFlatNoRiverNoLake.set(options.diffuse.sedimentFlatNoRiverNoLake);
+        this.diffuse.sedimentFlatNoRiverLake.set(options.diffuse.sedimentFlatNoRiverLake);
+        this.diffuse.sedimentFlatRiverNoLake.set(options.diffuse.sedimentFlatRiverNoLake);
+        this.diffuse.sedimentFlatRiverLake.set(options.diffuse.sedimentFlatRiverLake);
+        this.diffuse.sedimentSlopeNoRiverNoLake.set(options.diffuse.sedimentSlopeNoRiverNoLake);
+        this.diffuse.sedimentSlopeNoRiverLake.set(options.diffuse.sedimentSlopeNoRiverLake);
+        this.diffuse.sedimentSlopeRiverNoLake.set(options.diffuse.sedimentSlopeRiverNoLake);
+        this.diffuse.sedimentSlopeRiverLake.set(options.diffuse.sedimentSlopeRiverLake);
 
         this.dropletErosion.depositSpeed = options.dropletErosion.depositSpeed;
         this.dropletErosion.erodeSpeed = options.dropletErosion.erodeSpeed;
@@ -209,11 +241,6 @@ export class SettingsService implements ISettingsOptions {
 
         this.light.set(options.light);
 
-        this.normals.amplitude = options.normals.amplitude;
-        this.normals.octaves = options.normals.octaves;
-        this.normals.scale.set(options.normals.scale.x, options.normals.scale.y);
-        this.normals.seed = options.normals.seed;
-
         this.ocean.color.set(options.ocean.color);
         this.ocean.distortionScale = options.ocean.distortionScale;
         this.ocean.size = options.ocean.size;
@@ -221,8 +248,14 @@ export class SettingsService implements ISettingsOptions {
 
         this.rubble.color.set(options.rubble.color);
         this.rubble.scale.set(options.rubble.scale.x, options.rubble.scale.y, options.rubble.scale.z);
-        this.rubble.slopRange = options.rubble.slopRange;
-        this.rubble.slopStart = options.rubble.slopStart;
+        this.rubble.sedimentRange = options.rubble.sedimentRange;
+        this.rubble.sedimentStart = options.rubble.sedimentStart;
+        this.rubble.slopeRange = options.rubble.slopeRange;
+        this.rubble.slopeStart = options.rubble.slopeStart;
+        this.rubble.riverRange = options.rubble.riverRange;
+        this.rubble.riverStart = options.rubble.riverStart;
+        this.rubble.lakeRange = options.rubble.lakeRange;
+        this.rubble.lakeStart = options.rubble.lakeStart;
 
         this.sky.rayleigh = options.sky.rayleigh;
         this.sky.turbidity = options.sky.turbidity;

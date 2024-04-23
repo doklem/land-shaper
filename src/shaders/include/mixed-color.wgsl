@@ -5,7 +5,7 @@ struct MixedColor {
     octaves: i32,
     start: f32,
     range: f32,
-    scale: vec2f,
+    @align(16)scale: vec2f,
 }
 
 fn getMixedColorWithSeed(color: MixedColor, uv: vec2f, seed: f32) -> vec4f {

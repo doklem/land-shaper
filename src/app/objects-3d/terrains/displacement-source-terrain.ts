@@ -77,15 +77,13 @@ export class DisplacementSourceTerrain extends TerrainBase implements IDisplacem
     }
 
     public async applyRunOutput(
-        displacementProviders: {
-            displacement: IDisplacementNode,
-            range: DisplacementRangeComputeNode,
-            radius: DisplacementRadiusComputeNode
-        }): Promise<void> {
+        displacement: IDisplacementNode,
+        range: DisplacementRangeComputeNode,
+        radius: DisplacementRadiusComputeNode): Promise<void> {
         const promises: Promise<void>[] = [
-            displacementProviders.displacement.readOutputBuffer(this._displacementOutput),
-            displacementProviders.range.readOutputBuffer(this._displacementMin, this._displacementMax),
-            displacementProviders.radius.readOutputBuffer(this._displacementRadius)
+            displacement.readOutputBuffer(this._displacementOutput),
+            range.readOutputBuffer(this._displacementMin, this._displacementMax),
+            radius.readOutputBuffer(this._displacementRadius)
         ];
         if (this._normalTangentSpaceRenderNode && this._normalOutput) {
             promises.push(this._normalTangentSpaceRenderNode.readOutputBuffer(this._normalOutput));

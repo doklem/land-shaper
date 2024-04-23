@@ -6,8 +6,12 @@ struct ShaderConfig {
     uvSection: UvSection,
     itemsDimensions: vec2f,
     meshSize: vec2f,
-    scaleFactor: vec3f,
+    sediment: vec2f,
+    slope: vec2f,
+    river: vec2f,
+    lake: vec2f,
     color: MixedColor,
+    scaleFactor: vec3f
 }
 
 @group(0) @binding(0)
@@ -62,6 +66,11 @@ fn compose(position: vec3f, quaternion: vec4f, scale: vec3f) -> mat4x4f {
         position.x, position.y, position.z, 1.);
 }
 
+fn getScaleFromSurface(scaleRange: vec2f, level: f32) -> f32
+{
+    return min(step(scaleRange.x, level), 1. - step(scaleRange.x + scaleRange.y, level));
+}
+
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_invocation_id : vec3<u32>) {
     if (global_invocation_id.x >= arrayLength(&matrices)) {
@@ -77,8 +86,13 @@ fn main(@builtin(global_invocation_id) global_invocation_id : vec3<u32>) {
     let gridUv = gridPosition / config.itemsDimensions;
     let uv = config.uvSection.offset + gridUv * config.uvSection.range;
     
-    let vegetation = smoothstep(.8, .9, 1. - textureSampleLevel(surfaceTexture, samplerLinearClamp, uv, 0).y);
-    let scale = vegetation * (random3(vec3f(uv, 1.)) + 1.5) * config.scaleFactor;
+    let surface = textureSampleLevel(surfaceTexture, samplerLinearClamp, uv, 0);
+    var scaleBySurface = getScaleFromSurface(config.sediment, surface.r);
+    scaleBySurface = max(scaleBySurface, getScaleFromSurface(config.slope, surface.g));
+    scaleBySurface = max(scaleBySurface, getScaleFromSurface(config.river, surface.b));
+    scaleBySurface = max(scaleBySurface, getScaleFromSurface(config.lake, surface.a));
+
+    let scale = scaleBySurface * (random3(vec3f(uv, 1.)) + 1.5) * config.scaleFactor;
     let height = textureSampleLevel(displacementTexture, samplerLinearClamp, uv, 0).x;
     let rotation = random3(vec3f(uv, 2.));
     let position2d = config.meshSize * (uv - config.uvSection.offset);

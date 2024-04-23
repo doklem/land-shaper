@@ -11,9 +11,11 @@ import { Ocean } from '../ocean';
 import { IServiceProvider } from '../../services/service-provider';
 import { IDisplacementSource } from '../terrains/displacement-source';
 import { DisplacementDestinationTerrain } from '../terrains/displacement-destination-terrain';
+import { BumpsRenderNode } from '../../nodes/render-nodes/bumps-render-node';
 
 export class ColoringLandscape extends Group implements ILandscape {
 
+    private readonly _bumpsRenderNode: BumpsRenderNode;
     private readonly _diffuseRenderNode: DiffuseRenderNode;
     private readonly _normalObjectSpaceRenderNode: NormalObjectSpaceRenderNode;
     private readonly _normalTangentSpaceRenderNode: NormalTangentSpaceRenderNode;
@@ -35,11 +37,38 @@ export class ColoringLandscape extends Group implements ILandscape {
         this.applyMatrix4(_serviceProvider.settings.constants.transformation);
         const uvRange = new Vector2(1, 1);
 
-        this._normalObjectSpaceRenderNode = new NormalObjectSpaceRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.displacementErosion, _serviceProvider.textures.normalObjectSpace);
-        this._normalTangentSpaceRenderNode = new NormalTangentSpaceRenderNode(_serviceProvider, _serviceProvider.textures.normalObjectSpace, _serviceProvider.textures.normalTangentSpace);
-        this._diffuseRenderNode = new DiffuseRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.surface, _serviceProvider.textures.displacementErosion, _serviceProvider.textures.diffuse);
-        this._rubbleComputeNode = new RubbleComputeNode(_serviceProvider, uvRange, _serviceProvider.settings.constants.rubble.dimensions);
-        this._surfaceRenderNode = new SurfaceRenderNode(_serviceProvider, uvRange, _serviceProvider.textures.normalObjectSpace, _serviceProvider.textures.displacementErosion, _serviceProvider.textures.water, _serviceProvider.textures.surface);
+        this._bumpsRenderNode = new BumpsRenderNode(
+            _serviceProvider,
+            uvRange,
+            _serviceProvider.textures.bumps);
+        this._normalObjectSpaceRenderNode = new NormalObjectSpaceRenderNode(
+            _serviceProvider,
+            uvRange,
+            _serviceProvider.textures.displacementErosion,
+            _serviceProvider.textures.bumps,
+            _serviceProvider.textures.normalObjectSpace);
+        this._normalTangentSpaceRenderNode = new NormalTangentSpaceRenderNode(
+            _serviceProvider,
+            _serviceProvider.textures.normalObjectSpace,
+            _serviceProvider.textures.normalTangentSpace);
+        this._diffuseRenderNode = new DiffuseRenderNode(
+            _serviceProvider,
+            uvRange,
+            _serviceProvider.textures.surface,
+            _serviceProvider.textures.displacementErosion,
+            _serviceProvider.textures.diffuse);
+        this._rubbleComputeNode = new RubbleComputeNode(
+            _serviceProvider,
+            uvRange,
+            _serviceProvider.settings.constants.rubble.dimensions);
+        this._surfaceRenderNode = new SurfaceRenderNode(
+            _serviceProvider,
+            uvRange,
+            _serviceProvider.textures.normalObjectSpace,
+            _serviceProvider.textures.displacementErosionBedrock,
+            _serviceProvider.textures.displacementErosionSediment,
+            _serviceProvider.textures.water,
+            _serviceProvider.textures.surface);
         this._waterComputeNode = new WaterComputeNode(_serviceProvider);
 
         this._rubble = new Rubble(_serviceProvider, _serviceProvider.settings.constants.meshLodDistance, this._rubbleComputeNode);
@@ -77,6 +106,7 @@ export class ColoringLandscape extends Group implements ILandscape {
     }
 
     public dispose(): void {
+        this._bumpsRenderNode.dispose();
         this._diffuseRenderNode.dispose();
         this._normalObjectSpaceRenderNode.dispose();
         this._normalTangentSpaceRenderNode.dispose();
@@ -95,6 +125,7 @@ export class ColoringLandscape extends Group implements ILandscape {
         this._running = true;
 
         this._waterComputeNode.configureRun();
+        this._bumpsRenderNode.configureRun();
         this._normalObjectSpaceRenderNode.configureRun();
         this._surfaceRenderNode.configureRun();
         this._diffuseRenderNode.configureRun();
@@ -102,6 +133,7 @@ export class ColoringLandscape extends Group implements ILandscape {
 
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
         this._waterComputeNode.appendComputePass(commandEncoder);
+        this._bumpsRenderNode.appendRenderPass(commandEncoder);
         this._normalObjectSpaceRenderNode.appendRenderPass(commandEncoder);
         this._normalTangentSpaceRenderNode.appendRenderPass(commandEncoder);
         this._surfaceRenderNode.appendRenderPass(commandEncoder);
@@ -119,12 +151,14 @@ export class ColoringLandscape extends Group implements ILandscape {
         }
         this._running = true;
 
+        this._bumpsRenderNode.configureRun();
         this._normalObjectSpaceRenderNode.configureRun();
         this._surfaceRenderNode.configureRun();
         this._diffuseRenderNode.configureRun();
         this._rubbleComputeNode.configureRun();
 
         const commandEncoder = this._serviceProvider.device.createCommandEncoder();
+        this._bumpsRenderNode.appendRenderPass(commandEncoder);
         this._normalObjectSpaceRenderNode.appendRenderPass(commandEncoder);
         this._normalTangentSpaceRenderNode.appendRenderPass(commandEncoder);
         this._surfaceRenderNode.appendRenderPass(commandEncoder);

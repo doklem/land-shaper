@@ -1,19 +1,23 @@
 {
-    "blur": {
-        "size": {
-            "x": 2,
-            "y": 2
+    "bumps": {
+        "seed": 0,
+        "octaves": 3,
+        "scale": {
+            "x": 1000,
+            "y": 1000
         },
-        "strength": 0.5
+        "amplitude": 0.03
     },
     "diffuse": {
         "slopStart": 0.85,
-        "slopRange": 0.05,
-        "riverStart": 20,
-        "riverRange": 30,
-        "shoreStart": 3,
-        "shoreRange": 0.2,
-        "vegetation": {
+        "slopRange": 0.01,
+        "riverStart": 50,
+        "riverRange": 1,
+        "shoreStart": 1.5,
+        "shoreRange": 0.4,
+        "sedimentStart": 0,
+        "sedimentRange": 0.1,
+        "bedrockFlatNoRiverNoLake": {
             "colorA": 4546613,
             "colorB": 8361216,
             "seed": 0,
@@ -25,7 +29,43 @@
                 "y": 50
             }
         },
-        "bedrock": {
+        "bedrockFlatNoRiverLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "bedrockFlatRiverNoLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "bedrockFlatRiverLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "bedrockSlopeNoRiverNoLake": {
             "colorA": 16777215,
             "colorB": 9737364,
             "seed": 0.7,
@@ -37,7 +77,127 @@
                 "y": 8
             }
         },
-        "gravel": {
+        "bedrockSlopeNoRiverLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "bedrockSlopeRiverNoLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "bedrockSlopeRiverLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "sedimentFlatNoRiverNoLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "sedimentFlatNoRiverLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "sedimentFlatRiverNoLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "sedimentFlatRiverLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "sedimentSlopeNoRiverNoLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "sedimentSlopeNoRiverLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "sedimentSlopeRiverNoLake": {
+            "colorA": 16777215,
+            "colorB": 9737364,
+            "seed": 0,
+            "octaves": 1,
+            "start": -1,
+            "range": 2,
+            "scale": {
+                "x": 500,
+                "y": 500
+            }
+        },
+        "sedimentSlopeRiverLake": {
             "colorA": 16777215,
             "colorB": 9737364,
             "seed": 0,
@@ -55,10 +215,10 @@
         "maxLifetime": 50,
         "inertia": 0.05,
         "sedimentCapacityFactor": 4,
-        "minSedimentCapacity": 0.05,
-        "depositSpeed": 0.2,
-        "erodeSpeed": 0.2,
-        "evaporateSpeed": 0.1,
+        "minSedimentCapacity": 0.01,
+        "depositSpeed": 0.1,
+        "erodeSpeed": 0.1,
+        "evaporateSpeed": 0.05,
         "gravity": 9.807,
         "startSpeed": 1,
         "startWater": 1
@@ -68,15 +228,6 @@
         "azimuth": 92,
         "directional": 16777215,
         "elevation": 45
-    },
-    "normals": {
-        "seed": 0,
-        "octaves": 3,
-        "scale": {
-            "x": 1000,
-            "y": 1000
-        },
-        "amplitude": 0.03
     },
     "ocean": {
         "distortionScale": 3.7,
@@ -90,8 +241,6 @@
             "y": 0.5,
             "z": 0.5
         },
-        "slopStart": 0.7,
-        "slopRange": 0.1,
         "color": {
             "colorA": 12632256,
             "colorB": 15658734,
@@ -103,7 +252,15 @@
                 "x": 10,
                 "y": 10
             }
-        }
+        },
+        "sedimentStart": 0.142,
+        "sedimentRange": 1,
+        "slopeStart": 0,
+        "slopeRange": 0,
+        "riverStart": 0,
+        "riverRange": 0,
+        "lakeStart": 0.7,
+        "lakeRange": 1
     },
     "sky": {
         "turbidity": 0.1,
@@ -119,8 +276,8 @@
             "x": 1,
             "y": 1
         },
-        "iterations": 10,
-        "tanThreshold": 0
+        "iterations": 100,
+        "tanThreshold": 0.4
     },
     "topology": {
         "octaves": 9,

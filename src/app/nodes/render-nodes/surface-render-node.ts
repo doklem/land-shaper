@@ -12,21 +12,22 @@ export class SurfaceRenderNode extends RenderNodeBase {
     private readonly _uniformConfigArray: Float32Array;
     private readonly _uniformConfigBuffer: GPUBuffer;
 
-    protected readonly _renderBundle: GPURenderBundle;
-    protected readonly _pipeline: GPURenderPipeline;
+    protected override readonly _renderBundle: GPURenderBundle;
+    protected override readonly _pipeline: GPURenderPipeline;
 
     public constructor(
         serviceProvider: IServiceProvider,
         private readonly _uvRange: Vector2,
         normalObjectSpaceTexture: TextureWrapper,
-        displacementTexture: TextureWrapper,
+        displacementBedrockTexture: TextureWrapper,
+        displacementSedimentTexture: TextureWrapper,
         waterTexture: TextureWrapper,
         outputTexture: TextureWrapper
     ) {
         super(SurfaceRenderNode.NAME, serviceProvider, outputTexture);
 
         // buffers
-        this._uniformConfigArray = new Float32Array(12);
+        this._uniformConfigArray = new Float32Array(16);
         this._uniformConfigBuffer = this.createUniformBuffer(this._uniformConfigArray.byteLength);
 
         // bind group layout
@@ -37,22 +38,27 @@ export class SurfaceRenderNode extends RenderNodeBase {
                 texture: normalObjectSpaceTexture.bindingLayout,
             },
             {
-                binding: 1, // displacement texture
+                binding: 1, // displacement bedrock texture
                 visibility: GPUShaderStage.FRAGMENT,
-                texture: displacementTexture.bindingLayout,
+                texture: displacementBedrockTexture.bindingLayout,
             },
             {
-                binding: 2, // water texture
+                binding: 2, // displacement sediment texture
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: displacementSedimentTexture.bindingLayout,
+            },
+            {
+                binding: 3, // water texture
                 visibility: GPUShaderStage.FRAGMENT,
                 texture: waterTexture.bindingLayout,
             },
             {
-                binding: 3, // sampler
+                binding: 4, // sampler
                 visibility: GPUShaderStage.FRAGMENT,
                 sampler: { type: normalObjectSpaceTexture.settings.samplerBinding },
             },
             {
-                binding: 4, // config uniform
+                binding: 5, // config uniform
                 visibility: GPUShaderStage.FRAGMENT,
                 buffer: {}
             },
@@ -68,18 +74,22 @@ export class SurfaceRenderNode extends RenderNodeBase {
                 },
                 {
                     binding: 1,
-                    resource: displacementTexture.view,
+                    resource: displacementBedrockTexture.view,
                 },
                 {
                     binding: 2,
-                    resource: waterTexture.view,
+                    resource: displacementSedimentTexture.view,
                 },
                 {
                     binding: 3,
-                    resource: serviceProvider.textures.samplerLinearClamping,
+                    resource: waterTexture.view,
                 },
                 {
                     binding: 4,
+                    resource: serviceProvider.textures.samplerLinearClamping,
+                },
+                {
+                    binding: 5,
                     resource: { buffer: this._uniformConfigBuffer },
                 },
             ]
@@ -105,7 +115,9 @@ export class SurfaceRenderNode extends RenderNodeBase {
                 diffuse.riverStart,
                 diffuse.riverRange,
                 diffuse.shoreStart,
-                diffuse.shoreRange
+                diffuse.shoreRange,
+                diffuse.sedimentStart,
+                diffuse.sedimentRange
             ]
         );
         this._serviceProvider.device.queue.writeBuffer(this._uniformConfigBuffer, 0, this._uniformConfigArray);

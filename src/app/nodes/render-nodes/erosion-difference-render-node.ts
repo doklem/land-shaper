@@ -8,8 +8,8 @@ export class ErosionDifferenceRenderNode extends ExportableByteRenderNodeBase {
 
     private readonly _bindGroup: GPUBindGroup;
 
-    protected readonly _renderBundle: GPURenderBundle;
-    protected readonly _pipeline: GPURenderPipeline;
+    protected override readonly _renderBundle: GPURenderBundle;
+    protected override readonly _pipeline: GPURenderPipeline;
 
     public constructor(serviceProvider: IServiceProvider) {
         super(ErosionDifferenceRenderNode.NAME, serviceProvider, serviceProvider.textures.displacementErosionDifference);

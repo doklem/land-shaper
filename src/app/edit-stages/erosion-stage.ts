@@ -12,7 +12,6 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
 
     private readonly _erosionAffectedControllers: Controller[];
     private readonly _settingsActions = {
-        blurTerrain: async () => await this.runBlur(),
         toggleDropletErosion: () => this.toggleErosion(ErosionType.droplet),
         toggleThermalErosion: () => this.toggleErosion(ErosionType.thermal),
     };
@@ -43,7 +42,7 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
         this._folders.push(thremalErosionFolder);
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion, 'iterations', 1, 2000, 1).name('Iterations'));
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion, 'amplitude', 0, 0.1, 0.001).name('Amplitude'));
-        this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion, 'tanThreshold', 0, 1000, 0.01).name('Slope Threshold'));
+        this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion, 'tanThreshold', 0, 10, 0.01).name('Slope Threshold'));
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion.borderMin, 'x', 1, 2000, 1).name('Border X'));
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion.borderMin, 'y', 1, 2000, 1).name('Border Y'));
         this._erosionAffectedControllers.push(thremalErosionFolder.add(thermalErosion.borderRange, 'x', 1, 2000, 1).name('Border X Range'));
@@ -65,14 +64,6 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
         this._erosionAffectedControllers.push(dropletErosionFolder.add(dropletErosion, 'startSpeed', 0.01, 100, 0.01).name('Start Speed'));
         this._erosionAffectedControllers.push(dropletErosionFolder.add(dropletErosion, 'startWater', 0.01, 100, 0.01).name('Start Water'));
         this._dropletErosionToggle = dropletErosionFolder.add(this._settingsActions, 'toggleDropletErosion').name(ErosionStage.STOPPED_EROSION_LABEL);
-
-        const blur = this._serviceProvider.settings.blur;
-        const blurFolder = parent.addFolder('Blur').hide();
-        this._folders.push(blurFolder);
-        this._erosionAffectedControllers.push(blurFolder.add(blur.size, 'x', 0, 100, 1).name('Radius X'));
-        this._erosionAffectedControllers.push(blurFolder.add(blur.size, 'y', 0, 100, 1).name('Radius Y'));
-        this._erosionAffectedControllers.push(blurFolder.add(blur, 'strength', 0, 1, 0.01).name('Strength'));
-        this._erosionAffectedControllers.push(blurFolder.add(this._settingsActions, 'blurTerrain').name('Blur'));
     }
 
     protected override onVisibilityChange(visibility: boolean): void {
@@ -81,14 +72,6 @@ export class ErosionStage extends EditStageBase<ErosionLandscape> {
         if (visibility) {
             this.runErosionBackgroundWorker();
         }
-    }
-
-    private async runBlur(): Promise<void> {
-        if (this._erosionType !== ErosionType.none || !this._visible) {
-            return;
-        }
-        this.changed = true;
-        await this._landscape.runBlur();
     }
 
     private runErosionBackgroundWorker(): void {
